@@ -1,3 +1,15 @@
+# Build and Release Folders
+bin/
+bin-debug/
+bin-release/
+.ino.cpp
+
+# Other files and folders
+.settings/
+arduino
+Libraries
+Release
+
 # Prerequisites
 *.d
 
@@ -30,3 +42,4 @@
 *.exe
 *.out
 *.app
+*.elf
