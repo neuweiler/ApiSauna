@@ -1,9 +1,6 @@
 /*
  * HumiditySensor.h
  *
- * Main part of the bee sauna control software. It initializes all devices
- * and controls the main loop.
- *
  Copyright (c) 2017 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
@@ -30,11 +27,24 @@
 #ifndef HUMIDITYSENSOR_H_
 #define HUMIDITYSENSOR_H_
 
+#include <Arduino.h>
+#include <DHT.h>
+#include <DHT_U.h>
+#include <Adafruit_Sensor.h>
+
 class HumiditySensor
 {
 public:
     HumiditySensor();
+    HumiditySensor(uint8_t controlPin);
     virtual ~HumiditySensor();
+    void setControlPin(uint8_t controlPin);
+    uint8_t getRelativeHumidity();
+    int16_t getTemperature();
+
+private:
+    uint8_t controlPin;
+    DHT *dht;
 };
 
 #endif /* HUMIDITYSENSOR_H_ */

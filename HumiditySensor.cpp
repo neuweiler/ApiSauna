@@ -30,12 +30,53 @@
 
 HumiditySensor::HumiditySensor()
 {
-    // TODO Auto-generated constructor stub
+    dht = NULL;
+    controlPin = 0;
+}
 
+HumiditySensor::HumiditySensor(uint8_t controlPin)
+{
+    dht = NULL;
+    setControlPin(controlPin);
 }
 
 HumiditySensor::~HumiditySensor()
 {
-    // TODO Auto-generated destructor stub
+    if (dht != NULL) {
+        delete dht;
+        dht = NULL;
+    }
+    controlPin = 0;
 }
 
+void HumiditySensor::setControlPin(uint8_t controlPin)
+{
+    this->controlPin = controlPin;
+    if (dht != NULL) {
+        delete dht;
+    }
+    dht = new DHT(controlPin, DHT22);
+    dht->begin();
+}
+
+/**
+ * Get relative humidity in %
+ */
+uint8_t HumiditySensor::getRelativeHumidity()
+{
+    if (dht == NULL) {
+        return 0;
+    }
+    return dht->readHumidity();
+}
+
+/**
+ * Get temperature in 0.1 deg C
+ */
+int16_t HumiditySensor::getTemperature()
+{
+    if (dht == NULL) {
+        return 0;
+    }
+    return dht->readTemperature() * 10;
+}

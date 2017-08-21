@@ -30,11 +30,20 @@
 #ifndef HID_H_
 #define HID_H_
 
+#include <Arduino.h>
+#include "SimpleList.h"
+#include "Controller.h"
+
 class HID
 {
 public:
     HID();
     virtual ~HID();
+    void init(Controller *controller);
+    void loop();
+
+private:
+    Controller *controller;
 };
 
 #endif /* HID_H_ */

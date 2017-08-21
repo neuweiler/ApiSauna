@@ -35,12 +35,27 @@ class Humidifier
 {
 public:
     Humidifier();
+    Humidifier(uint8_t sensorPin, uint8_t fanPin, uint8_t evaporatorPin);
     virtual ~Humidifier();
+    void setSensorPin(uint8_t sensorPin);
+    void setFanPin(uint8_t fanPin);
+    void setEvaporatorPin(uint8_t evaproatorPin);
+    void setMaxHumidity(uint8_t maxHumidity);
+    uint8_t getMaxHumidity();
+    void setMinHumidity(uint8_t minHumidity);
+    uint8_t getMinHumidity();
+    uint8_t getHumidity();
+    uint8_t getFanSpeed();
+    Evaporator::Mode getEvaporatorMode();
+    void loop();
 
 private:
-    Evaporator *evaporator;
-    HumiditySensor *sensor;
-    Fan *fan;
+    Evaporator evaporator;
+    HumiditySensor sensor;
+    Fan fan;
+    uint8_t maximumHumidity;
+    uint8_t minimumHumidity;
+    uint8_t humidity;
 };
 
 #endif /* HUMIDIFIER_H_ */
