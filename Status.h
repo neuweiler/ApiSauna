@@ -35,10 +35,10 @@ class Status
 public:
     enum SystemState
     {
-        startup = 0, // the system is starting-up (next states: init, error)
         init = 1, // the system is being initialized and is not ready for operation yet (next states: ready, error)
-        ready = 7, // the system is ready to accept commands but the treatment is not started yet (next states: running, error)
-        running = 8, // the system is running a program (next states: ready, error)
+        ready = 2, // the system is ready to accept commands but the treatment has not started yet (next states: preHeat, running, error)
+        preHeat = 3, // a program was started and the system is heating up the hive (next states: running, error)
+        running = 4, // the system is running a program (next states: ready, shutdown, error)
         shutdown = 9, // the system is shut-down
         error = 99 // the system is in an error state and not operational
     };
@@ -46,7 +46,7 @@ public:
     Status();
     SystemState getSystemState();
     SystemState setSystemState(SystemState);
-    char *systemStateToStr(SystemState);
+    String systemStateToStr(SystemState);
 
 private:
     SystemState systemState; // the current state of the system, to be modified by the state machine of this class only

@@ -36,7 +36,7 @@ Status status;
  */
 Status::Status()
 {
-    systemState = startup;
+    systemState = init;
 }
 
 /*
@@ -59,38 +59,36 @@ Status::SystemState Status::setSystemState(SystemState newSystemState)
         return systemState;
     }
 
-    SystemState oldSystemState = systemState;
-
     if (newSystemState == error) {
         systemState = error;
     } else {
         switch (systemState) {
-        case startup:
-            if (newSystemState == init) {
-                systemState = newSystemState;
-            }
-            break;
         case init:
             if (newSystemState == ready) {
                 systemState = newSystemState;
             }
             break;
         case ready:
+            if (newSystemState == preHeat || newSystemState == running) {
+                systemState = newSystemState;
+            }
+            break;
+        case preHeat:
             if (newSystemState == running) {
                 systemState = newSystemState;
             }
             break;
         case running:
-            if (newSystemState == ready) {
+            if (newSystemState == ready || newSystemState == shutdown) {
                 systemState = newSystemState;
             }
             break;
         }
     }
     if (systemState == newSystemState) {
-        Logger::info("switching to system state '%s'", systemStateToStr(systemState));
+        Logger::info("switching to system state '%s'", systemStateToStr(systemState).c_str());
     } else {
-        Logger::error("switching from system state '%s' to '%s' is not allowed", systemStateToStr(systemState), systemStateToStr(newSystemState));
+        Logger::error("switching from system state '%s' to '%s' is not allowed", systemStateToStr(systemState).c_str(), systemStateToStr(newSystemState).c_str());
         systemState = error;
     }
 
@@ -100,15 +98,15 @@ Status::SystemState Status::setSystemState(SystemState newSystemState)
 /*
  * Convert the current state into a string.
  */
-char *Status::systemStateToStr(SystemState state)
+String Status::systemStateToStr(SystemState state)
 {
     switch (state) {
-    case startup:
-        return "unknown";
     case init:
-        return "init";
+        return "initializing";
     case ready:
         return "ready";
+    case preHeat:
+        return "pre-heating";
     case running:
         return "running";
     case error:
