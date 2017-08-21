@@ -59,7 +59,8 @@ public:
     void setMaximumPower(uint8_t power);
     void setFanSpeed(uint8_t speed);
     int16_t getTemperature();
-    uint8_t getHeaterPower();
+    uint8_t getPower();
+    uint8_t getFanSpeed();
     void loop();
 
 protected:

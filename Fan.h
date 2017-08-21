@@ -37,6 +37,7 @@ public:
     virtual ~Fan();
     void setControlPin(uint8_t controlPin);
     void setSpeed(uint8_t speed);
+    uint8_t getSpeed();
 private:
     uint8_t controlPin;
     uint8_t speed;

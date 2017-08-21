@@ -44,6 +44,7 @@ PlateConfig::PlateConfig(uint64_t address, uint8_t heaterPin, uint8_t fanPin)
 
 Plate::Plate()
 {
+    //TODO replace testing values with real ones
     maxTemperature = 300; // 70.0 deg C
     deratingTemperature = 250; // 50.0 deg C
     maxPower = 255; // 100%
@@ -62,7 +63,9 @@ Plate::Plate(SensorAddress sensorAddress, uint8_t heaterPin, uint8_t fanPin)
 
 Plate::~Plate()
 {
-    // TODO Auto-generated destructor stub
+    maxTemperature = 0;
+    deratingTemperature = 0;
+    maxPower = 0;
 }
 
 /**
@@ -112,9 +115,17 @@ int16_t Plate::getTemperature()
 /**
  * Get the applied power of the heater (0-255)
  */
-uint8_t Plate::getHeaterPower()
+uint8_t Plate::getPower()
 {
     return heater.getPower();
+}
+
+/**
+ * Get the current fan speed.
+ */
+uint8_t Plate::getFanSpeed()
+{
+    return fan.getSpeed();
 }
 
 /**

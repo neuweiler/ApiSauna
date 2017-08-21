@@ -51,6 +51,9 @@ Fan::~Fan()
     this->controlPin = 0;
 }
 
+/**
+ * Set the control pin for the fan
+ */
 void Fan::setControlPin(uint8_t controlPin) {
     this->controlPin = controlPin;
     pinMode(controlPin, OUTPUT);
@@ -66,4 +69,12 @@ void Fan::setSpeed(uint8_t speed)
         this->speed = constrain(speed, 0, 255);
         analogWrite(controlPin, this->speed);
     }
+}
+
+/**
+ * Get the current speed (0-255)
+ */
+uint8_t Fan::getSpeed()
+{
+    return speed;
 }
