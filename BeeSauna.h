@@ -30,6 +30,7 @@
 #include <Arduino.h>
 #include "Status.h"
 #include "Controller.h"
+#include "HID.h"
 
 #ifdef __cplusplus
 extern "C"

@@ -30,6 +30,7 @@
 #include "BeeSauna.h"
 
 Controller controller;
+HID hid;
 
 void delayStart()
 {
@@ -95,13 +96,16 @@ void setup()
     Serial.begin(CFG_SERIAL_SPEED);
     delayStart();
     Serial.println(CFG_VERSION);
-    status.setSystemState(Status::init);
 
     configurePwm();
     controller.init();
+    hid.init(&controller);
+
+    status.setSystemState(Status::ready);
 }
 
 void loop()
 {
     controller.loop();
+    hid.loop();
 }
