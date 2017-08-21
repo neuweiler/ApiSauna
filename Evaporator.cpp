@@ -30,12 +30,37 @@
 
 Evaporator::Evaporator()
 {
-    // TODO Auto-generated constructor stub
+    controlPin = 0;
+    mode = OFF;
+}
 
+Evaporator::Evaporator(uint8_t controlPin)
+{
+    setControlPin(controlPin);
 }
 
 Evaporator::~Evaporator()
 {
-    // TODO Auto-generated destructor stub
+    setMode(OFF);
+    controlPin = 0;
 }
 
+void Evaporator::setControlPin(uint8_t controlPin)
+{
+    this->controlPin = controlPin;
+    pinMode(controlPin, OUTPUT);
+    setMode(OFF);
+}
+
+void Evaporator::setMode(Mode mode)
+{
+    if (controlPin != 0) {
+        this->mode = mode;
+        digitalWrite(controlPin, (mode == ON));
+    }
+}
+
+Evaporator::Mode Evaporator::getMode()
+{
+    return mode;
+}

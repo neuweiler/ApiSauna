@@ -27,11 +27,26 @@
 #ifndef EVAPORATOR_H_
 #define EVAPORATOR_H_
 
+#include <Arduino.h>
+
 class Evaporator
 {
 public:
+    enum Mode
+    {
+        OFF,
+        ON
+    };
     Evaporator();
+    Evaporator(uint8_t controlPin);
     virtual ~Evaporator();
+    void setControlPin(uint8_t controlPin);
+    void setMode(Mode mode);
+    Mode getMode();
+
+private:
+    uint8_t controlPin;
+    Mode mode;
 };
 
 #endif /* EVAPORATOR_H_ */
