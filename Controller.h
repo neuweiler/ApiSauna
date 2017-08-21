@@ -31,6 +31,14 @@
 #include "TemperatureSensor.h"
 #include "Humidifier.h"
 #include "Plate.h"
+#include "Status.h"
+
+class ControllerProgram {
+public:
+    uint16_t executionTime;
+    uint32_t startTime;
+
+};
 
 class Controller
 {
@@ -39,6 +47,14 @@ public:
     virtual ~Controller();
     void init();
     void loop();
+    const SimpleList<TemperatureSensor>& getHiveTempSensors() const;
+    const SimpleList<Plate>& getPlates() const;
+    const  Humidifier getHumidifier() const;
+    const ControllerProgram getProgram() const;
+    uint16_t getTimeRunning();
+    uint16_t getTimeRemaining();
+    void startProgram(ControllerProgram controllerProgram);
+    void stopProgram();
 
 private:
     SimpleList<SensorAddress> findTemperatureSensors();
@@ -48,6 +64,7 @@ private:
     SimpleList<PlateConfig> plateConfigs;
     SimpleList<TemperatureSensor> hiveTempSensors;
     Humidifier humidifier;
+    ControllerProgram program;
 };
 
 #endif /* CONTROLLER_H_ */

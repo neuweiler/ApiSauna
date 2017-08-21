@@ -43,6 +43,46 @@ Controller::~Controller()
     // TODO Auto-generated destructor stub
 }
 
+const SimpleList<TemperatureSensor>& Controller::getHiveTempSensors() const
+{
+    return hiveTempSensors;
+}
+
+const SimpleList<Plate>& Controller::getPlates() const
+{
+    return plates;
+}
+
+const Humidifier Controller::getHumidifier() const
+{
+    return humidifier;
+}
+
+const ControllerProgram Controller::getProgram() const
+{
+    return program;
+}
+
+uint16_t Controller::getTimeRunning()
+{
+    return (program.startTime - millis()) / 1000;
+}
+
+uint16_t Controller::getTimeRemaining()
+{
+    return program.executionTime - getTimeRunning();
+}
+
+void Controller::startProgram(ControllerProgram controllerProgram)
+{
+    this->program = controllerProgram;
+}
+
+void Controller::stopProgram()
+{
+    // TODO !!
+}
+
 /**
  *  Find all temperature sensor addresses (DS18B20).
  */
@@ -98,6 +138,7 @@ void Controller::init()
     if (plateConfigs.size() != plates.size()) {
         Logger::error("unable to locate all temperature sensors of all configured plates (%d of %d) !!", plates.size(), plateConfigs.size());
     }
+    //TODO set humidifier fan, evap and sensor pins
 }
 
 /**
@@ -105,18 +146,28 @@ void Controller::init()
  */
 void Controller::loop()
 {
-    int plateNumber = 1;
-    for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
-        itr->loop();
-
-        if (Logger::isDebug()) {
-            int16_t temp = itr->getTemperature();
-            Logger::debug("plate %d: temp=%d.%d C, power=%d", plateNumber, temp / 10, temp % 10, itr->getHeaterPower());
+    //TODO get max hive temperature and adjust plate's max temperature accordingly (incl. derating)
+    switch (status.getSystemState()) {
+    case Status::init:
+        break;
+    case Status::ready:
+        break;
+    case Status::preHeat:
+        for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
+            itr->loop();
         }
-        plateNumber++;
+        humidifier.loop();
+        break;
+    case Status::running:
+        for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
+            itr->loop();
+        }
+        humidifier.loop();
+        break;
+    case Status::shutdown:
+        break;
     }
 
     TemperatureSensor::prepareData();
     delay(CFG_LOOP_DELAY);
 }
-
