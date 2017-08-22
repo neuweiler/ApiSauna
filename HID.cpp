@@ -47,26 +47,26 @@ void HID::init(Controller* controller)
 void HID::loop()
 {
     if (controller != NULL) {
-        Logger::debug("time running: %d:%d, time remaining: %d:%d", controller->getTimeRunning() / 60, controller->getTimeRunning() % 60,
+        Logger::debug("time running: %d:%02d, time remaining: %d:%02d", controller->getTimeRunning() / 60, controller->getTimeRunning() % 60,
                 controller->getTimeRemaining() / 60, controller->getTimeRemaining() % 60);
 
-        SimpleList<TemperatureSensor> hiveSensors = controller->getHiveTempSensors();
+        SimpleList<TemperatureSensor> *hiveSensors = controller->getHiveTempSensors();
         int sensorNumber = 1;
-        for (SimpleList<TemperatureSensor>::iterator itr = hiveSensors.begin(); itr != hiveSensors.end(); ++itr) {
+        for (SimpleList<TemperatureSensor>::iterator itr = hiveSensors->begin(); itr != hiveSensors->end(); ++itr) {
             int16_t temp = itr->getTemperatureCelsius();
-            Logger::debug("hive temp: temp=%d.%d C", sensorNumber++, temp / 10, temp % 10);
+            Logger::debug("hive temp %d: %d.%d C", sensorNumber++, temp / 10, temp % 10);
         }
+        Logger::debug("max hive temp: %d.%d C", controller->getMaxHiveTemperature() / 10, controller->getMaxHiveTemperature() % 10);
 
-        SimpleList<Plate> plates = controller->getPlates();
-        int plateNumber = 1;
-        for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
+        SimpleList<Plate> *plates = controller->getPlates();
+        for (SimpleList<Plate>::iterator itr = plates->begin(); itr != plates->end(); ++itr) {
             int16_t temp = itr->getTemperature();
-            Logger::debug("plate %d: temp=%d.%d C, power=%d, speed=%d", plateNumber++, temp / 10, temp % 10, itr->getPower(), itr->getFanSpeed());
+            Logger::debug("plate %d: temp=%d.%d C, power=%d, speed=%d", itr->getId(), temp / 10, temp % 10, itr->getPower(), itr->getFanSpeed());
         }
 
-        Humidifier humidifier = controller->getHumidifier();
-        Logger::debug("humidity: relHumidity=%d, enabled=%d, speed=%d", humidifier.getHumidity(), humidifier.getEvaporatorMode(),
-                humidifier.getFanSpeed());
+        Humidifier *humidifier = controller->getHumidifier();
+        Logger::debug("humidity: relHumidity=%d, enabled=%d, speed=%d", humidifier->getHumidity(), humidifier->getEvaporatorMode(),
+                humidifier->getFanSpeed());
     }
 
 }

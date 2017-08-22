@@ -159,7 +159,7 @@ boolean Logger::isDebug()
  */
 void Logger::log(LogLevel level, String format, va_list args)
 {
-    char *logLevel = "DEBUG";
+    String logLevel = "DEBUG";
     lastLogTime = millis();
 
     switch (level) {

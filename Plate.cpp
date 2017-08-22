@@ -33,13 +33,15 @@ PlateConfig::PlateConfig() {
     sensorAddress.value = 0;
     heaterPin = 0;
     fanPin = 0;
+    id = 0;
 }
 
-PlateConfig::PlateConfig(uint64_t address, uint8_t heaterPin, uint8_t fanPin)
+PlateConfig::PlateConfig(uint8_t id, uint64_t address, uint8_t heaterPin, uint8_t fanPin)
 {
     this->sensorAddress.value = address;
     this->heaterPin = heaterPin;
     this->fanPin = fanPin;
+    this->id = id;
 }
 
 Plate::Plate()
@@ -47,10 +49,11 @@ Plate::Plate()
     //TODO replace testing values with real ones
     maxTemperature = 300; // 70.0 deg C
     deratingTemperature = 250; // 50.0 deg C
-    maxPower = 255; // 100%
+    maxPower = 230; // 90%
+    id = 0;
 }
 
-Plate::Plate(SensorAddress sensorAddress, uint8_t heaterPin, uint8_t fanPin)
+Plate::Plate(uint8_t id, SensorAddress sensorAddress, uint8_t heaterPin, uint8_t fanPin)
 {
     temperatureSensor.setAddress(sensorAddress);
     heater.setControlPin(heaterPin);
@@ -58,7 +61,8 @@ Plate::Plate(SensorAddress sensorAddress, uint8_t heaterPin, uint8_t fanPin)
 
     maxTemperature = 300; // 70.0 deg C
     deratingTemperature = 250; // 50.0 deg C
-    maxPower = 255; // 100%
+    maxPower = 230; // 90%
+    this->id = id;
 }
 
 Plate::~Plate()
@@ -126,6 +130,14 @@ uint8_t Plate::getPower()
 uint8_t Plate::getFanSpeed()
 {
     return fan.getSpeed();
+}
+
+/**
+ * Get the plate's id.
+ */
+uint8_t Plate::getId()
+{
+    return id;
 }
 
 /**

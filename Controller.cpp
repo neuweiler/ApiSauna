@@ -31,11 +31,21 @@
 
 Controller::Controller()
 {
+    hiveTemperature = -999;
+
     //TODO move to EEPROM
-    plateConfigs.push_back(PlateConfig(0xf70315a86f2fff28, 3, 7));
-    plateConfigs.push_back(PlateConfig(0xf80315a86f2fff28, 4, 8));
-    plateConfigs.push_back(PlateConfig(0xf90315a86f2fff28, 5, 9));
-    plateConfigs.push_back(PlateConfig(0xfa0315a86f2fff28, 6, 10));
+    plateConfigs.push_back(PlateConfig(1, CFG_ADDR_TEMP_SENSOR_1, CFG_IO_HEATER_1, CFG_IO_FAN_1));
+    plateConfigs.push_back(PlateConfig(2, CFG_ADDR_TEMP_SENSOR_2, CFG_IO_HEATER_2, CFG_IO_FAN_2));
+    plateConfigs.push_back(PlateConfig(3, CFG_ADDR_TEMP_SENSOR_3, CFG_IO_HEATER_3, CFG_IO_FAN_3));
+    plateConfigs.push_back(PlateConfig(4, CFG_ADDR_TEMP_SENSOR_4, CFG_IO_HEATER_4, CFG_IO_FAN_4));
+
+    program.hiveTemperature = 420; // the target temperature (in 0.1 deg C)
+    program.deratingHiveTemperature = 300;
+    program.plateTemperature = 730; // the maximum temperature of the heater plates (in 0.1 deg C)
+    program.deratingPlateTemperature = 580;
+    program.preHeatDuration = 1800; // the duration of the pre-heating cycle (in sec)
+    program.duration = 14400; // how long the program should run (in sec)
+    program.fanSpeed = 127; // the maximum fan speed (0-255)
 }
 
 Controller::~Controller()
@@ -43,34 +53,38 @@ Controller::~Controller()
     // TODO Auto-generated destructor stub
 }
 
-const SimpleList<TemperatureSensor>& Controller::getHiveTempSensors() const
+SimpleList<TemperatureSensor>* Controller::getHiveTempSensors()
 {
-    return hiveTempSensors;
+    return &hiveTempSensors;
 }
 
-const SimpleList<Plate>& Controller::getPlates() const
+SimpleList<Plate>* Controller::getPlates()
 {
-    return plates;
+    return &plates;
 }
 
-const Humidifier Controller::getHumidifier() const
+Humidifier* Controller::getHumidifier()
 {
-    return humidifier;
+    return &humidifier;
 }
 
-const ControllerProgram Controller::getProgram() const
+ControllerProgram* Controller::getProgram()
 {
-    return program;
+    return &program;
 }
 
 uint16_t Controller::getTimeRunning()
 {
-    return (program.startTime - millis()) / 1000;
+    return (millis() - program.startTime) / 1000;
 }
 
 uint16_t Controller::getTimeRemaining()
 {
-    return program.executionTime - getTimeRunning();
+    return program.duration - getTimeRunning();
+}
+
+int16_t Controller::getMaxHiveTemperature() {
+    return hiveTemperature;
 }
 
 void Controller::startProgram(ControllerProgram controllerProgram)
@@ -97,7 +111,7 @@ SimpleList<SensorAddress> Controller::findTemperatureSensors()
         SensorAddress address = TemperatureSensor::search();
         if (address.value == 0)
             break;
-        Logger::info("  found sensor: addr=%#lx%lx", address.high, address.low);
+        Logger::debug("  found sensor: addr=%#lx%lx", address.high, address.low);
         addressList.push_back(address);
     }
     TemperatureSensor::prepareData(); // kick the sensors to prepare data
@@ -116,13 +130,13 @@ void Controller::assignTemperatureSensors(SimpleList<SensorAddress> addressList)
         for (SimpleList<PlateConfig>::iterator itrConfig = plateConfigs.begin(); itrConfig != plateConfigs.end(); ++itrConfig) {
             if (itrAddress->value == itrConfig->sensorAddress.value) {
                 foundInConfig = true;
-                Logger::debug("attaching sensor %#lx%lx, heater pin %d, fan pin %d to plate #%d", itrConfig->sensorAddress.high,
+                Logger::info("attaching sensor %#lx%lx, heater pin %d, fan pin %d to plate #%d", itrConfig->sensorAddress.high,
                         itrConfig->sensorAddress.low, itrConfig->heaterPin, itrConfig->fanPin, plateNumber++);
-                plates.push_back(Plate(itrConfig->sensorAddress, itrConfig->heaterPin, itrConfig->fanPin));
+                plates.push_back(Plate(itrConfig->id, itrConfig->sensorAddress, itrConfig->heaterPin, itrConfig->fanPin));
             }
         }
         if (!foundInConfig) {
-            Logger::error("using temp sensor %#lx%lx to measure hive temperature", itrAddress->high, itrAddress->low);
+            Logger::info("using temp sensor %#lx%lx to measure hive temperature", itrAddress->high, itrAddress->low);
             hiveTempSensors.push_back(TemperatureSensor(*itrAddress));
         }
     }
@@ -137,8 +151,11 @@ void Controller::init()
     assignTemperatureSensors(addressList);
     if (plateConfigs.size() != plates.size()) {
         Logger::error("unable to locate all temperature sensors of all configured plates (%d of %d) !!", plates.size(), plateConfigs.size());
+        status.setSystemState(Status::error);
     }
     //TODO set humidifier fan, evap and sensor pins
+
+
 }
 
 /**
@@ -146,25 +163,48 @@ void Controller::init()
  */
 void Controller::loop()
 {
+    hiveTemperature = -999;
     //TODO get max hive temperature and adjust plate's max temperature accordingly (incl. derating)
+    for (SimpleList<TemperatureSensor>::iterator itr = hiveTempSensors.begin(); itr != hiveTempSensors.end(); ++itr) {
+        itr->retrieveData();
+        hiveTemperature = max(hiveTemperature, itr->getTemperatureCelsius());
+    }
+
+    int16_t maxPlateTemperature = 0;
+    if (hiveTemperature != -999 && hiveTemperature < program.hiveTemperature) {
+        if (hiveTemperature < program.deratingHiveTemperature) {
+            maxPlateTemperature = program.plateTemperature;
+        } else {
+            maxPlateTemperature = program.plateTemperature * (program.hiveTemperature - hiveTemperature) / (program.hiveTemperature - program.deratingHiveTemperature); // derating
+        }
+//        Logger::debug("max plate temperature: %d", maxPlateTemperature / 10);
+    }
+
     switch (status.getSystemState()) {
     case Status::init:
+        Logger::error("controller loop must not be called while initialising!");
         break;
     case Status::ready:
         break;
     case Status::preHeat:
         for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
+            itr->setDeratingTemperature(program.deratingPlateTemperature); // TODO move to init
+            itr->setFanSpeed(program.fanSpeed); // TODO move to init
+            itr->setMaximumTemperature(maxPlateTemperature);
             itr->loop();
         }
         humidifier.loop();
         break;
     case Status::running:
         for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
+            itr->setMaximumTemperature(maxPlateTemperature);
             itr->loop();
         }
         humidifier.loop();
         break;
     case Status::shutdown:
+    case Status::error:
+
         break;
     }
 

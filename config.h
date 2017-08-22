@@ -32,7 +32,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define CFG_VERSION "BeeHive 2017-08-14"
+#define CFG_VERSION "BeeHive 2017-08-22"
 #define CFG_DEFAULT_LOGLEVEL Logger::Debug
 
 /*
@@ -45,7 +45,7 @@
  * TIMER INTERVALS
  *
  */
-#define CFG_LOOP_DELAY   200
+#define CFG_LOOP_DELAY   1000
 
 /*
  * ARRAY SIZE
@@ -59,6 +59,24 @@
  * PIN ASSIGNMENT
  */
 #define CFG_BLINK_LED                   13 //13 is L, 73 is TX, 72 is RX
-#define CFG_IO_TEMPERATURE_SENSOR       39 // pin to which the data line of the single wire temperature sensors are connected
+#define CFG_IO_TEMPERATURE_SENSOR       4 // pin to which the data line of the single wire temperature sensors are connected
+#define CFG_IO_HEATER_1                 11
+#define CFG_IO_HEATER_2                 12
+#define CFG_IO_HEATER_3                 2
+#define CFG_IO_HEATER_4                 3
+#define CFG_IO_FAN_1                    7
+#define CFG_IO_FAN_2                    8
+#define CFG_IO_FAN_3                    44
+#define CFG_IO_FAN_4                    45
+#define CFG_IO_VAPORIZER                5
+#define CFG_IO_FAN_HUMIDIFIER           6
+
+
+#define CFG_ADDR_TEMP_SENSOR_1          0x3d0516a4f187ff28
+#define CFG_ADDR_TEMP_SENSOR_2          0x9a0516a50124ff28
+#define CFG_ADDR_TEMP_SENSOR_3          0xe10316a5188cff28
+#define CFG_ADDR_TEMP_SENSOR_4          0xed0316a48290ff28
+
+#define CFG_MAX_HEATER_POWER            200
 
 #endif /* CONFIG_H_ */

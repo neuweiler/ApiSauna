@@ -35,9 +35,15 @@
 
 class ControllerProgram {
 public:
-    uint16_t executionTime;
-    uint32_t startTime;
+    int16_t hiveTemperature; // the target temperature (in 0.1 deg C)
+    int16_t deratingHiveTemperature; // hive temperature at which the derating begins (in 0.1 deg C)
+    int16_t plateTemperature; // the maximum temperature of the heater plates (in 0.1 deg C)
+    int16_t deratingPlateTemperature; // plate temperature at which the derating begins (in 0.1 deg C)
+    uint16_t preHeatDuration; // the duration of the pre-heating cycle (in sec)
+    uint16_t duration; // how long the program should run (in sec)
+    uint8_t fanSpeed; // the maximum fan speed (0-255)
 
+    uint32_t startTime; // timestamp when the program started (in millis)
 };
 
 class Controller
@@ -47,10 +53,11 @@ public:
     virtual ~Controller();
     void init();
     void loop();
-    const SimpleList<TemperatureSensor>& getHiveTempSensors() const;
-    const SimpleList<Plate>& getPlates() const;
-    const  Humidifier getHumidifier() const;
-    const ControllerProgram getProgram() const;
+    SimpleList<TemperatureSensor> *getHiveTempSensors();
+    SimpleList<Plate> *getPlates();
+    Humidifier *getHumidifier();
+    ControllerProgram *getProgram();
+    int16_t getMaxHiveTemperature();
     uint16_t getTimeRunning();
     uint16_t getTimeRemaining();
     void startProgram(ControllerProgram controllerProgram);
@@ -65,6 +72,7 @@ private:
     SimpleList<TemperatureSensor> hiveTempSensors;
     Humidifier humidifier;
     ControllerProgram program;
+    int16_t hiveTemperature;
 };
 
 #endif /* CONTROLLER_H_ */

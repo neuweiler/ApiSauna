@@ -28,6 +28,7 @@
 #define HEATER_H_
 
 #include <Arduino.h>
+#include "config.h"
 
 class Heater
 {

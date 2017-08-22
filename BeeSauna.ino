@@ -46,37 +46,35 @@ void delayStart()
  * The default PWM frequency is 490 Hz for all pins except pin 13 and 4, which use 980 Hz
  * The AT Mega 2560 provides the following timers:
  *  #0 8bit  (pin 13, 4)      : reserved (affects timing functions like delay() and millis())
- *  #1 16bit (pin 12, 11)     : heater #1 and #2
- *  #2 8bit  (pin 10, 9)      : reserved (used for tone())
- *  #3 16bit (pin 5, 3, 2)    : heater #3 - #5
- *  #4 16bit (pin 8, 7, 6)    : fans #1 - #3
- *  #5 16bit (pin 44, 45, 46) : fans #4, #5 and humidifier fan
+ *  #1 16bit (pin 11, 12)     : heater #1 and #2
+ *  #2 8bit  (pin 9, 10)      : reserved (used for tone())
+ *  #3 16bit (pin 2, 3, 5)    : heater #3 - #4, vaporizer
+ *  #4 16bit (pin 6, 7, 8)    : humidifier fan, fans #1 - #2
+ *  #5 16bit (pin 44, 45, 46) : fans #3 - #4, reserve
  */
 void configurePwm()
 {
     // prepare pins
-    pinMode(2, OUTPUT);
-    analogWrite(2, 0);
-    pinMode(3, OUTPUT);
-    analogWrite(3, 0);
-    pinMode(5, OUTPUT);
-    analogWrite(5, 0);
-    pinMode(6, OUTPUT);
-    analogWrite(6, 0);
-    pinMode(7, OUTPUT);
-    analogWrite(7, 0);
-    pinMode(8, OUTPUT);
-    analogWrite(8, 0);
-    pinMode(11, OUTPUT);
-    analogWrite(11, 0);
-    pinMode(12, OUTPUT);
-    analogWrite(12, 0);
-    pinMode(44, OUTPUT);
-    analogWrite(44, 0);
-    pinMode(45, OUTPUT);
-    analogWrite(45, 0);
-    pinMode(46, OUTPUT);
-    analogWrite(46, 0);
+    pinMode(CFG_IO_HEATER_1, OUTPUT);
+    analogWrite(CFG_IO_HEATER_1, 0);
+    pinMode(CFG_IO_HEATER_2, OUTPUT);
+    analogWrite(CFG_IO_HEATER_2, 0);
+    pinMode(CFG_IO_HEATER_3, OUTPUT);
+    analogWrite(CFG_IO_HEATER_3, 0);
+    pinMode(CFG_IO_HEATER_4, OUTPUT);
+    analogWrite(CFG_IO_HEATER_4, 0);
+    pinMode(CFG_IO_FAN_1, OUTPUT);
+    analogWrite(CFG_IO_FAN_1, 51); // 20% duty cycle = minimum
+    pinMode(CFG_IO_FAN_2, OUTPUT);
+    analogWrite(CFG_IO_FAN_2, 51); // 20% duty cycle = minimum
+    pinMode(CFG_IO_FAN_3, OUTPUT);
+    analogWrite(CFG_IO_FAN_3, 51); // 20% duty cycle = minimum
+    pinMode(CFG_IO_FAN_4, OUTPUT);
+    analogWrite(CFG_IO_FAN_4, 51); // 20% duty cycle = minimum
+    pinMode(CFG_IO_VAPORIZER, OUTPUT);
+    analogWrite(CFG_IO_VAPORIZER, 0);
+    pinMode(CFG_IO_FAN_HUMIDIFIER, OUTPUT);
+    analogWrite(CFG_IO_FAN_HUMIDIFIER, 0);
 
     // set timer 4+5 to 31kHz for controlling PWM fans
     TCCR4B &= ~7;
@@ -102,6 +100,9 @@ void setup()
     hid.init(&controller);
 
     status.setSystemState(Status::ready);
+
+    //TODO this must be set by HID
+    status.setSystemState(Status::preHeat);
 }
 
 void loop()

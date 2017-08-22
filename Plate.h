@@ -42,17 +42,18 @@ class PlateConfig
 {
 public:
     PlateConfig();
-    PlateConfig(uint64_t address, uint8_t heaterPin, uint8_t fanPin);
+    PlateConfig(uint8_t id, uint64_t address, uint8_t heaterPin, uint8_t fanPin);
     SensorAddress sensorAddress;
     uint8_t heaterPin;
     uint8_t fanPin;
+    uint8_t id;
 };
 
 class Plate
 {
 public:
     Plate();
-    Plate(SensorAddress sensorAddress, uint8_t heaterPin, uint8_t fanPin);
+    Plate(uint8_t id, SensorAddress sensorAddress, uint8_t heaterPin, uint8_t fanPin);
     virtual ~Plate();
     void setMaximumTemperature(int16_t temperature);
     void setDeratingTemperature(int16_t temperature);
@@ -61,6 +62,7 @@ public:
     int16_t getTemperature();
     uint8_t getPower();
     uint8_t getFanSpeed();
+    uint8_t getId();
     void loop();
 
 protected:
@@ -72,6 +74,7 @@ private:
     int16_t maxTemperature; // maximum temperature of the plate (in 0.1 deg C)
     int16_t deratingTemperature; // temperature where derating begins (in 0.1 deg C)
     uint8_t maxPower; // maximum power applied to heater (0-255)
+    uint8_t id; // the id/number of the plate
 };
 
 #endif /* PLATE_H_ */

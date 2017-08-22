@@ -63,7 +63,7 @@ void Heater::setControlPin(uint8_t controlPin) {
 void Heater::setPower(uint8_t power)
 {
     if ((controlPin >= 2 && controlPin <= 13) || (controlPin >= 44 && controlPin <= 46)) {
-        this->power = constrain(power, 0, 255);
+        this->power = constrain(power, 0, CFG_MAX_HEATER_POWER);
         analogWrite(controlPin, this->power);
     }
 }
