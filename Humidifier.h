@@ -27,9 +27,9 @@
 #ifndef HUMIDIFIER_H_
 #define HUMIDIFIER_H_
 
-#include "Evaporator.h"
 #include "HumiditySensor.h"
 #include "Fan.h"
+#include "Vaporizer.h"
 
 class Humidifier
 {
@@ -39,23 +39,25 @@ public:
     virtual ~Humidifier();
     void setSensorPin(uint8_t sensorPin);
     void setFanPin(uint8_t fanPin);
-    void setEvaporatorPin(uint8_t evaproatorPin);
+    void setVaporizerPin(uint8_t evaproatorPin);
     void setMaxHumidity(uint8_t maxHumidity);
     uint8_t getMaxHumidity();
     void setMinHumidity(uint8_t minHumidity);
     uint8_t getMinHumidity();
     uint8_t getHumidity();
     uint8_t getFanSpeed();
-    Evaporator::Mode getEvaporatorMode();
+    void setFanSpeed(uint8_t speed);
+    Vaporizer::Mode getVaporizerMode();
     void loop();
 
 private:
-    Evaporator evaporator;
+    Vaporizer vaporizer;
     HumiditySensor sensor;
     Fan fan;
     uint8_t maximumHumidity;
     uint8_t minimumHumidity;
     uint8_t humidity;
+    uint8_t fanSpeed;
 };
 
 #endif /* HUMIDIFIER_H_ */

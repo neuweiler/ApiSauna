@@ -47,26 +47,49 @@ void HID::init(Controller* controller)
 void HID::loop()
 {
     if (controller != NULL) {
-        Logger::debug("time running: %d:%02d, time remaining: %d:%02d", controller->getTimeRunning() / 60, controller->getTimeRunning() % 60,
-                controller->getTimeRemaining() / 60, controller->getTimeRemaining() % 60);
+        Logger::debug("time running: %s, time remaining: %s, status: %s", convertTime(controller->getTimeRunning()).c_str(),
+                convertTime(controller->getTimeRemaining()).c_str(), status.systemStateToStr(status.getSystemState()).c_str());
 
         SimpleList<TemperatureSensor> *hiveSensors = controller->getHiveTempSensors();
-        int sensorNumber = 1;
         for (SimpleList<TemperatureSensor>::iterator itr = hiveSensors->begin(); itr != hiveSensors->end(); ++itr) {
             int16_t temp = itr->getTemperatureCelsius();
-            Logger::debug("hive temp %d: %d.%d C", sensorNumber++, temp / 10, temp % 10);
+            Logger::debug("sensor %#lx%lx: %s C", itr->getAddress().high, itr->getAddress().low, toDecimal(temp, 10).c_str());
         }
-        Logger::debug("max hive temp: %d.%d C", controller->getMaxHiveTemperature() / 10, controller->getMaxHiveTemperature() % 10);
+        Logger::debug("hive temp: %s C, target: %s C", toDecimal(controller->getHiveTemperature(), 10).c_str(),
+                toDecimal(controller->getHiveTargetTemperature(), 10).c_str());
 
         SimpleList<Plate> *plates = controller->getPlates();
         for (SimpleList<Plate>::iterator itr = plates->begin(); itr != plates->end(); ++itr) {
-            int16_t temp = itr->getTemperature();
-            Logger::debug("plate %d: temp=%d.%d C, power=%d, speed=%d", itr->getId(), temp / 10, temp % 10, itr->getPower(), itr->getFanSpeed());
+            Logger::debug("plate %d: temp=%s C, target=%s C, power=%d (max=%d), speed=%d", itr->getId(), toDecimal(itr->getTemperature(), 10).c_str(), toDecimal(itr->getMaximumTemperature(), 10).c_str(), itr->getPower(), itr->getMaximumPower(), itr->getFanSpeed());
         }
 
         Humidifier *humidifier = controller->getHumidifier();
-        Logger::debug("humidity: relHumidity=%d, enabled=%d, speed=%d", humidifier->getHumidity(), humidifier->getEvaporatorMode(),
-                humidifier->getFanSpeed());
+        Logger::debug("humidity: relHumidity=%d (%d-%d), enabled=%d, speed=%d", humidifier->getHumidity(), humidifier->getMinHumidity(),
+                humidifier->getMaxHumidity(), humidifier->getVaporizerMode(), humidifier->getFanSpeed());
     }
-
 }
+
+/**
+ * \brief Convert milliseconds to in hh:mm:ss
+ *
+ * \return the time in hh:mm:ss
+ */
+String HID::convertTime(uint32_t seconds)
+{
+    char buffer[10];
+    int8_t hours = (seconds / 3600) % 24;
+    int8_t minutes = (seconds / 60) % 60;
+    sprintf(buffer, "%02d:%02d:%02d", hours, minutes, seconds % 60);
+    return String(buffer);
+}
+
+/**
+ * Convert integer to decimal
+ */
+String HID::toDecimal(int16_t number, uint8_t divisor)
+{
+    char buffer[10];
+    snprintf(buffer, CFG_LOG_BUFFER_SIZE, "%d.%d", number / divisor, abs(number % divisor));
+    return String(buffer);
+}
+

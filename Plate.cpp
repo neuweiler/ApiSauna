@@ -29,7 +29,8 @@
 
 #include "Plate.h"
 
-PlateConfig::PlateConfig() {
+PlateConfig::PlateConfig()
+{
     sensorAddress.value = 0;
     heaterPin = 0;
     fanPin = 0;
@@ -47,9 +48,9 @@ PlateConfig::PlateConfig(uint8_t id, uint64_t address, uint8_t heaterPin, uint8_
 Plate::Plate()
 {
     //TODO replace testing values with real ones
-    maxTemperature = 300; // 70.0 deg C
-    deratingTemperature = 250; // 50.0 deg C
-    maxPower = 230; // 90%
+    maxTemperature = 300;
+    deratingDelta = 250;
+    maxPower = CFG_MAX_HEATER_POWER;
     id = 0;
 }
 
@@ -59,16 +60,16 @@ Plate::Plate(uint8_t id, SensorAddress sensorAddress, uint8_t heaterPin, uint8_t
     heater.setControlPin(heaterPin);
     fan.setControlPin(fanPin);
 
-    maxTemperature = 300; // 70.0 deg C
-    deratingTemperature = 250; // 50.0 deg C
-    maxPower = 230; // 90%
+    maxTemperature = 300;
+    deratingDelta = 250;
+    maxPower = CFG_MAX_HEATER_POWER;
     this->id = id;
 }
 
 Plate::~Plate()
 {
     maxTemperature = 0;
-    deratingTemperature = 0;
+    deratingDelta = 0;
     maxPower = 0;
 }
 
@@ -79,17 +80,20 @@ Plate::~Plate()
 void Plate::setMaximumTemperature(int16_t temperature)
 {
     maxTemperature = temperature;
-    deratingTemperature = min(temperature - 1, deratingTemperature); // max and derating must never be equal (DIVby0)
+}
+
+int16_t Plate::getMaximumTemperature()
+{
+    return maxTemperature;
 }
 
 /**
  * Set the temperature of the plate where derating begins (in 0.1 deg C)
  * Automatically adjusts maximum temperature if necessary
  */
-void Plate::setDeratingTemperature(int16_t temperature)
+void Plate::setDeratingDelta(int16_t delta)
 {
-    deratingTemperature = temperature;
-    maxTemperature = max(temperature + 1, maxTemperature); // max and hysterisis must never be equal (DIVby0)
+    deratingDelta = delta;
 }
 
 /**
@@ -98,6 +102,10 @@ void Plate::setDeratingTemperature(int16_t temperature)
 void Plate::setMaximumPower(uint8_t power)
 {
     this->maxPower = power;
+}
+
+uint8_t Plate::getMaximumPower() {
+    return maxPower;
 }
 
 /**
@@ -151,11 +159,16 @@ void Plate::loop()
     int16_t temp = temperatureSensor.getTemperatureCelsius();
     uint8_t power = 0;
 
+    if (temp > CFG_PLATE_OVER_TEMPERATURE) {
+        Logger::error("!!!!! ALERT !!!!! Plate %d is over-heating !!!", id);
+        status.setSystemState(Status::overtemp);
+    }
+
     if (temp < maxTemperature) {
-        if (temp < deratingTemperature) {
+        if (temp < (maxTemperature - deratingDelta)) {
             power = maxPower; // full power
         } else {
-            power = maxPower * (maxTemperature - temp) / (maxTemperature - deratingTemperature); // derating
+            power = map(temp, maxTemperature, (maxTemperature - deratingDelta), 0, maxPower);
         }
     }
     heater.setPower(power);

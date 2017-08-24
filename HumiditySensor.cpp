@@ -55,7 +55,8 @@ void HumiditySensor::setControlPin(uint8_t controlPin)
     if (dht != NULL) {
         delete dht;
     }
-    dht = new DHT(controlPin, DHT22);
+    dht = new DHT(controlPin, DHT11);
+//    dht = new DHT(controlPin, DHT22);
     dht->begin();
 }
 
@@ -64,10 +65,10 @@ void HumiditySensor::setControlPin(uint8_t controlPin)
  */
 uint8_t HumiditySensor::getRelativeHumidity()
 {
-    if (dht == NULL) {
-        return 0;
+    if (dht == NULL || millis() < 10000) {
+        return 99;
     }
-    return dht->readHumidity();
+    return (int) dht->readHumidity();
 }
 
 /**

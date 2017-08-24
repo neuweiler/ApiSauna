@@ -39,6 +39,7 @@ public:
         ready = 2, // the system is ready to accept commands but the treatment has not started yet (next states: preHeat, running, error)
         preHeat = 3, // a program was started and the system is heating up the hive (next states: running, error)
         running = 4, // the system is running a program (next states: ready, shutdown, error)
+        overtemp = 5, // the hive's temperature is/was too high (next states: shutdown, error)
         shutdown = 9, // the system is shut-down
         error = 99 // the system is in an error state and not operational
     };

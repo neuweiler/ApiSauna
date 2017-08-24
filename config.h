@@ -58,7 +58,7 @@
 /*
  * PIN ASSIGNMENT
  */
-#define CFG_BLINK_LED                   13 //13 is L, 73 is TX, 72 is RX
+#define CFG_IO_BLINK_LED                13 //13 is L, 73 is TX, 72 is RX
 #define CFG_IO_TEMPERATURE_SENSOR       4 // pin to which the data line of the single wire temperature sensors are connected
 #define CFG_IO_HEATER_1                 11
 #define CFG_IO_HEATER_2                 12
@@ -70,13 +70,17 @@
 #define CFG_IO_FAN_4                    45
 #define CFG_IO_VAPORIZER                5
 #define CFG_IO_FAN_HUMIDIFIER           6
-
+#define CFG_IO_HUMIDITY_SENSOR          9
 
 #define CFG_ADDR_TEMP_SENSOR_1          0x3d0516a4f187ff28
 #define CFG_ADDR_TEMP_SENSOR_2          0x9a0516a50124ff28
 #define CFG_ADDR_TEMP_SENSOR_3          0xe10316a5188cff28
 #define CFG_ADDR_TEMP_SENSOR_4          0xed0316a48290ff28
 
-#define CFG_MAX_HEATER_POWER            200
+#define CFG_MAX_HEATER_POWER            170
+#define CFG_MIN_FAN_SPEED               10
+#define CFG_HIVE_OVER_TEMPERATURE       480
+#define CFG_HIVE_TEMPERATURE_RECOVER    350
+#define CFG_PLATE_OVER_TEMPERATURE      800
 
 #endif /* CONFIG_H_ */

@@ -43,6 +43,9 @@ public:
     void loop();
 
 private:
+    String convertTime(uint32_t millis);
+    String toDecimal(int16_t number, uint8_t divisor);
+
     Controller *controller;
 };
 

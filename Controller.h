@@ -35,13 +35,18 @@
 
 class ControllerProgram {
 public:
+    int16_t preHeatTemperature; // the target hive temperature during pre-heat (in 0.1 deg C)
+    uint8_t preHeatFanSpeed; // the maximum fan speed during pre-heat (0-255)
     int16_t hiveTemperature; // the target temperature (in 0.1 deg C)
-    int16_t deratingHiveTemperature; // hive temperature at which the derating begins (in 0.1 deg C)
+    int16_t deratingHiveDelta; // delta of the hive temperature where the derating begins (in 0.1 deg C)
     int16_t plateTemperature; // the maximum temperature of the heater plates (in 0.1 deg C)
-    int16_t deratingPlateTemperature; // plate temperature at which the derating begins (in 0.1 deg C)
+    int16_t deratingPlateDelta; // delta of the plate temperature where the derating begins (in 0.1 deg C)
     uint16_t preHeatDuration; // the duration of the pre-heating cycle (in sec)
     uint16_t duration; // how long the program should run (in sec)
     uint8_t fanSpeed; // the maximum fan speed (0-255)
+    uint8_t fanSpeedHumidifier; // the fan speed of the humidifier fan (when active (0-255)
+    uint8_t humidityMinimum; // the minimum humidity in %
+    uint8_t humidityMaximum; // the maximum humidity in %
 
     uint32_t startTime; // timestamp when the program started (in millis)
 };
@@ -57,7 +62,8 @@ public:
     SimpleList<Plate> *getPlates();
     Humidifier *getHumidifier();
     ControllerProgram *getProgram();
-    int16_t getMaxHiveTemperature();
+    int16_t getHiveTemperature();
+    int16_t getHiveTargetTemperature();
     uint16_t getTimeRunning();
     uint16_t getTimeRemaining();
     void startProgram(ControllerProgram controllerProgram);
@@ -65,7 +71,11 @@ public:
 
 private:
     SimpleList<SensorAddress> findTemperatureSensors();
-    void assignTemperatureSensors(SimpleList<SensorAddress> addressList);
+    void assignTemperatureSensors(SimpleList<SensorAddress> *addressList);
+    void powerDownDevices();
+    int16_t retrieveHiveTemperatures();
+    int16_t calculateMaxPlateTemperature();
+    void updateProgramState();
 
     SimpleList<Plate> plates;
     SimpleList<PlateConfig> plateConfigs;
@@ -73,6 +83,7 @@ private:
     Humidifier humidifier;
     ControllerProgram program;
     int16_t hiveTemperature;
+    bool statusLed;
 };
 
 #endif /* CONTROLLER_H_ */

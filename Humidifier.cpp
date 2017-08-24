@@ -1,7 +1,7 @@
 /*
  * Humidifier.cpp
  *
- * Measures the humidity of the hive and controls the evaporator and
+ * Measures the humidity of the hive and controls the vaporizer and
  * its fan.
  *
  Copyright (c) 2017 Michael Neuweiler
@@ -34,16 +34,18 @@ Humidifier::Humidifier()
     maximumHumidity = 0;
     minimumHumidity = 0;
     humidity = 0;
+    fanSpeed = 0;
 }
 
-Humidifier::Humidifier(uint8_t sensorPin, uint8_t fanPin, uint8_t evaporatorPin)
+Humidifier::Humidifier(uint8_t sensorPin, uint8_t fanPin, uint8_t vaporizerPin)
 {
     sensor.setControlPin(sensorPin);
     fan.setControlPin(fanPin);
-    evaporator.setControlPin(evaporatorPin);
+    vaporizer.setControlPin(vaporizerPin);
     maximumHumidity = 0;
     minimumHumidity = 0;
     humidity = 0;
+    fanSpeed = 0;
 }
 
 Humidifier::~Humidifier()
@@ -63,9 +65,9 @@ void Humidifier::setFanPin(uint8_t fanPin)
     fan.setControlPin(fanPin);
 }
 
-void Humidifier::setEvaporatorPin(uint8_t evaproatorPin)
+void Humidifier::setVaporizerPin(uint8_t vaporizerPin)
 {
-    evaporator.setControlPin(evaproatorPin);
+    vaporizer.setControlPin(vaporizerPin);
 }
 
 void Humidifier::setMaxHumidity(uint8_t maxHumidity)
@@ -93,27 +95,32 @@ uint8_t Humidifier::getHumidity()
     return humidity;
 }
 
+void Humidifier::setFanSpeed(uint8_t speed)
+{
+    fanSpeed = speed;
+}
+
 uint8_t Humidifier::getFanSpeed()
 {
     return fan.getSpeed();
 }
 
-Evaporator::Mode Humidifier::getEvaporatorMode()
+Vaporizer::Mode Humidifier::getVaporizerMode()
 {
-    return evaporator.getMode();
+    return vaporizer.getMode();
 }
 
 void Humidifier::loop()
 {
     humidity = sensor.getRelativeHumidity();
 
-    if (humidity < minimumHumidity) {
-        fan.setSpeed(127);
-        evaporator.setMode(Evaporator::ON);
+    if (humidity != 0 && humidity < minimumHumidity) {
+        fan.setSpeed(fanSpeed);
+        vaporizer.setMode(Vaporizer::ON);
     }
 
-    if (humidity > maximumHumidity) {
+    if (humidity >= maximumHumidity) {
         fan.setSpeed(0);
-        evaporator.setMode(Evaporator::OFF);
+        vaporizer.setMode(Vaporizer::OFF);
     }
 }

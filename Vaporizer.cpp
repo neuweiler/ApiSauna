@@ -1,7 +1,7 @@
 /*
- * Evaporator.cpp
+ * Vaporizer.cpp
  *
- * Class which controls the evaporator of the humidifier.
+ * Class which controls the vaporizer of the humidifier.
  *
  Copyright (c) 2017 Michael Neuweiler
 
@@ -26,33 +26,33 @@
 
  */
 
-#include "Evaporator.h"
+#include "Vaporizer.h"
 
-Evaporator::Evaporator()
+Vaporizer::Vaporizer()
 {
     controlPin = 0;
     mode = OFF;
 }
 
-Evaporator::Evaporator(uint8_t controlPin)
+Vaporizer::Vaporizer(uint8_t controlPin)
 {
     setControlPin(controlPin);
 }
 
-Evaporator::~Evaporator()
+Vaporizer::~Vaporizer()
 {
     setMode(OFF);
     controlPin = 0;
 }
 
-void Evaporator::setControlPin(uint8_t controlPin)
+void Vaporizer::setControlPin(uint8_t controlPin)
 {
     this->controlPin = controlPin;
     pinMode(controlPin, OUTPUT);
     setMode(OFF);
 }
 
-void Evaporator::setMode(Mode mode)
+void Vaporizer::setMode(Mode mode)
 {
     if (controlPin != 0) {
         this->mode = mode;
@@ -60,7 +60,7 @@ void Evaporator::setMode(Mode mode)
     }
 }
 
-Evaporator::Mode Evaporator::getMode()
+Vaporizer::Mode Vaporizer::getMode()
 {
     return mode;
 }

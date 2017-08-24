@@ -64,13 +64,13 @@ void configurePwm()
     pinMode(CFG_IO_HEATER_4, OUTPUT);
     analogWrite(CFG_IO_HEATER_4, 0);
     pinMode(CFG_IO_FAN_1, OUTPUT);
-    analogWrite(CFG_IO_FAN_1, 51); // 20% duty cycle = minimum
+    analogWrite(CFG_IO_FAN_1, CFG_MIN_FAN_SPEED);
     pinMode(CFG_IO_FAN_2, OUTPUT);
-    analogWrite(CFG_IO_FAN_2, 51); // 20% duty cycle = minimum
+    analogWrite(CFG_IO_FAN_2, CFG_MIN_FAN_SPEED);
     pinMode(CFG_IO_FAN_3, OUTPUT);
-    analogWrite(CFG_IO_FAN_3, 51); // 20% duty cycle = minimum
+    analogWrite(CFG_IO_FAN_3, CFG_MIN_FAN_SPEED);
     pinMode(CFG_IO_FAN_4, OUTPUT);
-    analogWrite(CFG_IO_FAN_4, 51); // 20% duty cycle = minimum
+    analogWrite(CFG_IO_FAN_4, CFG_MIN_FAN_SPEED);
     pinMode(CFG_IO_VAPORIZER, OUTPUT);
     analogWrite(CFG_IO_VAPORIZER, 0);
     pinMode(CFG_IO_FAN_HUMIDIFIER, OUTPUT);
@@ -83,26 +83,40 @@ void configurePwm()
     TCCR5B |= 1;
 
     // set timer 1+3 to 31kHz for controlling the heaters
-    TCCR1B &= ~7;
-    TCCR1B |= 1;
-    TCCR3B &= ~7;
-    TCCR3B |= 1;
+//    TCCR1B &= ~7;
+//    TCCR1B |= 1;
+//    TCCR3B &= ~7;
+//    TCCR3B |= 1;
 }
 
 void setup()
 {
+    configurePwm(); // do this asap to keep the levels low
+
     Serial.begin(CFG_SERIAL_SPEED);
-    delayStart();
+//    delayStart();
     Serial.println(CFG_VERSION);
 
-    configurePwm();
     controller.init();
     hid.init(&controller);
 
     status.setSystemState(Status::ready);
 
+    // this helps !!
+    analogWrite(CFG_IO_HEATER_1, 0);
+    analogWrite(CFG_IO_HEATER_2, 0);
+    analogWrite(CFG_IO_HEATER_3, 0);
+    analogWrite(CFG_IO_HEATER_4, 0);
+    analogWrite(CFG_IO_FAN_1, CFG_MIN_FAN_SPEED);
+    analogWrite(CFG_IO_FAN_2, CFG_MIN_FAN_SPEED);
+    analogWrite(CFG_IO_FAN_3, CFG_MIN_FAN_SPEED);
+    analogWrite(CFG_IO_FAN_4, CFG_MIN_FAN_SPEED);
+    analogWrite(CFG_IO_VAPORIZER, 0);
+    analogWrite(CFG_IO_FAN_HUMIDIFIER, 0);
+
+    delay(10000);
     //TODO this must be set by HID
-    status.setSystemState(Status::preHeat);
+    controller.startProgram(*controller.getProgram()); // TODO this is just a hack !!
 }
 
 void loop()

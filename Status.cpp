@@ -59,8 +59,8 @@ Status::SystemState Status::setSystemState(SystemState newSystemState)
         return systemState;
     }
 
-    if (newSystemState == error) {
-        systemState = error;
+    if (newSystemState == error || newSystemState == overtemp) { // go in these states unconditionally!
+        systemState = newSystemState;
     } else {
         switch (systemState) {
         case init:
@@ -80,6 +80,11 @@ Status::SystemState Status::setSystemState(SystemState newSystemState)
             break;
         case running:
             if (newSystemState == ready || newSystemState == shutdown) {
+                systemState = newSystemState;
+            }
+            break;
+        case overtemp:
+            if (newSystemState == shutdown) {
                 systemState = newSystemState;
             }
             break;
@@ -109,10 +114,12 @@ String Status::systemStateToStr(SystemState state)
         return "pre-heating";
     case running:
         return "running";
-    case error:
-        return "error";
+    case overtemp:
+        return "over-temperature";
     case shutdown:
         return "shut-down";
+    case error:
+        return "error";
     }
     Logger::error("the system state is invalid, contact your support!");
     return "invalid";

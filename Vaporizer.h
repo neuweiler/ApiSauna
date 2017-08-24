@@ -24,12 +24,12 @@
 
  */
 
-#ifndef EVAPORATOR_H_
-#define EVAPORATOR_H_
+#ifndef VAPORIZER_H_
+#define VAPORIZER_H_
 
 #include <Arduino.h>
 
-class Evaporator
+class Vaporizer
 {
 public:
     enum Mode
@@ -37,9 +37,9 @@ public:
         OFF,
         ON
     };
-    Evaporator();
-    Evaporator(uint8_t controlPin);
-    virtual ~Evaporator();
+    Vaporizer();
+    Vaporizer(uint8_t controlPin);
+    virtual ~Vaporizer();
     void setControlPin(uint8_t controlPin);
     void setMode(Mode mode);
     Mode getMode();
@@ -49,4 +49,4 @@ private:
     Mode mode;
 };
 
-#endif /* EVAPORATOR_H_ */
+#endif /* VAPORIZER_H_ */
