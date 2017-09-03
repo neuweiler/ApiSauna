@@ -33,7 +33,7 @@
 #define CONFIG_H_
 
 #define CFG_VERSION "BeeHive 2017-08-22"
-#define CFG_DEFAULT_LOGLEVEL Logger::Debug
+#define CFG_DEFAULT_LOGLEVEL Logger::Info
 
 /*
  * SERIAL CONFIGURATION
@@ -54,12 +54,15 @@
  * These values should normally not be changed.
  */
 #define CFG_LOG_BUFFER_SIZE             120 // size of log output messages
+#define CFG_SERIAL_BUFFER_SIZE          80 // size of the serial input buffer
+#define CFG_PROGRAM_SIZE                10 // size of program array
 
 /*
  * PIN ASSIGNMENT
  */
 #define CFG_IO_BLINK_LED                13 //13 is L, 73 is TX, 72 is RX
 #define CFG_IO_TEMPERATURE_SENSOR       4 // pin to which the data line of the single wire temperature sensors are connected
+#define CFG_IO_HEATER_MAIN_SWITCH       A0
 #define CFG_IO_HEATER_1                 11
 #define CFG_IO_HEATER_2                 12
 #define CFG_IO_HEATER_3                 2

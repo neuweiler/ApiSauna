@@ -1,8 +1,5 @@
 /*
- * HID.h
- *
- * Main part of the bee sauna control software. It initializes all devices
- * and controls the main loop.
+ * SerialConsole.h
  *
  Copyright (c) 2017 Michael Neuweiler
 
@@ -27,26 +24,30 @@
 
  */
 
-#ifndef HID_H_
-#define HID_H_
+#ifndef SERIALCONSOLE_H_
+#define SERIALCONSOLE_H_
 
 #include <Arduino.h>
-#include "SimpleList.h"
+#include "Logger.h"
+#include "Status.h"
 #include "Controller.h"
 
-class HID
+class SerialConsole
 {
 public:
-    HID();
-    virtual ~HID();
-    void init();
+    SerialConsole();
+    virtual ~SerialConsole();
     void loop();
+    void printMenu();
 
 private:
-    String convertTime(uint32_t millis);
-    String toDecimal(int16_t number, uint8_t divisor);
+    char cmdBuffer[CFG_SERIAL_BUFFER_SIZE + 1];
+    int ptrBuffer;
+
+    bool handleShortCmd();
+    bool handleCmd();
 };
 
-extern HID hid;
+extern SerialConsole serialConsole;
 
-#endif /* HID_H_ */
+#endif /* SERIALCONSOLE_H_ */

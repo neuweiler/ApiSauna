@@ -5,3 +5,5 @@ To compile, you'll need the following libraries:
 * Adafruit Unified Sensor Library
 * Adafruit DHT22 library
 * OneWire library
+* PID library
+

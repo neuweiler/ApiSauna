@@ -69,12 +69,12 @@ Status::SystemState Status::setSystemState(SystemState newSystemState)
             }
             break;
         case ready:
-            if (newSystemState == preHeat || newSystemState == running) {
+            if (newSystemState == preHeat || newSystemState == running || newSystemState == shutdown) {
                 systemState = newSystemState;
             }
             break;
         case preHeat:
-            if (newSystemState == running) {
+            if (newSystemState == running || newSystemState == shutdown) {
                 systemState = newSystemState;
             }
             break;

@@ -29,15 +29,9 @@
 
 #include "BeeSauna.h"
 
+SerialConsole serialConsole;
 Controller controller;
 HID hid;
-
-void delayStart()
-{
-    while (!Serial) {
-        ; // wait for serial port to connect. Needed for native USB port only
-    }
-}
 
 /**
  * Configure the PWM ports and adjust the timers so the PWM frequency is usable to control
@@ -55,6 +49,9 @@ void delayStart()
 void configurePwm()
 {
     // prepare pins
+
+    pinMode(CFG_IO_HEATER_MAIN_SWITCH, OUTPUT);
+    digitalWrite(CFG_IO_HEATER_MAIN_SWITCH, LOW);
     pinMode(CFG_IO_HEATER_1, OUTPUT);
     analogWrite(CFG_IO_HEATER_1, 0);
     pinMode(CFG_IO_HEATER_2, OUTPUT);
@@ -81,28 +78,11 @@ void configurePwm()
     TCCR4B |= 1;
     TCCR5B &= ~7;
     TCCR5B |= 1;
-
-    // set timer 1+3 to 31kHz for controlling the heaters
-//    TCCR1B &= ~7;
-//    TCCR1B |= 1;
-//    TCCR3B &= ~7;
-//    TCCR3B |= 1;
 }
 
-void setup()
+void resetOutput()
 {
-    configurePwm(); // do this asap to keep the levels low
-
-    Serial.begin(CFG_SERIAL_SPEED);
-//    delayStart();
-    Serial.println(CFG_VERSION);
-
-    controller.init();
-    hid.init(&controller);
-
-    status.setSystemState(Status::ready);
-
-    // this helps !!
+    digitalWrite(CFG_IO_HEATER_MAIN_SWITCH, LOW);
     analogWrite(CFG_IO_HEATER_1, 0);
     analogWrite(CFG_IO_HEATER_2, 0);
     analogWrite(CFG_IO_HEATER_3, 0);
@@ -113,14 +93,29 @@ void setup()
     analogWrite(CFG_IO_FAN_4, CFG_MIN_FAN_SPEED);
     analogWrite(CFG_IO_VAPORIZER, 0);
     analogWrite(CFG_IO_FAN_HUMIDIFIER, 0);
+}
 
-    delay(10000);
-    //TODO this must be set by HID
-    controller.startProgram(*controller.getProgram()); // TODO this is just a hack !!
+void setup()
+{
+    configurePwm(); // do this asap to keep the levels low
+
+    Serial.begin(CFG_SERIAL_SPEED);
+    Serial.println(CFG_VERSION);
+
+    controller.init();
+    hid.init();
+
+    status.setSystemState(Status::ready);
+
+    resetOutput();
+    serialConsole.printMenu();
 }
 
 void loop()
 {
+    serialConsole.loop();
     controller.loop();
     hid.loop();
+
+    delay(CFG_LOOP_DELAY);
 }

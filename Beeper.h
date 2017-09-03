@@ -1,8 +1,5 @@
 /*
- * HID.h
- *
- * Main part of the bee sauna control software. It initializes all devices
- * and controls the main loop.
+ * Beeper.h
  *
  Copyright (c) 2017 Michael Neuweiler
 
@@ -27,26 +24,25 @@
 
  */
 
-#ifndef HID_H_
-#define HID_H_
+#ifndef BEEPER_H_
+#define BEEPER_H_
 
-#include <Arduino.h>
-#include "SimpleList.h"
-#include "Controller.h"
+#include "Status.h"
 
-class HID
+class Beeper
 {
 public:
-    HID();
-    virtual ~HID();
-    void init();
+    Beeper();
+    virtual ~Beeper();
     void loop();
+    void setControlPin(uint8_t controlPin);
+    void playSound();
 
 private:
-    String convertTime(uint32_t millis);
-    String toDecimal(int16_t number, uint8_t divisor);
+    uint8_t controlPin;
+    Status::SystemState lastState;
+    int8_t numberOfBeeps;
+    bool soundOn;
 };
 
-extern HID hid;
-
-#endif /* HID_H_ */
+#endif /* BEEPER_H_ */

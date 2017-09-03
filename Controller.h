@@ -32,6 +32,8 @@
 #include "Humidifier.h"
 #include "Plate.h"
 #include "Status.h"
+#include "Beeper.h"
+#include "SerialConsole.h"
 
 class ControllerProgram {
 public:
@@ -61,12 +63,13 @@ public:
     SimpleList<TemperatureSensor> *getHiveTempSensors();
     SimpleList<Plate> *getPlates();
     Humidifier *getHumidifier();
-    ControllerProgram *getProgram();
+    SimpleList<ControllerProgram> *getPrograms();
+    ControllerProgram *getRunningProgram();
     int16_t getHiveTemperature();
     int16_t getHiveTargetTemperature();
     uint16_t getTimeRunning();
     uint16_t getTimeRemaining();
-    void startProgram(ControllerProgram controllerProgram);
+    void startProgram(ControllerProgram *controllerProgram);
     void stopProgram();
 
 private:
@@ -81,9 +84,14 @@ private:
     SimpleList<PlateConfig> plateConfigs;
     SimpleList<TemperatureSensor> hiveTempSensors;
     Humidifier humidifier;
-    ControllerProgram program;
+    Beeper beeper;
+    SimpleList<ControllerProgram> programs;
+    ControllerProgram *runningProgram;
     int16_t hiveTemperature;
     bool statusLed;
+    int16_t offset;
 };
+
+extern Controller controller;
 
 #endif /* CONTROLLER_H_ */

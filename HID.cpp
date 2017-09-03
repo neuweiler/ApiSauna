@@ -31,42 +31,38 @@
 
 HID::HID()
 {
-    controller = NULL;
 }
 
 HID::~HID()
 {
-    // TODO Auto-generated destructor stub
 }
 
-void HID::init(Controller* controller)
+void HID::init()
 {
-    this->controller = controller;
 }
 
 void HID::loop()
 {
-    if (controller != NULL) {
-        Logger::debug("time running: %s, time remaining: %s, status: %s", convertTime(controller->getTimeRunning()).c_str(),
-                convertTime(controller->getTimeRemaining()).c_str(), status.systemStateToStr(status.getSystemState()).c_str());
+    Logger::debug("time running: %s, time remaining: %s, status: %s", convertTime(controller.getTimeRunning()).c_str(),
+            convertTime(controller.getTimeRemaining()).c_str(), status.systemStateToStr(status.getSystemState()).c_str());
 
-        SimpleList<TemperatureSensor> *hiveSensors = controller->getHiveTempSensors();
-        for (SimpleList<TemperatureSensor>::iterator itr = hiveSensors->begin(); itr != hiveSensors->end(); ++itr) {
-            int16_t temp = itr->getTemperatureCelsius();
-            Logger::debug("sensor %#lx%lx: %s C", itr->getAddress().high, itr->getAddress().low, toDecimal(temp, 10).c_str());
-        }
-        Logger::debug("hive temp: %s C, target: %s C", toDecimal(controller->getHiveTemperature(), 10).c_str(),
-                toDecimal(controller->getHiveTargetTemperature(), 10).c_str());
-
-        SimpleList<Plate> *plates = controller->getPlates();
-        for (SimpleList<Plate>::iterator itr = plates->begin(); itr != plates->end(); ++itr) {
-            Logger::debug("plate %d: temp=%s C, target=%s C, power=%d (max=%d), speed=%d", itr->getId(), toDecimal(itr->getTemperature(), 10).c_str(), toDecimal(itr->getMaximumTemperature(), 10).c_str(), itr->getPower(), itr->getMaximumPower(), itr->getFanSpeed());
-        }
-
-        Humidifier *humidifier = controller->getHumidifier();
-        Logger::debug("humidity: relHumidity=%d (%d-%d), enabled=%d, speed=%d", humidifier->getHumidity(), humidifier->getMinHumidity(),
-                humidifier->getMaxHumidity(), humidifier->getVaporizerMode(), humidifier->getFanSpeed());
+    SimpleList<TemperatureSensor> *hiveSensors = controller.getHiveTempSensors();
+    for (SimpleList<TemperatureSensor>::iterator itr = hiveSensors->begin(); itr != hiveSensors->end(); ++itr) {
+        int16_t temp = itr->getTemperatureCelsius();
+        Logger::debug("sensor %#lx%lx: %s C", itr->getAddress().high, itr->getAddress().low, toDecimal(temp, 10).c_str());
     }
+    Logger::debug("hive temp: %s C, target: %s C", toDecimal(controller.getHiveTemperature(), 10).c_str(),
+            toDecimal(controller.getHiveTargetTemperature(), 10).c_str());
+
+    SimpleList<Plate> *plates = controller.getPlates();
+    for (SimpleList<Plate>::iterator itr = plates->begin(); itr != plates->end(); ++itr) {
+        Logger::debug("plate %d: temp=%s C, target=%s C, power=%d (max=%d), speed=%d", itr->getId(), toDecimal(itr->getTemperature(), 10).c_str(),
+                toDecimal(itr->getMaximumTemperature(), 10).c_str(), itr->getPower(), itr->getMaximumPower(), itr->getFanSpeed());
+    }
+
+    Humidifier *humidifier = controller.getHumidifier();
+    Logger::debug("humidity: relHumidity=%d (%d-%d), enabled=%d, speed=%d", humidifier->getHumidity(), humidifier->getMinHumidity(),
+            humidifier->getMaxHumidity(), humidifier->getVaporizerMode(), humidifier->getFanSpeed());
 }
 
 /**
@@ -79,7 +75,7 @@ String HID::convertTime(uint32_t seconds)
     char buffer[10];
     int8_t hours = (seconds / 3600) % 24;
     int8_t minutes = (seconds / 60) % 60;
-    sprintf(buffer, "%02d:%02d:%02d", hours, minutes, seconds % 60);
+    sprintf(buffer, "%02d:%02d:%02d", hours, minutes, (int) (seconds % 60));
     return String(buffer);
 }
 
