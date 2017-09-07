@@ -32,6 +32,7 @@
 SerialConsole serialConsole;
 Controller controller;
 HID hid;
+Configuration config;
 
 /**
  * Configure the PWM ports and adjust the timers so the PWM frequency is usable to control
@@ -107,14 +108,19 @@ void setup()
 
     status.setSystemState(Status::ready);
 
-    resetOutput();
+    resetOutput(); // just to be on the safe side...
     serialConsole.printMenu();
 }
 
+int ticks = 0;
 void loop()
 {
     serialConsole.loop();
-    controller.loop();
+    if (ticks++ > 9) {
+
+        controller.loop();
+        ticks = 0;
+    }
     hid.loop();
 
     delay(CFG_LOOP_DELAY);

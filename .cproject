@@ -24,6 +24,11 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/OneWire}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/DHT_sensor_library}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/Adafruit_Unified_Sensor}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/PID}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/EEPROM}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/EEPROM/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/LiquidCrystal}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/LiquidCrystal/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.1101808430" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -34,6 +39,11 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/OneWire}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/DHT_sensor_library}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/Adafruit_Unified_Sensor}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/PID}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/EEPROM}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/EEPROM/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/LiquidCrystal}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/LiquidCrystal/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.1471737891" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -44,6 +54,11 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/OneWire}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/DHT_sensor_library}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/Adafruit_Unified_Sensor}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/PID}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/EEPROM}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/EEPROM/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/LiquidCrystal}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BeeSauna/libraries/LiquidCrystal/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.1228594068" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>

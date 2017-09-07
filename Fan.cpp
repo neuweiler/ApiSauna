@@ -31,10 +31,8 @@
 /**
  * Constructor.
  */
-Fan::Fan()
+Fan::Fan() : Fan::Fan(0)
 {
-    speed = 0;
-    controlPin = 0;
 }
 
 /**

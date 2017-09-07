@@ -33,6 +33,7 @@
 #include <Arduino.h>
 #include "SimpleList.h"
 #include "Controller.h"
+#include <LiquidCrystal.h>
 
 class HID
 {
@@ -43,8 +44,32 @@ public:
     void loop();
 
 private:
+    enum Button
+    {
+        RIGHT,
+        UP,
+        DOWN,
+        LEFT,
+        SELECT,
+        NONE
+    };
+    void displayProgramInfo();
+    void logData();
     String convertTime(uint32_t millis);
     String toDecimal(int16_t number, uint8_t divisor);
+    Button buttonPressed();
+    void handleMenu(Button button);
+
+    LiquidCrystal lcd = LiquidCrystal(0,0,0,0,0,0); // will be properly initialized later
+    uint8_t controlPin;
+    uint16_t baseValue;
+    Button lastSelectedButton;
+    Status::SystemState lastSystemState;
+    uint8_t menuXPos, menuYPos;
+    String menu[5];
+    String subMenu[5][10];
+    uint8_t tickCounter;
+    char lcdBuffer[17];
 };
 
 extern HID hid;
