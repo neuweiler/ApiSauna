@@ -38,6 +38,7 @@
 #include "Heater.h"
 #include "TemperatureSensor.h"
 #include "Status.h"
+#include "PID_v1.h"
 
 class PlateConfig
 {
@@ -58,10 +59,10 @@ public:
     virtual ~Plate();
     void setMaximumTemperature(int16_t temperature);
     int16_t getMaximumTemperature();
-    void setDeratingDelta(int16_t temperature);
     void setMaximumPower(uint8_t power);
     uint8_t getMaximumPower();
     void setFanSpeed(uint8_t speed);
+    void setPIDTuning(double kp, double ki, double kd);
     int16_t getTemperature();
     uint8_t getPower();
     uint8_t getFanSpeed();
@@ -71,13 +72,16 @@ public:
 protected:
 
 private:
+    uint8_t calculatePower();
+    void checkPid();
+
     TemperatureSensor temperatureSensor;
     Heater heater;
     Fan fan;
-    int16_t maxTemperature; // maximum temperature of the plate (in 0.1 deg C)
-    int16_t deratingDelta; // temperature delta against max temp where derating begins (in 0.1 deg C)
+    double maxTemperature, actualTemperature, power; // maximum temperature of the plate (in 0.1 deg C)
     uint8_t maxPower; // maximum power applied to heater (0-255)
     uint8_t id; // the id/number of the plate
+    PID *pid; // pointer to PID controller
 };
 
 #endif /* PLATE_H_ */

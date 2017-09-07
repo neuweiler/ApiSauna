@@ -29,12 +29,9 @@
 
 #include "Plate.h"
 
-PlateConfig::PlateConfig()
+PlateConfig::PlateConfig() :
+        PlateConfig::PlateConfig(0, 0, 0, 0)
 {
-    sensorAddress.value = 0;
-    heaterPin = 0;
-    fanPin = 0;
-    id = 0;
 }
 
 PlateConfig::PlateConfig(uint8_t id, uint64_t address, uint8_t heaterPin, uint8_t fanPin)
@@ -47,35 +44,33 @@ PlateConfig::PlateConfig(uint8_t id, uint64_t address, uint8_t heaterPin, uint8_
 
 Plate::Plate()
 {
-    //TODO replace testing values with real ones
-    maxTemperature = 300;
-    deratingDelta = 250;
+    actualTemperature = 0;
+    maxTemperature = 0;
     maxPower = CFG_MAX_HEATER_POWER;
+    pid = NULL;
+    power = 0;
     id = 0;
 }
 
-Plate::Plate(uint8_t id, SensorAddress sensorAddress, uint8_t heaterPin, uint8_t fanPin)
+Plate::Plate(uint8_t id, SensorAddress sensorAddress, uint8_t heaterPin, uint8_t fanPin) :
+        Plate::Plate()
 {
     temperatureSensor.setAddress(sensorAddress);
     heater.setControlPin(heaterPin);
     fan.setControlPin(fanPin);
-
-    maxTemperature = 300;
-    deratingDelta = 250;
-    maxPower = CFG_MAX_HEATER_POWER;
     this->id = id;
 }
 
 Plate::~Plate()
 {
-    maxTemperature = 0;
-    deratingDelta = 0;
-    maxPower = 0;
+    if (pid) {
+        delete pid;
+        pid = NULL;
+    }
 }
 
 /**
  * Set the maximum temperature of the plate (in 0.1 deg C)
- * Automatically adjusts the derating temperature if necessary
  */
 void Plate::setMaximumTemperature(int16_t temperature)
 {
@@ -88,23 +83,17 @@ int16_t Plate::getMaximumTemperature()
 }
 
 /**
- * Set the temperature of the plate where derating begins (in 0.1 deg C)
- * Automatically adjusts maximum temperature if necessary
- */
-void Plate::setDeratingDelta(int16_t delta)
-{
-    deratingDelta = delta;
-}
-
-/**
  * Set the maximum temperature of the plate (0-255)
  */
 void Plate::setMaximumPower(uint8_t power)
 {
     this->maxPower = power;
+    checkPid();
+    pid->SetOutputLimits(0, maxPower);
 }
 
-uint8_t Plate::getMaximumPower() {
+uint8_t Plate::getMaximumPower()
+{
     return maxPower;
 }
 
@@ -114,6 +103,15 @@ uint8_t Plate::getMaximumPower() {
 void Plate::setFanSpeed(uint8_t speed)
 {
     fan.setSpeed(speed);
+}
+
+/**
+ * Set the tuning parameters of the PID controller for the plate temperature
+ */
+void Plate::setPIDTuning(double kp, double ki, double kd)
+{
+    checkPid();
+    pid->SetTunings(kp, ki, kd);
 }
 
 /**
@@ -148,6 +146,30 @@ uint8_t Plate::getId()
     return id;
 }
 
+void Plate::checkPid()
+{
+    // need to do late init because if placed into list, object is duplicated and addresses of PID variables shift again
+    if (!pid) {
+        pid = new PID(&actualTemperature, &power, &maxTemperature, 0, 0, 0, DIRECT);
+        pid->SetOutputLimits(0, maxPower);
+        pid->SetSampleTime(CFG_LOOP_DELAY);
+        pid->SetMode(AUTOMATIC);
+    }
+}
+
+uint8_t Plate::calculatePower()
+{
+    checkPid();
+    pid->Compute();
+    if (actualTemperature > CFG_PLATE_OVER_TEMPERATURE) {
+        Logger::error("!!!!! ALERT !!!!! Plate %d is over-heating !!!", id);
+        status.setSystemState(Status::overtemp);
+        power = 0;
+    }
+
+    return constrain(power, (double )0, maxPower);
+}
+
 /**
  * Method called for each plate in the main loop.
  * It re-calculates the power and fan speed according to current
@@ -156,20 +178,7 @@ uint8_t Plate::getId()
 void Plate::loop()
 {
     temperatureSensor.retrieveData(); // get the data from the sensor
-    int16_t temp = temperatureSensor.getTemperatureCelsius();
-    uint8_t power = 0;
+    actualTemperature = temperatureSensor.getTemperatureCelsius();
 
-    if (temp > CFG_PLATE_OVER_TEMPERATURE) {
-        Logger::error("!!!!! ALERT !!!!! Plate %d is over-heating !!!", id);
-        status.setSystemState(Status::overtemp);
-    }
-
-    if (temp < maxTemperature) {
-        if (temp < (maxTemperature - deratingDelta)) {
-            power = maxPower; // full power
-        } else {
-            power = map(temp, maxTemperature, (maxTemperature - deratingDelta), 0, maxPower);
-        }
-    }
-    heater.setPower(power);
+    heater.setPower(calculatePower());
 }

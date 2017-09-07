@@ -1,8 +1,7 @@
 /*
  * config.h
  *
- * Defines the components to be used in the BeeSauna and allows the user to configure
- * static parameters.
+ * Defines configuration and static parameters.
  *
  * Note: Make sure with all pin defintions of your hardware that each pin number is
  *       only defined once.
@@ -32,33 +31,25 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define CFG_VERSION "BeeHive 2017-08-22"
-#define CFG_DEFAULT_LOGLEVEL Logger::Info
+#include <Arduino.h>
 
-/*
- * SERIAL CONFIGURATION
- */
+#define CFG_VERSION                 "BeeHive 2017-09-04"
+#define CFG_DEFAULT_LOGLEVEL        Logger::Debug
+
+#define CFG_EEPROM_CONFIG_ADDRESS   32
+#define CFG_EEPROM_CONFIG_TOKEN     [0xb, 0xee, 0x5, 0xa0, 0x4a]
+#define CFG_EEPROM_PROGRAM_ADDRESS  1024
+
 #define CFG_SERIAL_SPEED 115200
-//#define Serial SerialUSB // re-route serial output to serial-usb
+#define CFG_LOOP_DELAY   100
 
-/*
- * TIMER INTERVALS
- *
- */
-#define CFG_LOOP_DELAY   1000
-
-/*
- * ARRAY SIZE
- *
- * Define the maximum number of various object lists.
- * These values should normally not be changed.
- */
+#define CFG_PLATES                      4 // defines the number of heater plates (default: 4)
 #define CFG_LOG_BUFFER_SIZE             120 // size of log output messages
 #define CFG_SERIAL_BUFFER_SIZE          80 // size of the serial input buffer
 #define CFG_PROGRAM_SIZE                10 // size of program array
 
 /*
- * PIN ASSIGNMENT
+ * Default values for the configuration
  */
 #define CFG_IO_BLINK_LED                13 //13 is L, 73 is TX, 72 is RX
 #define CFG_IO_TEMPERATURE_SENSOR       4 // pin to which the data line of the single wire temperature sensors are connected
@@ -74,6 +65,13 @@
 #define CFG_IO_VAPORIZER                5
 #define CFG_IO_FAN_HUMIDIFIER           6
 #define CFG_IO_HUMIDITY_SENSOR          9
+#define CFG_IO_LCD_RS                   26
+#define CFG_IO_LCD_ENABLE               27
+#define CFG_IO_LCD_D0                   22
+#define CFG_IO_LCD_D1                   23
+#define CFG_IO_LCD_D2                   24
+#define CFG_IO_LCD_D3                   25
+#define CFG_IO_LCD_BUTTON               A1
 
 #define CFG_ADDR_TEMP_SENSOR_1          0x3d0516a4f187ff28
 #define CFG_ADDR_TEMP_SENSOR_2          0x9a0516a50124ff28
@@ -85,5 +83,28 @@
 #define CFG_HIVE_OVER_TEMPERATURE       480
 #define CFG_HIVE_TEMPERATURE_RECOVER    350
 #define CFG_PLATE_OVER_TEMPERATURE      800
+
+class Configuration
+{
+public:
+    uint8_t checksum;
+
+    uint8_t temperatureSensorPin;
+    uint8_t humiditySensorPin;
+    uint8_t vaporizerPin;
+    uint8_t humidifierFanPin;
+    uint8_t heaterRelayPin;
+    uint8_t heaterPin[CFG_PLATES]; // the pin assignments of the heaters
+    uint8_t fanPin[CFG_PLATES]; // the pin assigments of the plate fans
+    uint64_t sensorAddress[CFG_PLATES]; // the addresses of the heater sensors assigned to the plates
+
+    uint8_t maxHeaterPower;
+    uint8_t minFanSpeed;
+    uint8_t hiveOverTemp;
+    uint8_t hiveOverTempRecover;
+    uint8_t plateOverTemp;
+};
+
+extern Configuration config;
 
 #endif /* CONFIG_H_ */

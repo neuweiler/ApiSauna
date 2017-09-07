@@ -34,23 +34,24 @@
 #include "Status.h"
 #include "Beeper.h"
 #include "SerialConsole.h"
+#include "PID_v1.h"
+//#include "EEPROM.h"
 
 class ControllerProgram {
 public:
-    int16_t preHeatTemperature; // the target hive temperature during pre-heat (in 0.1 deg C)
-    uint8_t preHeatFanSpeed; // the maximum fan speed during pre-heat (0-255)
-    int16_t hiveTemperature; // the target temperature (in 0.1 deg C)
-    int16_t deratingHiveDelta; // delta of the hive temperature where the derating begins (in 0.1 deg C)
-    int16_t plateTemperature; // the maximum temperature of the heater plates (in 0.1 deg C)
-    int16_t deratingPlateDelta; // delta of the plate temperature where the derating begins (in 0.1 deg C)
-    uint16_t preHeatDuration; // the duration of the pre-heating cycle (in sec)
-    uint16_t duration; // how long the program should run (in sec)
-    uint8_t fanSpeed; // the maximum fan speed (0-255)
+    char name[16]; // name to be displayed in menu
+    int16_t temperaturePreHeat; // the target hive temperature during pre-heat (in 0.1 deg C)
+    int16_t temperatureHive; // the target hive temperature (in 0.1 deg C)
+    double hiveKp, hiveKi, hiveKd; // hive temperature PID configuration
+    int16_t temperaturePlate; // the target temperature of the heater plates (in 0.1 deg C)
+    double plateKp, plateKi, plateKd; // plate temperature PID configuration
+    uint8_t fanSpeedPreHeat; // the fan speed during pre-heat (0-255)
+    uint8_t fanSpeed; // the fan speed (0-255)
+    uint16_t durationPreHeat; // the duration of the pre-heating cycle (in min)
+    uint16_t duration; // the duration of the program (in min)
     uint8_t fanSpeedHumidifier; // the fan speed of the humidifier fan (when active (0-255)
-    uint8_t humidityMinimum; // the minimum humidity in %
-    uint8_t humidityMaximum; // the maximum humidity in %
-
-    uint32_t startTime; // timestamp when the program started (in millis)
+    uint8_t humidityMinimum; // the minimum relative humidity in %
+    uint8_t humidityMaximum; // the maximum relative humidity in %
 };
 
 class Controller
@@ -59,6 +60,9 @@ public:
     Controller();
     virtual ~Controller();
     void init();
+    void loadDefaults();
+    void loadConfig();
+    void saveConfig();
     void loop();
     SimpleList<TemperatureSensor> *getHiveTempSensors();
     SimpleList<Plate> *getPlates();
@@ -67,10 +71,16 @@ public:
     ControllerProgram *getRunningProgram();
     int16_t getHiveTemperature();
     int16_t getHiveTargetTemperature();
-    uint16_t getTimeRunning();
-    uint16_t getTimeRemaining();
-    void startProgram(ControllerProgram *controllerProgram);
+    uint32_t getTimeRunning();
+    uint32_t getTimeRemaining();
+    void startProgram(uint8_t programNumber);
     void stopProgram();
+    void setPIDTuningHive(double kp, double ki, double kd);
+    void setPIDTuningPlate(double kp, double ki, double kd);
+    void setFanSpeed(uint8_t speed);
+    void setFanSpeedHumidifier(uint8_t speed);
+    void setHumidifierLimits(uint8_t min, uint8_t max);
+
 
 private:
     SimpleList<SensorAddress> findTemperatureSensors();
@@ -87,9 +97,10 @@ private:
     Beeper beeper;
     SimpleList<ControllerProgram> programs;
     ControllerProgram *runningProgram;
-    int16_t hiveTemperature;
+    double actualTemperature, targetTemperature, plateTemperature;
+    PID *pid; // pointer to PID controller
     bool statusLed;
-    int16_t offset;
+    uint32_t startTime; // timestamp when the program started (in millis)
 };
 
 extern Controller controller;
