@@ -35,6 +35,28 @@
 #include "Controller.h"
 #include <LiquidCrystal.h>
 
+enum Action {
+    START_PROGRAM,
+    MONITOR_HIVE,
+    CONFIG_TEST1,
+    CONFIG_TEST2,
+    CONFIG_TEST3
+};
+
+class SubMenuEntry
+{
+public:
+    String name;
+    Action action;
+};
+
+class MenuEntry
+{
+public:
+    String name;
+    SimpleList<SubMenuEntry> subMenuEntries;
+};
+
 class HID
 {
 public:
@@ -58,6 +80,7 @@ private:
     String convertTime(uint32_t millis);
     String toDecimal(int16_t number, uint8_t divisor);
     Button buttonPressed();
+    void createMenu();
     void handleMenu(Button button);
 
     LiquidCrystal lcd = LiquidCrystal(0,0,0,0,0,0); // will be properly initialized later
@@ -65,9 +88,9 @@ private:
     uint16_t baseValue;
     Button lastSelectedButton;
     Status::SystemState lastSystemState;
-    uint8_t menuXPos, menuYPos;
-    String menu[5];
-    String subMenu[5][10];
+    SimpleList<MenuEntry> menuEntries;
+    SimpleList<MenuEntry>::iterator itrMenu;
+    SimpleList<SubMenuEntry>::iterator itrSubMenu;
     uint8_t tickCounter;
     char lcdBuffer[17];
 };

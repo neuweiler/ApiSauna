@@ -36,6 +36,7 @@ Controller::Controller()
     plateTemperature = 0;
     statusLed = false;
     startTime = 0;
+    tickCounter = 0;
     runningProgram = NULL;
     pid = NULL;
 
@@ -45,24 +46,56 @@ Controller::Controller()
     plateConfigs.push_back(PlateConfig(3, CFG_ADDR_TEMP_SENSOR_3, CFG_IO_HEATER_3, CFG_IO_FAN_3));
     plateConfigs.push_back(PlateConfig(4, CFG_ADDR_TEMP_SENSOR_4, CFG_IO_HEATER_4, CFG_IO_FAN_4));
 
-    ControllerProgram program;
-    program.temperaturePreHeat = 380; // 38 deg C
-    program.fanSpeedPreHeat = 60;
-    program.durationPreHeat = 30; // 30min
-    program.temperatureHive = 425; // 42.5 deg C
-    program.hiveKp = 8.0;
-    program.hiveKi = 0.2;
-    program.hiveKd = 5.0;
-    program.temperaturePlate = 700; // 70 deg C
-    program.plateKp = 1.0;
-    program.plateKi = 0.01;
-    program.plateKd = 50.0;
-    program.fanSpeed = 40; // minimum is 10
-    program.humidityMinimum = 35;
-    program.humidityMaximum = 60;
-    program.fanSpeedHumidifier = 240; // only works from 230 to 255
-    program.duration = 240; // 4 hours
-    programs.push_back(program);
+// solange temp nicht erreicht wurde: FAN = 250, danach runter bis auf 20 wenn alle 4 temp-sensoren bei Zieltemp +/- 1 Grad
+// wenn temp > 44 Grad: fan = 20, humidity-fan = 100%
+// anstatt pwm einfach on/off --> schonender für netzteil ?
+// wenn hive temp < target nach pre-heat --> extended pre-heat mit hoher fanspeed, program running time erst ab erreichen der temp zählen
+// jeder hive-temp sensor steuert eine platte.. --> sensoren durch löcher in abdeckplatte führen für genaue positionierung
+
+    ControllerProgram programVaroaSummer;
+    snprintf(programVaroaSummer.name, 16, "Varoa Killer");
+    programVaroaSummer.temperaturePreHeat = 380; // 38 deg C
+    programVaroaSummer.fanSpeedPreHeat = 60;
+    programVaroaSummer.durationPreHeat = 30; // 30min
+    programVaroaSummer.temperatureHive = 425; // 42.5 deg C
+    programVaroaSummer.hiveKp = 8.0;
+    programVaroaSummer.hiveKi = 0.2;
+    programVaroaSummer.hiveKd = 5.0;
+    programVaroaSummer.temperaturePlate = 750; // 75 deg C
+    programVaroaSummer.plateKp = 3.0;
+    programVaroaSummer.plateKi = 0.01;
+    programVaroaSummer.plateKd = 50.0;
+    programVaroaSummer.fanSpeed = 50; // minimum is 10
+    programVaroaSummer.humidityMinimum = 30;
+    programVaroaSummer.humidityMaximum = 35;
+    programVaroaSummer.fanSpeedHumidifier = 230; // only works from 230 to 255
+    programVaroaSummer.duration = 240; // 4 hours
+    programs.push_back(programVaroaSummer);
+
+    ControllerProgram programVaroaWinter;
+    snprintf(programVaroaWinter.name, 16, "Winter Treat");
+    programVaroaWinter.temperaturePreHeat = 380; // 38 deg C
+    programVaroaWinter.fanSpeedPreHeat = 100;
+    programVaroaWinter.durationPreHeat = 30; // 30min
+    programVaroaWinter.temperatureHive = 425; // 42.5 deg C
+    programVaroaWinter.hiveKp = 8.0;
+    programVaroaWinter.hiveKi = 0.2;
+    programVaroaWinter.hiveKd = 5.0;
+    programVaroaWinter.temperaturePlate = 750; // 75 deg C
+    programVaroaWinter.plateKp =4.0;
+    programVaroaWinter.plateKi = 0.09;
+    programVaroaWinter.plateKd = 50.0;
+    programVaroaWinter.fanSpeed = 255; // minimum is 10
+    programVaroaWinter.humidityMinimum = 30;
+    programVaroaWinter.humidityMaximum = 35;
+    programVaroaWinter.fanSpeedHumidifier = 230; // only works from 230 to 255
+    programVaroaWinter.duration = 180; // 3 hours
+    programs.push_back(programVaroaWinter);
+
+
+//    subMenu[0][1] = "2 Wellness";
+//    subMenu[0][2] = "3 Queen Health";
+//    subMenu[0][3] = "4 Melt Honey";
 }
 
 Controller::~Controller()
@@ -371,59 +404,62 @@ void Controller::updateProgramState()
  */
 void Controller::loop()
 {
-    actualTemperature = retrieveHiveTemperatures();
-    updateProgramState();
+    if (tickCounter++ > 9) {
+        tickCounter = 0;
+        actualTemperature = retrieveHiveTemperatures();
+        updateProgramState();
 
-    switch (status.getSystemState()) {
-    case Status::init:
-        Logger::error("controller loop must not be called while initialising!");
-        break;
-    case Status::ready:
-        break;
-    case Status::preHeat:
-    case Status::running: {
-        int16_t plateTemp = calculateMaxPlateTemperature();
-        for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
-            itr->setMaximumTemperature(plateTemp);
-            itr->loop();
+        switch (status.getSystemState()) {
+        case Status::init:
+            Logger::error("controller loop must not be called while initialising!");
+            break;
+        case Status::ready:
+            break;
+        case Status::preHeat:
+        case Status::running: {
+            int16_t plateTemp = calculateMaxPlateTemperature();
+            for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
+                itr->setMaximumTemperature(plateTemp);
+                itr->loop();
+            }
+            humidifier.loop();
+            break;
         }
-        humidifier.loop();
-        break;
-    }
-    case Status::overtemp: // shut-down heaters, full blow, full vaporizer (?) + fresh air !!
-        for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
-            itr->setMaximumPower(0);
-            itr->setFanSpeed(CFG_MIN_FAN_SPEED);
-            itr->loop();
+        case Status::overtemp: // shut-down heaters, plate fan to minimum, full blow humidifier fan (fresh air) !!
+            for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
+                itr->setMaximumPower(0);
+                itr->setFanSpeed(CFG_MIN_FAN_SPEED);
+                itr->loop();
+            }
+            humidifier.setMinHumidity(99);
+            humidifier.setMaxHumidity(100);
+            humidifier.setFanSpeed(255);
+            humidifier.loop();
+            delay(10); // wait a bit before trying to open the relay
+            digitalWrite(CFG_IO_HEATER_MAIN_SWITCH, LOW);
+            break;
+        case Status::shutdown:
+            for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
+                itr->setMaximumPower(0);
+                itr->setFanSpeed(CFG_MIN_FAN_SPEED);
+                itr->loop();
+            }
+            humidifier.setMinHumidity(0);
+            humidifier.setMaxHumidity(1);
+            humidifier.setFanSpeed(0);
+            humidifier.loop();
+            delay(10);
+            digitalWrite(CFG_IO_HEATER_MAIN_SWITCH, LOW);
+            break;
+        case Status::error:
+            powerDownDevices();
+            break;
         }
-        humidifier.setMinHumidity(99);
-        humidifier.setMaxHumidity(100);
-        humidifier.setFanSpeed(255);
-        humidifier.loop();
-        delay(10); // wait a bit before trying to open the relay
-        digitalWrite(CFG_IO_HEATER_MAIN_SWITCH, LOW);
-        break;
-    case Status::shutdown:
-        for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
-            itr->setMaximumPower(0);
-            itr->setFanSpeed(CFG_MIN_FAN_SPEED);
-            itr->loop();
-        }
-        humidifier.setMinHumidity(0);
-        humidifier.setMaxHumidity(1);
-        humidifier.setFanSpeed(0);
-        humidifier.loop();
-        delay(10);
-        digitalWrite(CFG_IO_HEATER_MAIN_SWITCH, LOW);
-        break;
-    case Status::error:
-        powerDownDevices();
-        break;
+        TemperatureSensor::prepareData();
+
+        statusLed = !statusLed;
+        digitalWrite(CFG_IO_BLINK_LED, statusLed); // some kind of heart-beat
     }
 
     beeper.loop();
-    TemperatureSensor::prepareData();
-
-    statusLed = !statusLed;
-    digitalWrite(CFG_IO_BLINK_LED, statusLed); // some kind of heart-beat
 }

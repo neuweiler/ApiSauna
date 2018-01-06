@@ -39,7 +39,7 @@
 
 class ControllerProgram {
 public:
-    char name[16]; // name to be displayed in menu
+    char name[17]; // name to be displayed in menu
     int16_t temperaturePreHeat; // the target hive temperature during pre-heat (in 0.1 deg C)
     int16_t temperatureHive; // the target hive temperature (in 0.1 deg C)
     double hiveKp, hiveKi, hiveKd; // hive temperature PID configuration
@@ -81,7 +81,6 @@ public:
     void setFanSpeedHumidifier(uint8_t speed);
     void setHumidifierLimits(uint8_t min, uint8_t max);
 
-
 private:
     SimpleList<SensorAddress> findTemperatureSensors();
     void assignTemperatureSensors(SimpleList<SensorAddress> *addressList);
@@ -101,6 +100,7 @@ private:
     PID *pid; // pointer to PID controller
     bool statusLed;
     uint32_t startTime; // timestamp when the program started (in millis)
+    uint8_t tickCounter;
 };
 
 extern Controller controller;
