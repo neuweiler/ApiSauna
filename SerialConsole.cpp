@@ -99,6 +99,7 @@ void SerialConsole::printMenu()
         Logger::console("PLATE-KP=%s - Kp parameter for plate temperature PID", String(program->plateKp).c_str());
         Logger::console("PLATE-KI=%s - Ki parameter for plate temperature PID", String(program->plateKi).c_str());
         Logger::console("PLATE-KD=%s - Kd parameter for plate temperature PID", String(program->plateKd).c_str());
+        Logger::console("");
     }
 }
 

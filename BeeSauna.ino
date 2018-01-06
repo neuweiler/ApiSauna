@@ -29,10 +29,10 @@
 
 #include "BeeSauna.h"
 
+Configuration config;
 SerialConsole serialConsole;
 Controller controller;
 HID hid;
-Configuration config;
 
 /**
  * Configure the PWM ports and adjust the timers so the PWM frequency is usable to control
@@ -50,7 +50,6 @@ Configuration config;
 void configurePwm()
 {
     // prepare pins
-
     pinMode(CFG_IO_HEATER_MAIN_SWITCH, OUTPUT);
     digitalWrite(CFG_IO_HEATER_MAIN_SWITCH, LOW);
     pinMode(CFG_IO_HEATER_1, OUTPUT);
@@ -112,15 +111,10 @@ void setup()
     serialConsole.printMenu();
 }
 
-int ticks = 0;
 void loop()
 {
     serialConsole.loop();
-    if (ticks++ > 9) {
-
-        controller.loop();
-        ticks = 0;
-    }
+    controller.loop();
     hid.loop();
 
     delay(CFG_LOOP_DELAY);
