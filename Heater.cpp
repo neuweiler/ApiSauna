@@ -12,7 +12,7 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
-
+z
  The above copyright notice and this permission notice shall be included
  in all copies or substantial portions of the Software.
 
@@ -61,7 +61,7 @@ void Heater::setControlPin(uint8_t controlPin) {
 void Heater::setPower(uint8_t power)
 {
     if ((controlPin >= 2 && controlPin <= 13) || (controlPin >= 44 && controlPin <= 46)) {
-        this->power = constrain(power, (double)0, CFG_MAX_HEATER_POWER);
+        this->power = power;
         analogWrite(controlPin, this->power);
     }
 }

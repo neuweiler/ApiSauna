@@ -29,6 +29,10 @@
 
 #include "Plate.h"
 
+#ifndef CFG_USE_PWM
+    uint8_t Plate::activeHeaters = 0;
+#endif
+
 PlateConfig::PlateConfig() :
         PlateConfig::PlateConfig(0, 0, 0, 0)
 {
@@ -87,9 +91,9 @@ int16_t Plate::getMaximumTemperature()
  */
 void Plate::setMaximumPower(uint8_t power)
 {
-    this->maxPower = power;
+    this->maxPower = constrain(power, (double) 0, CFG_MAX_HEATER_POWER);
     checkPid();
-    pid->SetOutputLimits(0, maxPower);
+    pid->SetOutputLimits(0, this->maxPower);
 }
 
 uint8_t Plate::getMaximumPower()
@@ -159,6 +163,8 @@ void Plate::checkPid()
 
 uint8_t Plate::calculatePower()
 {
+    double oldPower = power;
+
     checkPid();
     pid->Compute();
     if (actualTemperature > CFG_PLATE_OVER_TEMPERATURE) {
@@ -166,8 +172,20 @@ uint8_t Plate::calculatePower()
         status.setSystemState(Status::overtemp);
         power = 0;
     }
-
+#ifdef CFG_USE_PWM
     return constrain(power, (double )0, maxPower);
+#else
+    if ((power == CFG_MAX_HEATER_POWER) && (activeHeaters < CFG_MAX_CONCURRENT_HEATERS)) {
+        activeHeaters++;
+        return 255;
+    } else {
+        if (oldPower > 0 && activeHeaters > 0) {
+            activeHeaters--;
+        }
+        return 0;
+    }
+#endif
+
 }
 
 /**

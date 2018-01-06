@@ -33,20 +33,22 @@
 
 #include <Arduino.h>
 
-#define CFG_VERSION                 "BeeHive 2017-09-04"
-#define CFG_DEFAULT_LOGLEVEL        Logger::Debug
+#define CFG_VERSION                 "BeeHive 2018-01-06"
+#define CFG_DEFAULT_LOGLEVEL        Logger::Info
 
 #define CFG_EEPROM_CONFIG_ADDRESS   32
 #define CFG_EEPROM_CONFIG_TOKEN     [0xb, 0xee, 0x5, 0xa0, 0x4a]
-#define CFG_EEPROM_PROGRAM_ADDRESS  1024
+#define CFG_EEPROM_PROGRAM_ADDRESS  512
 
 #define CFG_SERIAL_SPEED 115200
 #define CFG_LOOP_DELAY   100
 
+//TODO the number of plates should not be hardcoded !
 #define CFG_PLATES                      4 // defines the number of heater plates (default: 4)
 #define CFG_LOG_BUFFER_SIZE             120 // size of log output messages
 #define CFG_SERIAL_BUFFER_SIZE          80 // size of the serial input buffer
-#define CFG_PROGRAM_SIZE                10 // size of program array
+//#define CFG_USE_PWM // should we use PWM or simple on/off at every loop for plates ?
+#define CFG_MAX_CONCURRENT_HEATERS      2 // the number of allows heaters active at the same time when not using PWM
 
 /*
  * Default values for the configuration
@@ -80,9 +82,9 @@
 
 #define CFG_MAX_HEATER_POWER            170
 #define CFG_MIN_FAN_SPEED               10
-#define CFG_HIVE_OVER_TEMPERATURE       480
+#define CFG_HIVE_OVER_TEMPERATURE       470
 #define CFG_HIVE_TEMPERATURE_RECOVER    350
-#define CFG_PLATE_OVER_TEMPERATURE      800
+#define CFG_PLATE_OVER_TEMPERATURE      850
 
 class Configuration
 {
@@ -95,7 +97,7 @@ public:
     uint8_t humidifierFanPin;
     uint8_t heaterRelayPin;
     uint8_t heaterPin[CFG_PLATES]; // the pin assignments of the heaters
-    uint8_t fanPin[CFG_PLATES]; // the pin assigments of the plate fans
+    uint8_t fanPin[CFG_PLATES]; // the pin assignments of the plate fans
     uint64_t sensorAddress[CFG_PLATES]; // the addresses of the heater sensors assigned to the plates
 
     uint8_t maxHeaterPower;

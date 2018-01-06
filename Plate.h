@@ -82,6 +82,10 @@ private:
     uint8_t maxPower; // maximum power applied to heater (0-255)
     uint8_t id; // the id/number of the plate
     PID *pid; // pointer to PID controller
+#ifndef CFG_USE_PWM
+    static uint8_t activeHeaters;
+#endif
+
 };
 
 #endif /* PLATE_H_ */
