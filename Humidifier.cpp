@@ -95,6 +95,11 @@ uint8_t Humidifier::getHumidity()
     return humidity;
 }
 
+int16_t Humidifier::getTemperature()
+{
+    return temperature;
+}
+
 void Humidifier::setFanSpeed(uint8_t speed)
 {
     fanSpeed = speed;
@@ -113,6 +118,7 @@ Vaporizer::Mode Humidifier::getVaporizerMode()
 void Humidifier::loop()
 {
     humidity = sensor.getRelativeHumidity();
+    temperature = sensor.getTemperature();
 
     if (humidity != 0 && humidity < minimumHumidity) {
         fan.setSpeed(fanSpeed);

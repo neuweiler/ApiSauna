@@ -32,8 +32,6 @@
 HID::HID()
 {
     lastSystemState = Status::init;
-    baseValue = 1023;
-    controlPin = 0;
     lastSelectedButton = NONE;
     tickCounter = 0;
     itrMenu = NULL;
@@ -48,9 +46,14 @@ void HID::init()
 {
     //TODO use values from config
     lcd.init(1, CFG_IO_LCD_RS, 255, CFG_IO_LCD_ENABLE, CFG_IO_LCD_D0, CFG_IO_LCD_D1, CFG_IO_LCD_D2, CFG_IO_LCD_D3, 0, 0, 0, 0);
-    lcd.begin(16, 2);
-    controlPin = CFG_IO_LCD_BUTTON;
-    baseValue = 800; //analogRead(controlPin); // adjust to platform's base value
+    lcd.begin(20, 4);
+
+    pinMode(CFG_IO_BUTTON_UP, INPUT);
+    pinMode(CFG_IO_BUTTON_DOWN, INPUT);
+    pinMode(CFG_IO_BUTTON_LEFT, INPUT);
+    pinMode(CFG_IO_BUTTON_RIGHT, INPUT);
+    pinMode(CFG_IO_BUTTON_SELECT, INPUT);
+
     createMenu();
     handleMenu(NONE);
 }
@@ -63,6 +66,7 @@ void HID::createMenu()
     for (SimpleList<ControllerProgram>::iterator itr = programs->begin(); itr != programs->end(); ++itr) {
         SubMenuEntry subMenuEntry;
         subMenuEntry.name = itr->name;
+        subMenuEntry.action = START_PROGRAM;
         programMenu.subMenuEntries.push_back(subMenuEntry);
     }
     menuEntries.push_back(programMenu);
@@ -101,7 +105,7 @@ void HID::handleMenu(Button button)
         }
         break;
     case DOWN:
-        if (itrSubMenu != itrMenu->subMenuEntries.end()) {
+        if (itrSubMenu+1 != itrMenu->subMenuEntries.end()) {
             itrSubMenu++;
         }
         break;
@@ -112,18 +116,19 @@ void HID::handleMenu(Button button)
         }
         break;
     case RIGHT:
-        if (itrMenu != menuEntries.end()) {
+        if (itrMenu+1 != menuEntries.end()) {
             itrMenu++;
             itrSubMenu = itrMenu->subMenuEntries.begin();
         }
         break;
     case SELECT: //TODO move this stuff to separate method
         switch (itrSubMenu->action) {
-        case START_PROGRAM:
-        {
+        case START_PROGRAM: {
             int i = 0;
+
             for (SimpleList<SubMenuEntry>::iterator itr = itrMenu->subMenuEntries.begin(); itr != itrMenu->subMenuEntries.end(); ++itr && ++i) {
                 if (itrSubMenu == itr) {
+                    lcd.clear();
                     controller.startProgram(i);
                     return;
                 }
@@ -132,15 +137,19 @@ void HID::handleMenu(Button button)
         }
         case MONITOR_HIVE:
             //TODO handle monitoring
+            Logger::info("Monitor hive...");
             break;
         case CONFIG_TEST1:
             //TODO handle configuration
+            Logger::info("Config test1...");
             break;
         case CONFIG_TEST2:
             //TODO handle configuration
+            Logger::info("Config test2...");
             break;
         case CONFIG_TEST3:
             //TODO handle configuration
+            Logger::info("Config test3...");
             break;
         }
         break;
@@ -150,8 +159,10 @@ void HID::handleMenu(Button button)
 
     lcd.clear();
     lcd.setCursor(0, 0);
+    lcd.print(CFG_VERSION);
+    lcd.setCursor(0, 2);
     lcd.print(itrMenu->name);
-    lcd.setCursor(0, 1);
+    lcd.setCursor(1, 3);
     lcd.print(itrSubMenu->name);
 }
 
@@ -170,21 +181,13 @@ void HID::loop()
         }
         break;
     case Status::preHeat:
-        if (button != NONE) {
-            tickCounter = 0;
-        }
-        displayProgramInfo();
-        logData();
-        break;
     case Status::running:
-        if (button != NONE) {
-            tickCounter = 0;
-        }
         displayProgramInfo();
         logData();
         break;
     case Status::overtemp:
-        lcd.print("OVER-TEMPERATURE");
+        lcd.clear();
+        lcd.print("OVER-TEMPERATURE !!!");
         lcd.setCursor(0, 1);
         lcd.print(toDecimal(controller.getHiveTemperature(), 10));
         logData();
@@ -212,41 +215,51 @@ void HID::loop()
  */
 void HID::displayProgramInfo()
 {
-    if (tickCounter < 50) { // hive temp + humidity (2nd line: hive sensors)
+    if (tickCounter > 9) {
         SimpleList<TemperatureSensor> *hiveSensors = controller.getHiveTempSensors();
         Humidifier *humidifier = controller.getHumidifier();
         SimpleList<TemperatureSensor>::iterator itr = hiveSensors->begin();
-        snprintf(lcdBuffer, 16, "H:%s>%s %d%%%s ", toDecimal(controller.getHiveTemperature(), 10).c_str(),
-                toDecimal(controller.getHiveTargetTemperature(), 10).c_str(), controller.getHumidifier()->getHumidity(),
-                (humidifier->getVaporizerMode() ? "*" : humidifier->getFanSpeed() ? "x" : ""));
+
+        // program name and time running
+        lcd.setCursor(0, 0);
+        snprintf(lcdBuffer, 21, "%s", (status.getSystemState() == Status::preHeat ? "pre-heating" : controller.getRunningProgram()->name));
         lcd.print(lcdBuffer);
+        lcd.setCursor(12, 0);
+        snprintf(lcdBuffer, 21, " %s", convertTime(controller.getTimeRunning()).c_str());
+        lcd.print(lcdBuffer);
+
+        // actual+target hive temperature and humidity with humidifier/fan status
         lcd.setCursor(0, 1);
         while (itr != hiveSensors->end()) {
-            snprintf(lcdBuffer, 16, "%d%s", itr->getTemperatureCelsius() / 10, (itr != hiveSensors->end() ? " " : ""));
+            snprintf(lcdBuffer, 21, "%02d\xdf", itr->getTemperatureCelsius() / 10);
             lcd.print(lcdBuffer);
             itr++;
         }
-        lcd.print("     ");
-    } else if (tickCounter < 80) { // plate temp + target, power
+        snprintf(lcdBuffer, 21, "\x7e%02d\xdf%s%02d%%  ", controller.getHiveTargetTemperature() / 10,
+                (humidifier->getVaporizerMode() ? "*" : humidifier->getFanSpeed() ? "x" : ""), controller.getHumidifier()->getHumidity());
+        lcd.print(lcdBuffer);
+
+        // actual and target plate temperatures
+        lcd.setCursor(0, 2);
         SimpleList<Plate> *plates = controller.getPlates();
         for (SimpleList<Plate>::iterator itr = plates->begin(); itr != plates->end(); ++itr) {
-            snprintf(lcdBuffer, 16, "%d%s", itr->getTemperature() / 10, (itr != plates->end() ? " " : ""));
+            snprintf(lcdBuffer, 21, "%02d%c", itr->getTemperature() / 10, (itr->getPower() > 0 ? 0xeb : 0xdf));
             lcd.print(lcdBuffer);
         }
-        snprintf(lcdBuffer, 16, ">%s    ", toDecimal(plates->begin()->getMaximumTemperature(), 10).c_str());
+        snprintf(lcdBuffer, 21, "\x7e%02d\xdf %02d\xdf", plates->begin()->getTargetTemperature() / 10, controller.getHumidifier()->getTemperature() / 10);
         lcd.print(lcdBuffer);
-        lcd.setCursor(0, 1);
+
+        // fan speed, time remaining
+        lcd.setCursor(0, 3);
+        plates = controller.getPlates();
         for (SimpleList<Plate>::iterator itr = plates->begin(); itr != plates->end(); ++itr) {
-            snprintf(lcdBuffer, 16, "%d ", itr->getPower());
+            snprintf(lcdBuffer, 21, "%02ld ", map(itr->getFanSpeed(), CFG_MIN_FAN_SPEED, 255, 0, 99));
             lcd.print(lcdBuffer);
         }
-        lcd.print("     ");
-    } else if (tickCounter < 110) { // program name + run time
-        lcd.print(controller.getRunningProgram()->name);
-        lcd.setCursor(0, 1);
-        snprintf(lcdBuffer, 16, "%s %s", convertTime(controller.getTimeRunning()).c_str(), convertTime(controller.getTimeRemaining()).c_str());
+        lcd.setCursor(12, 3);
+        snprintf(lcdBuffer, 21, " %s", convertTime(controller.getTimeRemaining()).c_str());
         lcd.print(lcdBuffer);
-    } else {
+
         tickCounter = 0;
     }
 }
@@ -257,7 +270,7 @@ void HID::displayProgramInfo()
  */
 void HID::logData()
 {
-    if (tickCounter % 10)
+    if (tickCounter != 0)
         return;
     Logger::info("time running: %s, remaining: %s, status: %s", convertTime(controller.getTimeRunning()).c_str(),
             convertTime(controller.getTimeRemaining()).c_str(), status.systemStateToStr(status.getSystemState()).c_str());
@@ -265,19 +278,19 @@ void HID::logData()
     SimpleList<TemperatureSensor> *hiveSensors = controller.getHiveTempSensors();
     for (SimpleList<TemperatureSensor>::iterator itr = hiveSensors->begin(); itr != hiveSensors->end(); ++itr) {
         int16_t temp = itr->getTemperatureCelsius();
-        Logger::debug("sensor %#lx%lx: %s C", itr->getAddress().high, itr->getAddress().low, toDecimal(temp, 10).c_str());
+        Logger::debug("sensor %#lx%lx: %sC", itr->getAddress().high, itr->getAddress().low, toDecimal(temp, 10).c_str());
     }
-    Logger::info("hive: %s C -> %s C", toDecimal(controller.getHiveTemperature(), 10).c_str(),
+    Logger::info("hive: %sC -> %sC", toDecimal(controller.getHiveTemperature(), 10).c_str(),
             toDecimal(controller.getHiveTargetTemperature(), 10).c_str());
 
     SimpleList<Plate> *plates = controller.getPlates();
     for (SimpleList<Plate>::iterator itr = plates->begin(); itr != plates->end(); ++itr) {
-        Logger::info("plate %d: %s C -> %s C, power=%d/%d, fan=%d", itr->getId(), toDecimal(itr->getTemperature(), 10).c_str(),
-                toDecimal(itr->getMaximumTemperature(), 10).c_str(), itr->getPower(), itr->getMaximumPower(), itr->getFanSpeed());
+        Logger::info("plate %d: %sC -> %sC, power=%d/%d, fan=%d", itr->getId(), toDecimal(itr->getTemperature(), 10).c_str(),
+                toDecimal(itr->getTargetTemperature(), 10).c_str(), itr->getPower(), itr->getMaximumPower(), itr->getFanSpeed());
     }
 
     Humidifier *humidifier = controller.getHumidifier();
-    Logger::info("humidity: relHumidity=%d (%d-%d), on=%d, fan=%d", humidifier->getHumidity(), humidifier->getMinHumidity(),
+    Logger::info("humidity: relHumidity=%d (%d-%d), vapor=%d, fan=%d", humidifier->getHumidity(), humidifier->getMinHumidity(),
             humidifier->getMaxHumidity(), humidifier->getVaporizerMode(), humidifier->getFanSpeed());
 }
 
@@ -288,20 +301,17 @@ void HID::logData()
  */
 HID::Button HID::buttonPressed()
 {
-    uint16_t sensorValue = constrain (analogRead(controlPin), 0, 800);
-    uint8_t button = map(sensorValue, 0, baseValue, 0, 5);
-    switch (button) {
-    case RIGHT:
-        return RIGHT;
-    case UP:
+    if (digitalRead(CFG_IO_BUTTON_UP))
         return UP;
-    case DOWN:
+    if (digitalRead(CFG_IO_BUTTON_DOWN))
         return DOWN;
-    case LEFT:
+    if (digitalRead(CFG_IO_BUTTON_LEFT))
         return LEFT;
-    case SELECT:
+    if (digitalRead(CFG_IO_BUTTON_RIGHT))
+        return RIGHT;
+    if (digitalRead(CFG_IO_BUTTON_SELECT))
         return SELECT;
-    }
+
     return NONE;
 }
 

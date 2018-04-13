@@ -45,6 +45,7 @@ public:
     void setMinHumidity(uint8_t minHumidity);
     uint8_t getMinHumidity();
     uint8_t getHumidity();
+    int16_t getTemperature();
     uint8_t getFanSpeed();
     void setFanSpeed(uint8_t speed);
     Vaporizer::Mode getVaporizerMode();
@@ -57,6 +58,7 @@ private:
     uint8_t maximumHumidity;
     uint8_t minimumHumidity;
     uint8_t humidity;
+    int16_t temperature;
     uint8_t fanSpeed;
 };
 

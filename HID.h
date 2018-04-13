@@ -84,15 +84,13 @@ private:
     void handleMenu(Button button);
 
     LiquidCrystal lcd = LiquidCrystal(0,0,0,0,0,0); // will be properly initialized later
-    uint8_t controlPin;
-    uint16_t baseValue;
     Button lastSelectedButton;
     Status::SystemState lastSystemState;
     SimpleList<MenuEntry> menuEntries;
     SimpleList<MenuEntry>::iterator itrMenu;
     SimpleList<SubMenuEntry>::iterator itrSubMenu;
     uint8_t tickCounter;
-    char lcdBuffer[17];
+    char lcdBuffer[21];
 };
 
 extern HID hid;
