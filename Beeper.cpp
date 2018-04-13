@@ -44,7 +44,7 @@ void Beeper::setControlPin(uint8_t controlPin)
 {
     this->controlPin = controlPin;
     pinMode(controlPin, OUTPUT);
-    digitalWrite(controlPin, 0);
+    digitalWrite(controlPin, LOW);
 }
 
 void Beeper::loop()
@@ -57,23 +57,22 @@ void Beeper::loop()
             numberOfBeeps = -1; // unlimited
             break;
         case Status::error:
+            numberOfBeeps = 20;
             break;
         default:
+            numberOfBeeps = 2;
             break;
         }
         lastState = state;
     }
 
     if (soundOn) {
-        //TODO turn sound off
-        Serial.println("Beep off");
         soundOn = false;
         if (numberOfBeeps != -1) {
             numberOfBeeps--;
         }
     } else if (numberOfBeeps != 0) {
-        //TODO turn sound on
-        Serial.println("BEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEP !!!!!!!!!!!!!!!!!!!!!!!!!");
         soundOn = true;
     }
+    analogWrite(controlPin, (soundOn ? 20 : 0));
 }
