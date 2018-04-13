@@ -1,5 +1,5 @@
 /*
- * BeeSauna.cpp
+ * ApiSauna.cpp
  *
  * Main part of the bee sauna control software. It initializes all devices
  * and controls the main loop.
@@ -27,7 +27,7 @@
 
  */
 
-#include "BeeSauna.h"
+#include "ApiSauna.h"
 
 Configuration config;
 SerialConsole serialConsole;

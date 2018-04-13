@@ -1,5 +1,5 @@
 /*
- * BeeSauna.h
+ * ApiSauna.h
  *
  Copyright (c) 2017 Michael Neuweiler
 
@@ -24,8 +24,8 @@
 
  */
 
-#ifndef BEESAUNA_H_
-#define BEESAUNA_H_
+#ifndef APISAUNA_H_
+#define APISAUNA_H_
 
 #include <Arduino.h>
 #include "Status.h"
@@ -43,4 +43,4 @@ void setup();
 } // extern "C"
 #endif
 
-#endif /* BEESAUNA_H_ */
+#endif /* APISAUNA_H_ */

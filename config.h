@@ -33,8 +33,8 @@
 
 #include <Arduino.h>
 
-#define CFG_VERSION                 "BeeHive 2018-01-06"
-#define CFG_DEFAULT_LOGLEVEL        Logger::Info
+#define CFG_VERSION                 "ApiSauna v1.0"
+#define CFG_DEFAULT_LOGLEVEL        Logger::Debug
 
 #define CFG_EEPROM_CONFIG_ADDRESS   32
 #define CFG_EEPROM_CONFIG_TOKEN     [0xb, 0xee, 0x5, 0xa0, 0x4a]
@@ -67,22 +67,35 @@
 #define CFG_IO_VAPORIZER                5
 #define CFG_IO_FAN_HUMIDIFIER           6
 #define CFG_IO_HUMIDITY_SENSOR          9
-#define CFG_IO_LCD_RS                   26
-#define CFG_IO_LCD_ENABLE               27
-#define CFG_IO_LCD_D0                   22
-#define CFG_IO_LCD_D1                   23
-#define CFG_IO_LCD_D2                   24
-#define CFG_IO_LCD_D3                   25
-#define CFG_IO_LCD_BUTTON               A1
+#define CFG_IO_LCD_RS                   22
+#define CFG_IO_LCD_ENABLE               23
+#define CFG_IO_LCD_D0                   24
+#define CFG_IO_LCD_D1                   25
+#define CFG_IO_LCD_D2                   26
+#define CFG_IO_LCD_D3                   27
+#define CFG_IO_BUTTON_UP                2
+#define CFG_IO_BUTTON_DOWN              3
+#define CFG_IO_BUTTON_LEFT              11
+#define CFG_IO_BUTTON_RIGHT             12
+#define CFG_IO_BUTTON_SELECT            13
+#define CFG_IO_BEEPER                   10
 
-#define CFG_ADDR_TEMP_SENSOR_1          0x3d0516a4f187ff28
-#define CFG_ADDR_TEMP_SENSOR_2          0x9a0516a50124ff28
-#define CFG_ADDR_TEMP_SENSOR_3          0xe10316a5188cff28
-#define CFG_ADDR_TEMP_SENSOR_4          0xed0316a48290ff28
+// assignment of temp sensors to heater plates (to measure their temp)
+//TODO not hard coded
+#define CFG_TEMP_SENSOR_HEATER_1        0x3d0516a4f187ff28
+#define CFG_TEMP_SENSOR_HEATER_2        0x9a0516a50124ff28
+#define CFG_TEMP_SENSOR_HEATER_3        0xe10316a5188cff28
+#define CFG_TEMP_SENSOR_HEATER_4        0xed0316a48290ff28
+// assignment of temp sensors to hive areas (must correspond to heater areas)
+#define CFG_TEMP_SENSOR_HIVE_1          0xff0516a4f187ff28
+#define CFG_TEMP_SENSOR_HIVE_2          0xff0516a50124ff28
+#define CFG_TEMP_SENSOR_HIVE_3          0xff0316a5188cff28
+#define CFG_TEMP_SENSOR_HIVE_4          0xff0316a48290ff28
+
 
 #define CFG_MAX_HEATER_POWER            170
 #define CFG_MIN_FAN_SPEED               10
-#define CFG_HIVE_OVER_TEMPERATURE       470
+#define CFG_HIVE_OVER_TEMPERATURE       460
 #define CFG_HIVE_TEMPERATURE_RECOVER    350
 #define CFG_PLATE_OVER_TEMPERATURE      850
 

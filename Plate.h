@@ -44,8 +44,8 @@ class PlateConfig
 {
 public:
     PlateConfig();
-    PlateConfig(uint8_t id, uint64_t address, uint8_t heaterPin, uint8_t fanPin);
-    SensorAddress sensorAddress;
+    PlateConfig(uint8_t id, uint64_t addressHeater, uint8_t heaterPin, uint8_t fanPin);
+    SensorAddress sensorAddressHeater;
     uint8_t heaterPin;
     uint8_t fanPin;
     uint8_t id;
@@ -55,10 +55,10 @@ class Plate
 {
 public:
     Plate();
-    Plate(uint8_t id, SensorAddress sensorAddress, uint8_t heaterPin, uint8_t fanPin);
+    Plate(PlateConfig *plateConfig);
     virtual ~Plate();
-    void setMaximumTemperature(int16_t temperature);
-    int16_t getMaximumTemperature();
+    void setTargetTemperature(int16_t temperature);
+    int16_t getTargetTemperature();
     void setMaximumPower(uint8_t power);
     uint8_t getMaximumPower();
     void setFanSpeed(uint8_t speed);
@@ -72,18 +72,18 @@ public:
 protected:
 
 private:
-    uint8_t calculatePower();
+    uint8_t calculateHeaterPower();
     void checkPid();
 
-    TemperatureSensor temperatureSensor;
+    TemperatureSensor sensorHeater;
     Heater heater;
     Fan fan;
-    double maxTemperature, actualTemperature, power; // maximum temperature of the plate (in 0.1 deg C)
+    double targetTemperature, currentTemperature, power;
     uint8_t maxPower; // maximum power applied to heater (0-255)
     uint8_t id; // the id/number of the plate
     PID *pid; // pointer to PID controller
 #ifndef CFG_USE_PWM
-    static uint8_t activeHeaters;
+    static uint8_t activeHeaters; // a static counter to establish how many heaters are active in non-PWM mode
 #endif
 
 };

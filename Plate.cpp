@@ -38,9 +38,9 @@ PlateConfig::PlateConfig() :
 {
 }
 
-PlateConfig::PlateConfig(uint8_t id, uint64_t address, uint8_t heaterPin, uint8_t fanPin)
+PlateConfig::PlateConfig(uint8_t id, uint64_t addressHeater, uint8_t heaterPin, uint8_t fanPin)
 {
-    this->sensorAddress.value = address;
+    this->sensorAddressHeater.value = addressHeater;
     this->heaterPin = heaterPin;
     this->fanPin = fanPin;
     this->id = id;
@@ -48,21 +48,21 @@ PlateConfig::PlateConfig(uint8_t id, uint64_t address, uint8_t heaterPin, uint8_
 
 Plate::Plate()
 {
-    actualTemperature = 0;
-    maxTemperature = 0;
+    currentTemperature = 0;
+    targetTemperature = 0;
     maxPower = CFG_MAX_HEATER_POWER;
     pid = NULL;
     power = 0;
     id = 0;
 }
 
-Plate::Plate(uint8_t id, SensorAddress sensorAddress, uint8_t heaterPin, uint8_t fanPin) :
+Plate::Plate(PlateConfig *config) :
         Plate::Plate()
 {
-    temperatureSensor.setAddress(sensorAddress);
-    heater.setControlPin(heaterPin);
-    fan.setControlPin(fanPin);
-    this->id = id;
+    sensorHeater.setAddress(config->sensorAddressHeater);
+    heater.setControlPin(config->heaterPin);
+    fan.setControlPin(config->fanPin);
+    this->id = config->id;
 }
 
 Plate::~Plate()
@@ -76,14 +76,14 @@ Plate::~Plate()
 /**
  * Set the maximum temperature of the plate (in 0.1 deg C)
  */
-void Plate::setMaximumTemperature(int16_t temperature)
+void Plate::setTargetTemperature(int16_t temperature)
 {
-    maxTemperature = temperature;
+    targetTemperature = temperature;
 }
 
-int16_t Plate::getMaximumTemperature()
+int16_t Plate::getTargetTemperature()
 {
-    return maxTemperature;
+    return targetTemperature;
 }
 
 /**
@@ -123,7 +123,7 @@ void Plate::setPIDTuning(double kp, double ki, double kd)
  */
 int16_t Plate::getTemperature()
 {
-    return temperatureSensor.getTemperatureCelsius();
+    return sensorHeater.getTemperatureCelsius();
 }
 
 /**
@@ -154,20 +154,20 @@ void Plate::checkPid()
 {
     // need to do late init because if placed into list, object is duplicated and addresses of PID variables shift again
     if (!pid) {
-        pid = new PID(&actualTemperature, &power, &maxTemperature, 0, 0, 0, DIRECT);
+        pid = new PID(&currentTemperature, &power, &targetTemperature, 0, 0, 0, DIRECT);
         pid->SetOutputLimits(0, maxPower);
         pid->SetSampleTime(CFG_LOOP_DELAY);
         pid->SetMode(AUTOMATIC);
     }
 }
 
-uint8_t Plate::calculatePower()
+uint8_t Plate::calculateHeaterPower()
 {
     double oldPower = power;
 
     checkPid();
     pid->Compute();
-    if (actualTemperature > CFG_PLATE_OVER_TEMPERATURE) {
+    if (currentTemperature > CFG_PLATE_OVER_TEMPERATURE) {
         Logger::error("!!!!! ALERT !!!!! Plate %d is over-heating !!!", id);
         status.setSystemState(Status::overtemp);
         power = 0;
@@ -195,8 +195,8 @@ uint8_t Plate::calculatePower()
  */
 void Plate::loop()
 {
-    temperatureSensor.retrieveData(); // get the data from the sensor
-    actualTemperature = temperatureSensor.getTemperatureCelsius();
+    sensorHeater.retrieveData();
+    currentTemperature = sensorHeater.getTemperatureCelsius();
 
-    heater.setPower(calculatePower());
+    heater.setPower(calculateHeaterPower());
 }
