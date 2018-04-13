@@ -40,11 +40,11 @@ Controller::Controller()
     runningProgram = NULL;
     pid = NULL;
 
-    //TODO move to EEPROM
-    plateConfigs.push_back(PlateConfig(1, CFG_ADDR_TEMP_SENSOR_1, CFG_IO_HEATER_1, CFG_IO_FAN_1));
-    plateConfigs.push_back(PlateConfig(2, CFG_ADDR_TEMP_SENSOR_2, CFG_IO_HEATER_2, CFG_IO_FAN_2));
-    plateConfigs.push_back(PlateConfig(3, CFG_ADDR_TEMP_SENSOR_3, CFG_IO_HEATER_3, CFG_IO_FAN_3));
-    plateConfigs.push_back(PlateConfig(4, CFG_ADDR_TEMP_SENSOR_4, CFG_IO_HEATER_4, CFG_IO_FAN_4));
+    //TODO move config to EEPROM
+    plateConfigs.push_back(PlateConfig(1, CFG_TEMP_SENSOR_HEATER_1, CFG_IO_HEATER_1, CFG_IO_FAN_1));
+    plateConfigs.push_back(PlateConfig(2, CFG_TEMP_SENSOR_HEATER_2, CFG_IO_HEATER_2, CFG_IO_FAN_2));
+    plateConfigs.push_back(PlateConfig(3, CFG_TEMP_SENSOR_HEATER_3, CFG_IO_HEATER_3, CFG_IO_FAN_3));
+    plateConfigs.push_back(PlateConfig(4, CFG_TEMP_SENSOR_HEATER_4, CFG_IO_HEATER_4, CFG_IO_FAN_4));
 
 // solange temp nicht erreicht wurde: FAN = 250, danach runter bis auf 20 wenn alle 4 temp-sensoren bei Zieltemp +/- 1 Grad
 // wenn temp > 44 Grad: fan = 20, humidity-fan = 100%
@@ -54,18 +54,18 @@ Controller::Controller()
 
     ControllerProgram programVaroaSummer;
     snprintf(programVaroaSummer.name, 16, "Varoa Killer");
-    programVaroaSummer.temperaturePreHeat = 380; // 38 deg C
+    programVaroaSummer.temperaturePreHeat = 390; // 39 deg C
     programVaroaSummer.fanSpeedPreHeat = 60;
     programVaroaSummer.durationPreHeat = 30; // 30min
-    programVaroaSummer.temperatureHive = 425; // 42.5 deg C
+    programVaroaSummer.temperatureHive = 430; // 430 deg C
     programVaroaSummer.hiveKp = 8.0;
     programVaroaSummer.hiveKi = 0.2;
     programVaroaSummer.hiveKd = 5.0;
-    programVaroaSummer.temperaturePlate = 750; // 75 deg C
+    programVaroaSummer.temperaturePlate = 800; // 80 deg C
     programVaroaSummer.plateKp = 3.0;
     programVaroaSummer.plateKi = 0.01;
     programVaroaSummer.plateKd = 50.0;
-    programVaroaSummer.fanSpeed = 50; // minimum is 10
+    programVaroaSummer.fanSpeed = 170; // minimum is 10
     programVaroaSummer.humidityMinimum = 30;
     programVaroaSummer.humidityMaximum = 35;
     programVaroaSummer.fanSpeedHumidifier = 230; // only works from 230 to 255
@@ -74,14 +74,14 @@ Controller::Controller()
 
     ControllerProgram programVaroaWinter;
     snprintf(programVaroaWinter.name, 16, "Winter Treat");
-    programVaroaWinter.temperaturePreHeat = 380; // 38 deg C
+    programVaroaWinter.temperaturePreHeat = 390; // 39 deg C
     programVaroaWinter.fanSpeedPreHeat = 100;
     programVaroaWinter.durationPreHeat = 30; // 30min
-    programVaroaWinter.temperatureHive = 425; // 42.5 deg C
+    programVaroaWinter.temperatureHive = 430; // 43.0 deg C
     programVaroaWinter.hiveKp = 8.0;
     programVaroaWinter.hiveKi = 0.2;
     programVaroaWinter.hiveKd = 5.0;
-    programVaroaWinter.temperaturePlate = 750; // 75 deg C
+    programVaroaWinter.temperaturePlate = 800; // 75 deg C
     programVaroaWinter.plateKp =4.0;
     programVaroaWinter.plateKi = 0.09;
     programVaroaWinter.plateKd = 50.0;
@@ -91,6 +91,26 @@ Controller::Controller()
     programVaroaWinter.fanSpeedHumidifier = 230; // only works from 230 to 255
     programVaroaWinter.duration = 180; // 3 hours
     programs.push_back(programVaroaWinter);
+
+    ControllerProgram programCleaning;
+    snprintf(programCleaning.name, 16, "Cleaning");
+    programCleaning.temperaturePreHeat = 380; // 38 deg C
+    programCleaning.fanSpeedPreHeat = 100;
+    programCleaning.durationPreHeat = 30; // 30min
+    programCleaning.temperatureHive = 425; // 42.5 deg C
+    programCleaning.hiveKp = 8.0;
+    programCleaning.hiveKi = 0.2;
+    programCleaning.hiveKd = 5.0;
+    programCleaning.temperaturePlate = 750; // 75 deg C
+    programCleaning.plateKp =4.0;
+    programCleaning.plateKi = 0.09;
+    programCleaning.plateKd = 50.0;
+    programCleaning.fanSpeed = 255; // minimum is 10
+    programCleaning.humidityMinimum = 30;
+    programCleaning.humidityMaximum = 35;
+    programCleaning.fanSpeedHumidifier = 230; // only works from 230 to 255
+    programCleaning.duration = 180; // 3 hours
+    programs.push_back(programCleaning);
 
 
 //    subMenu[0][1] = "2 Wellness";
@@ -174,6 +194,7 @@ void Controller::startProgram(uint8_t programNumber)
             Logger::info("starting program #%d", i);
             if (status.setSystemState(Status::preHeat) == Status::preHeat) {
                 runningProgram = itr;
+                startTime = millis();
 
                 // init all plate parameters
                 for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
@@ -267,11 +288,11 @@ void Controller::assignTemperatureSensors(SimpleList<SensorAddress> *addressList
     for (SimpleList<SensorAddress>::iterator itrAddress = addressList->begin(); itrAddress != addressList->end(); ++itrAddress) {
         bool foundInConfig = false;
         for (SimpleList<PlateConfig>::iterator itrConfig = plateConfigs.begin(); itrConfig != plateConfigs.end(); ++itrConfig) {
-            if (itrAddress->value == itrConfig->sensorAddress.value) {
+            if (itrAddress->value == itrConfig->sensorAddressHeater.value) {
                 foundInConfig = true;
-                Logger::info("attaching sensor %#lx%lx, heater pin %d, fan pin %d to plate #%d", itrConfig->sensorAddress.high,
-                        itrConfig->sensorAddress.low, itrConfig->heaterPin, itrConfig->fanPin, itrConfig->id);
-                Plate *plate = new Plate(itrConfig->id, itrConfig->sensorAddress, itrConfig->heaterPin, itrConfig->fanPin);
+                Logger::info("attaching sensor %#lx%lx, heater pin %d, fan pin %d to plate #%d", itrConfig->sensorAddressHeater.high,
+                        itrConfig->sensorAddressHeater.low, itrConfig->heaterPin, itrConfig->fanPin, itrConfig->id);
+                Plate *plate = new Plate(itrConfig);
                 plates.push_back(*plate);
             }
         }
@@ -312,6 +333,8 @@ void Controller::init()
     humidifier.setVaporizerPin(CFG_IO_VAPORIZER);
     humidifier.setFanPin(CFG_IO_FAN_HUMIDIFIER);
     humidifier.setSensorPin(CFG_IO_HUMIDITY_SENSOR);
+
+    beeper.setControlPin(CFG_IO_BEEPER);
 
     pid = new PID(&actualTemperature, &plateTemperature, &targetTemperature, 0, 0, 0, DIRECT);
     pid->SetOutputLimits(0, CFG_PLATE_OVER_TEMPERATURE);
@@ -419,7 +442,7 @@ void Controller::loop()
         case Status::running: {
             int16_t plateTemp = calculateMaxPlateTemperature();
             for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
-                itr->setMaximumTemperature(plateTemp);
+                itr->setTargetTemperature(plateTemp);
                 itr->loop();
             }
             humidifier.loop();
