@@ -1,5 +1,5 @@
 /*
- * Beeper.h
+ * Device.h
  *
  Copyright (c) 2017 Michael Neuweiler
 
@@ -24,24 +24,19 @@
 
  */
 
-#ifndef BEEPER_H_
-#define BEEPER_H_
+#ifndef DEVICE_H_
+#define DEVICE_H_
 
-#include "Device.h"
+#include "Configuration.h"
+#include "Status.h"
 
-class Beeper : Device
+class Device
 {
 public:
-    Beeper();
-    void initialize();
-    void process();
-
-private:
-    void playSound();
-
-    Status::SystemState lastState;
-    int8_t numberOfBeeps;
-    bool soundOn;
+    Device();
+    virtual ~Device();
+    virtual void initialize();
+    virtual void process();
 };
 
-#endif /* BEEPER_H_ */
+#endif /* DEVICE_H_ */

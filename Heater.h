@@ -28,20 +28,19 @@
 #define HEATER_H_
 
 #include <Arduino.h>
-#include "config.h"
+#include "Device.h"
 
 class Heater
 {
 public:
     Heater();
-    Heater(uint8_t controlPin);
+    Heater(uint8_t index);
     virtual ~Heater();
-    void setControlPin(uint8_t controlPin);
     void setPower(uint8_t power);
     uint8_t getPower();
 
 private:
-    uint8_t controlPin;
+    uint8_t index;
     uint8_t power;
 };
 #endif /* HEATER_H_ */

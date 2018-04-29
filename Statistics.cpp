@@ -1,5 +1,5 @@
 /*
- * Beeper.h
+ * Statistics.cpp
  *
  Copyright (c) 2017 Michael Neuweiler
 
@@ -24,24 +24,53 @@
 
  */
 
-#ifndef BEEPER_H_
-#define BEEPER_H_
+#include "Statistics.h"
 
-#include "Device.h"
 
-class Beeper : Device
+Statistics::Statistics()
 {
-public:
-    Beeper();
-    void initialize();
-    void process();
+    reset();
+}
 
-private:
-    void playSound();
+Statistics::~Statistics()
+{
+}
 
-    Status::SystemState lastState;
-    int8_t numberOfBeeps;
-    bool soundOn;
-};
+/**
+ * Return the instance of the singleton
+ */
+Statistics *Statistics::getInstance()
+{
+    static Statistics instance;
+    return &instance;
+}
 
-#endif /* BEEPER_H_ */
+void Statistics::load()
+{
+    Logger::info(F("loading statistics"));
+    EEPROM.get(CONFIG_ADDRESS_STATISTICS, *getStatistics());
+    //TODO verify crc
+}
+
+void Statistics::save()
+{
+//TODO calc/update the crc's of all config
+//    configUnused.crc;
+    Logger::info(F("saving statistics"));
+    EEPROM.put(CONFIG_ADDRESS_STATISTICS, *getStatistics());
+}
+
+void Statistics::reset()
+{
+    Logger::info(F("resetting stats"));
+
+    StatisticValues *stats = getStatistics();
+
+    stats->unused = 0;
+}
+
+StatisticValues *Statistics::getStatistics()
+{
+    static StatisticValues stats;
+    return &stats;
+}

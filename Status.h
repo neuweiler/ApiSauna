@@ -29,6 +29,7 @@
 
 #include <Arduino.h>
 #include "Logger.h"
+#include "Configuration.h"
 
 class Status
 {
@@ -44,15 +45,28 @@ public:
         error = 99 // the system is in an error state and not operational
     };
 
-    Status();
+    static Status *getInstance();
     SystemState getSystemState();
     SystemState setSystemState(SystemState);
     String systemStateToStr(SystemState);
 
+    int16_t temperatureHive[CFG_MAX_NUMBER_PLATES];
+    int16_t temperaturePlate[CFG_MAX_NUMBER_PLATES];
+    int16_t temperatureTargetHive;
+    int16_t temperatureTargetPlate;
+    int16_t temperatureHumidifier;
+    uint8_t powerPlate[CFG_MAX_NUMBER_PLATES];
+    uint8_t fanSpeedPlate[CFG_MAX_NUMBER_PLATES];
+    uint8_t fanSpeedHumidifier;
+    bool vaporizerEnabled;
+    uint8_t humidity;
+
 private:
+    Status();
+    Status(Status const&); // copy disabled
+    void operator=(Status const&); // assigment disabled
+
     SystemState systemState; // the current state of the system, to be modified by the state machine of this class only
 };
-
-extern Status status;
 
 #endif /* STATUS_H_ */

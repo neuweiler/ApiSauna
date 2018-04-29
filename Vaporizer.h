@@ -28,6 +28,7 @@
 #define VAPORIZER_H_
 
 #include <Arduino.h>
+#include "Configuration.h"
 
 class Vaporizer
 {
@@ -38,14 +39,11 @@ public:
         ON
     };
     Vaporizer();
-    Vaporizer(uint8_t controlPin);
     virtual ~Vaporizer();
-    void setControlPin(uint8_t controlPin);
     void setMode(Mode mode);
     Mode getMode();
 
 private:
-    uint8_t controlPin;
     Mode mode;
 };
 

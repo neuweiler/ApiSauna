@@ -28,6 +28,7 @@
 #define FAN_H_
 
 #include <Arduino.h>
+#include "Device.h"
 
 class Fan
 {
@@ -38,8 +39,11 @@ public:
     void setControlPin(uint8_t controlPin);
     void setSpeed(uint8_t speed);
     uint8_t getSpeed();
+
 private:
+    void initializePWM();
     uint8_t controlPin;
     uint8_t speed;
+    static bool pwmInitialized;
 };
 #endif /* FAN_H_ */

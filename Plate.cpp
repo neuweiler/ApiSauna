@@ -29,48 +29,48 @@
 
 #include "Plate.h"
 
-#ifndef CFG_USE_PWM
-    uint8_t Plate::activeHeaters = 0;
-#endif
+uint8_t Plate::activeHeaters = 0;
 
-PlateConfig::PlateConfig() :
-        PlateConfig::PlateConfig(0, 0, 0, 0)
+Plate::Plate() :
+        Device()
 {
-}
-
-PlateConfig::PlateConfig(uint8_t id, uint64_t addressHeater, uint8_t heaterPin, uint8_t fanPin)
-{
-    this->sensorAddressHeater.value = addressHeater;
-    this->heaterPin = heaterPin;
-    this->fanPin = fanPin;
-    this->id = id;
-}
-
-Plate::Plate()
-{
-    currentTemperature = 0;
-    targetTemperature = 0;
-    maxPower = CFG_MAX_HEATER_POWER;
+    currentTemperature = 0.0;
+    targetTemperature = 0.0;
+    power = 0.0;
+    maxPower = 0;
+    index = 0;
     pid = NULL;
-    power = 0;
-    id = 0;
+    sensorHeater = NULL;
+    heater = NULL;
+    fan = NULL;
 }
 
-Plate::Plate(PlateConfig *config) :
-        Plate::Plate()
+void Plate::initialize()
 {
-    sensorHeater.setAddress(config->sensorAddressHeater);
-    heater.setControlPin(config->heaterPin);
-    fan.setControlPin(config->fanPin);
-    this->id = config->id;
+    Device::initialize();
+
+    maxPower = Configuration::getParams()->maxHeaterPower;
+
+    pid = new PID(&currentTemperature, &power, &targetTemperature, 0, 0, 0, DIRECT);
+    pid->SetOutputLimits(0, maxPower);
+    pid->SetSampleTime(CFG_LOOP_DELAY);
+    pid->SetMode(AUTOMATIC);
+}
+
+void Plate::initialize(uint8_t index)
+{
+    Logger::debug(F("initializing plate %d"), index + 1);
+
+    initialize();
+    this->index = index;
+    sensorHeater = new TemperatureSensor(index, true);
+    heater = new Heater(index);
+    fan = new Fan(Configuration::getIO()->fan[index]);
+    fan->setSpeed(Configuration::getParams()->minFanSpeed);
 }
 
 Plate::~Plate()
 {
-    if (pid) {
-        delete pid;
-        pid = NULL;
-    }
 }
 
 /**
@@ -91,8 +91,7 @@ int16_t Plate::getTargetTemperature()
  */
 void Plate::setMaximumPower(uint8_t power)
 {
-    this->maxPower = constrain(power, (double) 0, CFG_MAX_HEATER_POWER);
-    checkPid();
+    this->maxPower = constrain(power, (double ) 0, Configuration::getParams()->maxHeaterPower);
     pid->SetOutputLimits(0, this->maxPower);
 }
 
@@ -106,7 +105,8 @@ uint8_t Plate::getMaximumPower()
  */
 void Plate::setFanSpeed(uint8_t speed)
 {
-    fan.setSpeed(speed);
+    fan->setSpeed(speed);
+    Status::getInstance()->fanSpeedPlate[index] = speed;
 }
 
 /**
@@ -114,7 +114,6 @@ void Plate::setFanSpeed(uint8_t speed)
  */
 void Plate::setPIDTuning(double kp, double ki, double kd)
 {
-    checkPid();
     pid->SetTunings(kp, ki, kd);
 }
 
@@ -123,7 +122,7 @@ void Plate::setPIDTuning(double kp, double ki, double kd)
  */
 int16_t Plate::getTemperature()
 {
-    return sensorHeater.getTemperatureCelsius();
+    return sensorHeater->getTemperatureCelsius();
 }
 
 /**
@@ -131,7 +130,7 @@ int16_t Plate::getTemperature()
  */
 uint8_t Plate::getPower()
 {
-    return heater.getPower();
+    return heater->getPower();
 }
 
 /**
@@ -139,53 +138,41 @@ uint8_t Plate::getPower()
  */
 uint8_t Plate::getFanSpeed()
 {
-    return fan.getSpeed();
+    return fan->getSpeed();
 }
 
 /**
- * Get the plate's id.
+ * Get the plate's index.
  */
-uint8_t Plate::getId()
+uint8_t Plate::getIndex()
 {
-    return id;
-}
-
-void Plate::checkPid()
-{
-    // need to do late init because if placed into list, object is duplicated and addresses of PID variables shift again
-    if (!pid) {
-        pid = new PID(&currentTemperature, &power, &targetTemperature, 0, 0, 0, DIRECT);
-        pid->SetOutputLimits(0, maxPower);
-        pid->SetSampleTime(CFG_LOOP_DELAY);
-        pid->SetMode(AUTOMATIC);
-    }
+    return index;
 }
 
 uint8_t Plate::calculateHeaterPower()
 {
     double oldPower = power;
 
-    checkPid();
-    pid->Compute();
-    if (currentTemperature > CFG_PLATE_OVER_TEMPERATURE) {
-        Logger::error("!!!!! ALERT !!!!! Plate %d is over-heating !!!", id);
-        status.setSystemState(Status::overtemp);
+    pid->Compute(); // updates power
+    if (currentTemperature > Configuration::getParams()->plateOverTemp) {
+        Logger::error(F("ALERT !!! Plate %d is over-heating !!!"), index + 1);
+        Status::getInstance()->setSystemState(Status::overtemp);
         power = 0;
     }
-#ifdef CFG_USE_PWM
-    return constrain(power, (double )0, maxPower);
-#else
-    if ((power == CFG_MAX_HEATER_POWER) && (activeHeaters < CFG_MAX_CONCURRENT_HEATERS)) {
-        activeHeaters++;
-        return 255;
-    } else {
-        if (oldPower > 0 && activeHeaters > 0) {
-            activeHeaters--;
-        }
-        return 0;
-    }
-#endif
 
+    if (Configuration::getParams()->usePWM) {
+        return constrain(power, (double )0, maxPower);
+    } else {
+        if ((power > Configuration::getParams()->maxHeaterPower / 2) && (activeHeaters < Configuration::getParams()->maxConcurrentHeaters)) {
+            activeHeaters++;
+            return 255;
+        } else {
+            if (oldPower > 0 && activeHeaters > 0) {
+                activeHeaters--;
+            }
+            return 0;
+        }
+    }
 }
 
 /**
@@ -193,10 +180,15 @@ uint8_t Plate::calculateHeaterPower()
  * It re-calculates the power and fan speed according to current
  * settings and sensor data.
  */
-void Plate::loop()
+void Plate::process()
 {
-    sensorHeater.retrieveData();
-    currentTemperature = sensorHeater.getTemperatureCelsius();
+    Device::process();
+    sensorHeater->retrieveData();
+    currentTemperature = sensorHeater->getTemperatureCelsius();
+    Status::getInstance()->temperaturePlate[index] = currentTemperature;
 
-    heater.setPower(calculateHeaterPower());
+    uint8_t power = calculateHeaterPower();
+    Status::getInstance()->powerPlate[index] = power;
+    heater->setPower(power);
+
 }

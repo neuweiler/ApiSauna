@@ -28,31 +28,28 @@
 
 #include "Beeper.h"
 
-Beeper::Beeper()
+Beeper::Beeper() : Device()
 {
-    controlPin = 0;
     lastState = Status::init;
     numberOfBeeps = 0;
     soundOn = false;
 }
 
-Beeper::~Beeper()
+void Beeper::initialize()
 {
+    Device::initialize();
+    uint8_t pin = Configuration::getIO()->beeper;
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW);
 }
 
-void Beeper::setControlPin(uint8_t controlPin)
+void Beeper::process()
 {
-    this->controlPin = controlPin;
-    pinMode(controlPin, OUTPUT);
-    digitalWrite(controlPin, LOW);
-}
-
-void Beeper::loop()
-{
-    Status::SystemState state = status.getSystemState();
+    Device::process();
+    Status::SystemState state = Status::getInstance()->getSystemState();
 
     if (lastState != state) {
-        switch (status.getSystemState()) {
+        switch (state) {
         case Status::overtemp:
             numberOfBeeps = -1; // unlimited
             break;
@@ -74,5 +71,5 @@ void Beeper::loop()
     } else if (numberOfBeeps != 0) {
         soundOn = true;
     }
-    analogWrite(controlPin, (soundOn ? 20 : 0));
+    analogWrite(Configuration::getIO()->beeper, (soundOn ? 20 : 0));
 }

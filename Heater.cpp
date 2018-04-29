@@ -38,32 +38,26 @@ Heater::Heater() : Heater::Heater(0)
 /**
  * Constructor, specify PWM pin to control the power of the heater.
  */
-Heater::Heater(uint8_t controlPin)
+Heater::Heater(uint8_t index)
 {
-    setControlPin(controlPin);
+    this->index = constrain(index, 0, CFG_MAX_NUMBER_PLATES - 1);
+    pinMode(Configuration::getIO()->heater[this->index], OUTPUT);
+    setPower(0);
 }
 
 Heater::~Heater()
 {
     setPower(0);
-    this->controlPin = 0;
-}
-
-void Heater::setControlPin(uint8_t controlPin) {
-    this->controlPin = controlPin;
-    pinMode(controlPin, OUTPUT);
-    setPower(0);
 }
 
 /**
- * Set the power of the heater (value 0-255)
+ * Set the power of the heater (value 0-255).
+ * The value is automatically limited to the configured max HeaterPower
  */
 void Heater::setPower(uint8_t power)
 {
-    if ((controlPin >= 2 && controlPin <= 13) || (controlPin >= 44 && controlPin <= 46)) {
-        this->power = power;
-        analogWrite(controlPin, this->power);
-    }
+    this->power = power;
+    analogWrite(Configuration::getIO()->heater[index], this->power);
 }
 
 uint8_t Heater::getPower() {

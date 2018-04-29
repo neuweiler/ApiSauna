@@ -31,9 +31,10 @@
 #define HID_H_
 
 #include <Arduino.h>
-#include "SimpleList.h"
-#include "Controller.h"
 #include <LiquidCrystal.h>
+#include "SimpleList.h"
+#include "Device.h"
+#include "ProgramHandler.h"
 
 enum Action {
     START_PROGRAM,
@@ -57,13 +58,12 @@ public:
     SimpleList<SubMenuEntry> subMenuEntries;
 };
 
-class HID
+class HID : Device
 {
 public:
     HID();
-    virtual ~HID();
-    void init();
-    void loop();
+    void initialize();
+    void process();
 
 private:
     enum Button
@@ -92,7 +92,5 @@ private:
     uint8_t tickCounter;
     char lcdBuffer[21];
 };
-
-extern HID hid;
 
 #endif /* HID_H_ */

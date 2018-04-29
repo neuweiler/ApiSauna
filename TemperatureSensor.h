@@ -27,24 +27,10 @@
 #ifndef TEMPERATURESENSOR_H_
 #define TEMPERATURESENSOR_H_
 
-#include "config.h"
-#include "Logger.h"
+#include <Arduino.h>
 #include <OneWire.h>
-
-typedef union {
-    uint64_t value;
-    struct {
-        uint32_t low;
-        uint32_t high;
-    };
-    struct {
-        uint16_t s0;
-        uint16_t s1;
-        uint16_t s2;
-        uint16_t s3;
-    };
-    uint8_t byte[8];
-} SensorAddress;
+#include "Configuration.h"
+#include "Logger.h"
 
 class TemperatureSensor
 {
@@ -58,7 +44,7 @@ public:
     };
 
     TemperatureSensor();
-    TemperatureSensor(SensorAddress sensorAddress);
+    TemperatureSensor(uint8_t index, bool plate);
     static void prepareData();
     static void resetSearch();
     static SensorAddress search();
@@ -73,9 +59,11 @@ public:
 protected:
 
 private:
+    uint8_t index;
     SensorAddress address;
     DeviceType type;
     int16_t temperature; // integer representation of temperature
+    static OneWire *ds;
 };
 
 #endif /* TEMPERATURESENSOR_H_ */

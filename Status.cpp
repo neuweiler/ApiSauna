@@ -29,14 +29,30 @@
 
 #include "Status.h"
 
-Status status;
-
 /*
  * Constructor
  */
 Status::Status()
 {
     systemState = init;
+    for (int i = 0; i < CFG_MAX_NUMBER_PLATES; i++) {
+        temperatureHive[i] = 0;
+        temperaturePlate[i] = 0;
+        powerPlate[i] = 0;
+        fanSpeedPlate[i] = 0;
+    }
+    temperatureTargetHive = 0;
+    temperatureTargetPlate = 0;
+    temperatureHumidifier = 0;
+    fanSpeedHumidifier = 0;
+    vaporizerEnabled = false;
+    humidity = 0;
+
+}
+
+Status *Status::getInstance() {
+    static Status instance;
+    return &instance;
 }
 
 /*
@@ -73,6 +89,11 @@ Status::SystemState Status::setSystemState(SystemState newSystemState)
                 systemState = newSystemState;
             }
             break;
+        case shutdown:
+            if (newSystemState == preHeat || newSystemState == running) {
+                systemState = newSystemState;
+            }
+            break;
         case preHeat:
             if (newSystemState == running || newSystemState == shutdown) {
                 systemState = newSystemState;
@@ -91,9 +112,9 @@ Status::SystemState Status::setSystemState(SystemState newSystemState)
         }
     }
     if (systemState == newSystemState) {
-        Logger::info("switching to system state '%s'", systemStateToStr(systemState).c_str());
+        Logger::info(F("switching to state '%s'"), systemStateToStr(systemState).c_str());
     } else {
-        Logger::error("switching from system state '%s' to '%s' is not allowed", systemStateToStr(systemState).c_str(), systemStateToStr(newSystemState).c_str());
+        Logger::error(F("switching from state '%s' to '%s' is not allowed"), systemStateToStr(systemState).c_str(), systemStateToStr(newSystemState).c_str());
         systemState = error;
     }
 
@@ -107,20 +128,19 @@ String Status::systemStateToStr(SystemState state)
 {
     switch (state) {
     case init:
-        return "initializing";
+        return F("initializing");
     case ready:
-        return "ready";
+        return F("ready");
     case preHeat:
-        return "pre-heating";
+        return F("pre-heating");
     case running:
-        return "running";
+        return F("running");
     case overtemp:
-        return "over-temperature";
+        return F("over-temperature");
     case shutdown:
-        return "shut-down";
+        return F("shut-down");
     case error:
-        return "error";
+        return F("error");
     }
-    Logger::error("the system state is invalid, contact your support!");
-    return "invalid";
+    return F("invalid");
 }

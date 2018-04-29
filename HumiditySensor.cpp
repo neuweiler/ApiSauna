@@ -31,13 +31,6 @@
 HumiditySensor::HumiditySensor()
 {
     dht = NULL;
-    controlPin = 0;
-}
-
-HumiditySensor::HumiditySensor(uint8_t controlPin)
-{
-    dht = NULL;
-    setControlPin(controlPin);
 }
 
 HumiditySensor::~HumiditySensor()
@@ -46,17 +39,14 @@ HumiditySensor::~HumiditySensor()
         delete dht;
         dht = NULL;
     }
-    controlPin = 0;
 }
 
-void HumiditySensor::setControlPin(uint8_t controlPin)
+void HumiditySensor::init()
 {
-    this->controlPin = controlPin;
     if (dht != NULL) {
         delete dht;
     }
-    dht = new DHT(controlPin, DHT11);
-//    dht = new DHT(controlPin, DHT22);
+    dht = new DHT(Configuration::getIO()->humiditySensor, Configuration::getIO()->humiditySensorType);
     dht->begin();
 }
 

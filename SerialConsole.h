@@ -29,15 +29,14 @@
 
 #include <Arduino.h>
 #include "Logger.h"
-#include "Status.h"
-#include "Controller.h"
+#include "Device.h"
+#include "ProgramHandler.h"
 
-class SerialConsole
+class SerialConsole : Device
 {
 public:
     SerialConsole();
-    virtual ~SerialConsole();
-    void loop();
+    void process();
     void printMenu();
 
 private:
@@ -47,7 +46,5 @@ private:
     bool handleShortCmd();
     bool handleCmd();
 };
-
-extern SerialConsole serialConsole;
 
 #endif /* SERIALCONSOLE_H_ */

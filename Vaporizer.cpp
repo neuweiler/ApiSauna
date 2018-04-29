@@ -30,33 +30,21 @@
 
 Vaporizer::Vaporizer()
 {
-    controlPin = 0;
+    pinMode(Configuration::getIO()->vaporizer, OUTPUT);
+    setMode(OFF);
     mode = OFF;
-}
-
-Vaporizer::Vaporizer(uint8_t controlPin)
-{
-    setControlPin(controlPin);
 }
 
 Vaporizer::~Vaporizer()
 {
     setMode(OFF);
-    controlPin = 0;
-}
-
-void Vaporizer::setControlPin(uint8_t controlPin)
-{
-    this->controlPin = controlPin;
-    pinMode(controlPin, OUTPUT);
-    setMode(OFF);
 }
 
 void Vaporizer::setMode(Mode mode)
 {
-    if (controlPin != 0) {
+    if (Configuration::getIO()->vaporizer != 0) {
         this->mode = mode;
-        digitalWrite(controlPin, (mode == ON));
+        digitalWrite(Configuration::getIO()->vaporizer, (this->mode == ON ? HIGH : LOW));
     }
 }
 

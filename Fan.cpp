@@ -28,6 +28,8 @@
 
 #include "Fan.h"
 
+bool Fan::pwmInitialized = false;
+
 /**
  * Constructor.
  */
@@ -37,9 +39,14 @@ Fan::Fan() : Fan::Fan(0)
 
 /**
  * Constructor, specify PWM pin to control the speed of the fan.
+ * Also initialize the PWM timers the first time.
  */
 Fan::Fan(uint8_t controlPin)
 {
+    if (!pwmInitialized) {
+        initializePWM();
+    }
+
     setControlPin(controlPin);
 }
 
@@ -49,9 +56,6 @@ Fan::~Fan()
     this->controlPin = 0;
 }
 
-/**
- * Set the control pin for the fan
- */
 void Fan::setControlPin(uint8_t controlPin) {
     this->controlPin = controlPin;
     pinMode(controlPin, OUTPUT);
@@ -59,14 +63,37 @@ void Fan::setControlPin(uint8_t controlPin) {
 }
 
 /**
+ * Configure the PWM ports and adjust the timers so the PWM frequency is usable to control
+ * PWM fans and the heaters.
+ *
+ * The default PWM frequency is 490 Hz for all pins except pin 13 and 4, which use 980 Hz
+ * The AT Mega 2560 provides the following timers:
+ *  #0 8bit  (pin 13, 4)      : reserved (affects timing functions like delay() and millis())
+ *  #1 16bit (pin 11, 12)     : heater #1 and #2
+ *  #2 8bit  (pin 9, 10)      : reserved (used for tone())
+ *  #3 16bit (pin 2, 3, 5)    : heater #3 - #4, vaporizer
+ *  #4 16bit (pin 6, 7, 8)    : humidifier fan, fans #1 - #2
+ *  #5 16bit (pin 44, 45, 46) : fans #3 - #4, reserve
+ */
+void Fan::initializePWM()
+{
+    // set timer 4 to 31kHz for controlling PWM fans
+    TCCR4B &= ~7;
+    TCCR4B |= 1;
+    // set timer 5 to 31kHz for controlling PWM fans
+    TCCR5B &= ~7;
+    TCCR5B |= 1;
+
+    pwmInitialized = true;
+}
+
+/**
  * Set the speed of the fan (value 0-255)
  */
 void Fan::setSpeed(uint8_t speed)
 {
-    if ((controlPin >= 2 && controlPin <= 13) || (controlPin >= 44 && controlPin <= 46)) {
-        this->speed = constrain(speed, 0, 255);
-        analogWrite(controlPin, this->speed);
-    }
+    this->speed = speed;
+    analogWrite(controlPin, this->speed);
 }
 
 /**

@@ -29,45 +29,13 @@
 
 #include "Humidifier.h"
 
-Humidifier::Humidifier()
+Humidifier::Humidifier() : Device()
 {
     maximumHumidity = 0;
     minimumHumidity = 0;
     humidity = 0;
     fanSpeed = 0;
-}
-
-Humidifier::Humidifier(uint8_t sensorPin, uint8_t fanPin, uint8_t vaporizerPin)
-{
-    sensor.setControlPin(sensorPin);
-    fan.setControlPin(fanPin);
-    vaporizer.setControlPin(vaporizerPin);
-    maximumHumidity = 0;
-    minimumHumidity = 0;
-    humidity = 0;
-    fanSpeed = 0;
-}
-
-Humidifier::~Humidifier()
-{
-    minimumHumidity = 0;
-    maximumHumidity = 0;
-    humidity = 0;
-}
-
-void Humidifier::setSensorPin(uint8_t sensorPin)
-{
-    sensor.setControlPin(sensorPin);
-}
-
-void Humidifier::setFanPin(uint8_t fanPin)
-{
-    fan.setControlPin(fanPin);
-}
-
-void Humidifier::setVaporizerPin(uint8_t vaporizerPin)
-{
-    vaporizer.setControlPin(vaporizerPin);
+    temperature = 0;
 }
 
 void Humidifier::setMaxHumidity(uint8_t maxHumidity)
@@ -90,16 +58,6 @@ uint8_t Humidifier::getMinHumidity()
     return minimumHumidity;
 }
 
-uint8_t Humidifier::getHumidity()
-{
-    return humidity;
-}
-
-int16_t Humidifier::getTemperature()
-{
-    return temperature;
-}
-
 void Humidifier::setFanSpeed(uint8_t speed)
 {
     fanSpeed = speed;
@@ -110,23 +68,49 @@ uint8_t Humidifier::getFanSpeed()
     return fan.getSpeed();
 }
 
+uint8_t Humidifier::getHumidity()
+{
+    return humidity;
+}
+
+int16_t Humidifier::getTemperature()
+{
+    return temperature;
+}
+
 Vaporizer::Mode Humidifier::getVaporizerMode()
 {
     return vaporizer.getMode();
 }
 
-void Humidifier::loop()
+void Humidifier::initialize() {
+    Device::initialize();
+    sensor.init();
+    fan.setControlPin(Configuration::getIO()->humidifierFan);
+}
+
+void Humidifier::process()
 {
+    Device::process();
+    Status *status = Status::getInstance();
     humidity = sensor.getRelativeHumidity();
     temperature = sensor.getTemperature();
 
     if (humidity != 0 && humidity < minimumHumidity) {
         fan.setSpeed(fanSpeed);
         vaporizer.setMode(Vaporizer::ON);
-    }
+        status->vaporizerEnabled = true;
+        status->fanSpeedHumidifier = fanSpeed;
+   }
 
     if (humidity >= maximumHumidity) {
         fan.setSpeed(0);
         vaporizer.setMode(Vaporizer::OFF);
+        status->vaporizerEnabled = false;
+        status->fanSpeedHumidifier = 0;
     }
+
+    status->humidity = humidity;
+    status->temperatureHumidifier = temperature;
+
 }

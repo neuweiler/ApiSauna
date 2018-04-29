@@ -28,10 +28,7 @@
 #define APISAUNA_H_
 
 #include <Arduino.h>
-#include "Status.h"
 #include "Controller.h"
-#include "HID.h"
-#include "SerialConsole.h"
 
 #ifdef __cplusplus
 extern "C"

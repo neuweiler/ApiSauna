@@ -159,26 +159,26 @@ boolean Logger::isDebug()
  */
 void Logger::log(LogLevel level, String format, va_list args)
 {
-    String logLevel = "DEBUG";
+    String logLevel = F("DEBUG");
     lastLogTime = millis();
 
     switch (level) {
     case Info:
-        logLevel = "INFO";
+        logLevel = F("INFO");
         break;
     case Warn:
-        logLevel = "WARNING";
+        logLevel = F("WARNING");
         break;
     case Error:
-        logLevel = "ERROR";
+        logLevel = F("ERROR");
         break;
     }
     vsnprintf(msgBuffer, CFG_LOG_BUFFER_SIZE, format.c_str(), args);
 
     // print to serial USB
     Serial.print(lastLogTime);
-    Serial.print(" - ");
+    Serial.print(F(" - "));
     Serial.print(logLevel);
-    Serial.print(": ");
+    Serial.print(F(": "));
     Serial.println(msgBuffer);
 }

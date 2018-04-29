@@ -1,5 +1,7 @@
 /*
- * Beeper.h
+ * Device.cpp
+ *
+ * The base class for all devices
  *
  Copyright (c) 2017 Michael Neuweiler
 
@@ -24,24 +26,28 @@
 
  */
 
-#ifndef BEEPER_H_
-#define BEEPER_H_
-
 #include "Device.h"
 
-class Beeper : Device
+Device::Device()
 {
-public:
-    Beeper();
-    void initialize();
-    void process();
 
-private:
-    void playSound();
+}
 
-    Status::SystemState lastState;
-    int8_t numberOfBeeps;
-    bool soundOn;
-};
+Device::~Device()
+{
+}
 
-#endif /* BEEPER_H_ */
+/**
+ * Initialize the device.
+ * Note: Most devices depend on a pre-loaded configuration!
+ */
+void Device::initialize()
+{
+}
+
+/**
+ * The controller regularly calls this to allow the device to process its data/input/output
+ */
+void Device::process()
+{
+}

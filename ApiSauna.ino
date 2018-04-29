@@ -1,8 +1,7 @@
 /*
- * ApiSauna.cpp
+ * ApiSauna.ino
  *
- * Main part of the bee sauna control software. It initializes all devices
- * and controls the main loop.
+ * The main application, hands over control to the Controller class.
  *
  Copyright (c) 2017 Michael Neuweiler
 
@@ -29,93 +28,23 @@
 
 #include "ApiSauna.h"
 
-Configuration config;
-SerialConsole serialConsole;
-Controller controller;
-HID hid;
-
 /**
- * Configure the PWM ports and adjust the timers so the PWM frequency is usable to control
- * PWM fans and the heaters.
- *
- * The default PWM frequency is 490 Hz for all pins except pin 13 and 4, which use 980 Hz
- * The AT Mega 2560 provides the following timers:
- *  #0 8bit  (pin 13, 4)      : reserved (affects timing functions like delay() and millis())
- *  #1 16bit (pin 11, 12)     : heater #1 and #2
- *  #2 8bit  (pin 9, 10)      : reserved (used for tone())
- *  #3 16bit (pin 2, 3, 5)    : heater #3 - #4, vaporizer
- *  #4 16bit (pin 6, 7, 8)    : humidifier fan, fans #1 - #2
- *  #5 16bit (pin 44, 45, 46) : fans #3 - #4, reserve
+ * The initial setup function called after device reset/power-up
  */
-void configurePwm()
-{
-    // prepare pins
-    pinMode(CFG_IO_HEATER_MAIN_SWITCH, OUTPUT);
-    digitalWrite(CFG_IO_HEATER_MAIN_SWITCH, LOW);
-    pinMode(CFG_IO_HEATER_1, OUTPUT);
-    analogWrite(CFG_IO_HEATER_1, 0);
-    pinMode(CFG_IO_HEATER_2, OUTPUT);
-    analogWrite(CFG_IO_HEATER_2, 0);
-    pinMode(CFG_IO_HEATER_3, OUTPUT);
-    analogWrite(CFG_IO_HEATER_3, 0);
-    pinMode(CFG_IO_HEATER_4, OUTPUT);
-    analogWrite(CFG_IO_HEATER_4, 0);
-    pinMode(CFG_IO_FAN_1, OUTPUT);
-    analogWrite(CFG_IO_FAN_1, CFG_MIN_FAN_SPEED);
-    pinMode(CFG_IO_FAN_2, OUTPUT);
-    analogWrite(CFG_IO_FAN_2, CFG_MIN_FAN_SPEED);
-    pinMode(CFG_IO_FAN_3, OUTPUT);
-    analogWrite(CFG_IO_FAN_3, CFG_MIN_FAN_SPEED);
-    pinMode(CFG_IO_FAN_4, OUTPUT);
-    analogWrite(CFG_IO_FAN_4, CFG_MIN_FAN_SPEED);
-    pinMode(CFG_IO_VAPORIZER, OUTPUT);
-    analogWrite(CFG_IO_VAPORIZER, 0);
-    pinMode(CFG_IO_FAN_HUMIDIFIER, OUTPUT);
-    analogWrite(CFG_IO_FAN_HUMIDIFIER, 0);
-
-    // set timer 4+5 to 31kHz for controlling PWM fans
-    TCCR4B &= ~7;
-    TCCR4B |= 1;
-    TCCR5B &= ~7;
-    TCCR5B |= 1;
-}
-
-void resetOutput()
-{
-    digitalWrite(CFG_IO_HEATER_MAIN_SWITCH, LOW);
-    analogWrite(CFG_IO_HEATER_1, 0);
-    analogWrite(CFG_IO_HEATER_2, 0);
-    analogWrite(CFG_IO_HEATER_3, 0);
-    analogWrite(CFG_IO_HEATER_4, 0);
-    analogWrite(CFG_IO_FAN_1, CFG_MIN_FAN_SPEED);
-    analogWrite(CFG_IO_FAN_2, CFG_MIN_FAN_SPEED);
-    analogWrite(CFG_IO_FAN_3, CFG_MIN_FAN_SPEED);
-    analogWrite(CFG_IO_FAN_4, CFG_MIN_FAN_SPEED);
-    analogWrite(CFG_IO_VAPORIZER, 0);
-    analogWrite(CFG_IO_FAN_HUMIDIFIER, 0);
-}
-
 void setup()
 {
-    configurePwm(); // do this asap to keep the levels low
-
     Serial.begin(CFG_SERIAL_SPEED);
     Serial.println(CFG_VERSION);
 
-    controller.init();
-    hid.init();
-
-    status.setSystemState(Status::ready);
-
-    resetOutput(); // just to be on the safe side...
-    serialConsole.printMenu();
+    Controller::getSetupLoopInstance()->initialize();
 }
 
+/**
+ * The main program loop
+ */
 void loop()
 {
-    serialConsole.loop();
-    controller.loop();
-    hid.loop();
+    Controller::getSetupLoopInstance()->process();
 
     delay(CFG_LOOP_DELAY);
 }

@@ -1,5 +1,7 @@
 /*
- * Beeper.h
+ * Statistics.h
+ *
+ *  Statistics stored in EEPROM. Align with addresses in Configuration.cpp
  *
  Copyright (c) 2017 Michael Neuweiler
 
@@ -24,24 +26,38 @@
 
  */
 
-#ifndef BEEPER_H_
-#define BEEPER_H_
+#ifndef STATISTICS_H_
+#define STATISTICS_H_
 
-#include "Device.h"
+#include "config.h"
+#include "Logger.h"
+#include <EEPROM.h>
 
-class Beeper : Device
-{
+#define CONFIG_ADDRESS_STATISTICS   768
+
+class StatisticValues {
 public:
-    Beeper();
-    void initialize();
-    void process();
+    uint32_t crc; // 0-3
 
-private:
-    void playSound();
-
-    Status::SystemState lastState;
-    int8_t numberOfBeeps;
-    bool soundOn;
+    uint8_t unused;
+    // 5 bytes used
 };
 
-#endif /* BEEPER_H_ */
+
+class Statistics
+{
+public:
+    static Statistics *getInstance();
+    static StatisticValues *getStatistics();
+    virtual ~Statistics();
+    void load();
+    void save();
+    void reset();
+
+private:
+    Statistics();
+    Statistics(Statistics const&); // copy disabled
+    void operator=(Statistics const&); // assigment disabled
+};
+
+#endif /* STATISTICS_H_ */

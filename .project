@@ -34,12 +34,12 @@
 		<link>
 			<name>core/core</name>
 			<type>2</type>
-			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/arduino/hardware/avr/1.6.19/cores/arduino</locationURI>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/arduino/hardware/avr/1.6.11/cores/arduino</locationURI>
 		</link>
 		<link>
 			<name>core/variant</name>
 			<type>2</type>
-			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/arduino/hardware/avr/1.6.19/variants/mega</locationURI>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/arduino/hardware/avr/1.6.11/variants/mega</locationURI>
 		</link>
 		<link>
 			<name>libraries/Adafruit_Unified_Sensor</name>
@@ -54,22 +54,22 @@
 		<link>
 			<name>libraries/EEPROM</name>
 			<type>2</type>
-			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/arduino/hardware/avr/1.6.19/libraries/EEPROM</locationURI>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/arduino/hardware/avr/1.6.11/libraries/EEPROM</locationURI>
 		</link>
 		<link>
 			<name>libraries/LiquidCrystal</name>
 			<type>2</type>
-			<location>ECLIPSE_HOME/arduinoPlugin/libraries/LiquidCrystal/1.0.4</location>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/libraries/LiquidCrystal/1.0.4</locationURI>
 		</link>
 		<link>
 			<name>libraries/OneWire</name>
 			<type>2</type>
-			<location>ECLIPSE_HOME/arduinoPlugin/libraries/OneWire/2.3.3</location>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/libraries/OneWire/2.3.3</locationURI>
 		</link>
 		<link>
 			<name>libraries/PID</name>
 			<type>2</type>
-			<location>ECLIPSE_HOME/arduinoPlugin/libraries/PID/1.2.0</location>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/libraries/PID/1.2.0</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

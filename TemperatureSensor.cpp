@@ -28,13 +28,14 @@
 
 #include "TemperatureSensor.h"
 
-static OneWire ds(CFG_IO_TEMPERATURE_SENSOR); // DS18B20 Temperature chip i/o
+OneWire *TemperatureSensor::ds = NULL;
 
 /**
  * Constructor
  */
 TemperatureSensor::TemperatureSensor()
 {
+    index = 0;
     temperature = 0;
     type = UNKNOWN;
 }
@@ -42,10 +43,13 @@ TemperatureSensor::TemperatureSensor()
 /**
  * Constructor
  */
-TemperatureSensor::TemperatureSensor(SensorAddress address)
+TemperatureSensor::TemperatureSensor(uint8_t index, bool plate)
 {
     temperature = 0;
-    setAddress(address);
+    setAddress((plate ? Configuration::getSensor()->addressPlate[index] : Configuration::getSensor()->addressHive[index]));
+    if (ds == NULL) {
+        ds = new OneWire(Configuration::getIO()->temperatureSensor);
+    }
 }
 
 /**
@@ -63,16 +67,16 @@ String TemperatureSensor::getTypeStr()
 {
     switch (type) {
     case TemperatureSensor::DS18S20:
-        return "DS18S20";
+        return F("DS18S20");
         break;
     case TemperatureSensor::DS18B20:
-        return "DS18B20";
+        return F("DS18B20");
         break;
     case TemperatureSensor::DS1822:
-        return "DS1822";
+        return F("DS1822");
         break;
     default:
-        return "unknown";
+        return F("unknown");
         break;
     }
 }
@@ -102,7 +106,6 @@ void TemperatureSensor::setAddress(SensorAddress address)
     }
 }
 
-
 /**
  * Set the resolution of the DS18B20 between 9 or 12 bits.
  */
@@ -124,13 +127,13 @@ void TemperatureSensor::setResolution(byte resolution)
     }
 
     // set configuration
-    ds.reset();
-    ds.select(address.byte);
-    ds.write(0x4E);			// write scratchpad
-    ds.write(0);				// TL
-    ds.write(0);				// TH
-    ds.write(resolutionByte);	// configuration register
-    ds.write(0x48);			// copy scratchpad
+    ds->reset();
+    ds->select(address.byte);
+    ds->write(0x4E);			// write scratchpad
+    ds->write(0);				// TL
+    ds->write(0);				// TH
+    ds->write(resolutionByte);	// configuration register
+    ds->write(0x48);			// copy scratchpad
 }
 
 /**
@@ -138,9 +141,9 @@ void TemperatureSensor::setResolution(byte resolution)
  */
 void TemperatureSensor::prepareData()
 {
-    ds.reset();
-    ds.skip(); // skip ROM - send to all devices
-    ds.write(0x44); // start conversion
+    ds->reset();
+    ds->skip(); // skip ROM - send to all devices
+    ds->write(0x44); // start conversion
 }
 
 /**
@@ -150,10 +153,10 @@ void TemperatureSensor::retrieveData()
 {
     byte data[9];
 
-    ds.reset();
-    ds.select(address.byte);
-    ds.write(0xBE); // read scratchpad
-    ds.read_bytes(data, 9); // 9 bytes are required
+    ds->reset();
+    ds->select(address.byte);
+    ds->write(0xBE); // read scratchpad
+    ds->read_bytes(data, 9); // 9 bytes are required
 
     temperature = (data[1] << 8) | data[0];
 
@@ -195,7 +198,10 @@ int16_t TemperatureSensor::getTemperatureFahrenheit()
  */
 void TemperatureSensor::resetSearch()
 {
-    ds.reset_search();
+    if (ds == NULL) {
+        ds = new OneWire(Configuration::getIO()->temperatureSensor);
+    }
+    ds->reset_search();
 }
 
 /**
@@ -207,9 +213,9 @@ SensorAddress TemperatureSensor::search()
     SensorAddress addr;
 
     addr.value = 0;
-    if (ds.search(addr.byte)) {
+    if (ds->search(addr.byte)) {
         if (OneWire::crc8(addr.byte, 7) != addr.byte[7]) {
-            Logger::error("temperature sensor: invalid CRC!\n");
+            Logger::error(F("temperature sensor: invalid CRC!\n"));
             addr.value = 0;
         }
     }

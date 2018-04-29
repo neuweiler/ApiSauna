@@ -31,19 +31,18 @@
 #include <DHT.h>
 #include <DHT_U.h>
 #include <Adafruit_Sensor.h>
+#include "Configuration.h"
 
 class HumiditySensor
 {
 public:
     HumiditySensor();
-    HumiditySensor(uint8_t controlPin);
     virtual ~HumiditySensor();
-    void setControlPin(uint8_t controlPin);
+    void init();
     uint8_t getRelativeHumidity();
     int16_t getTemperature();
 
 private:
-    uint8_t controlPin;
     DHT *dht;
 };
 
