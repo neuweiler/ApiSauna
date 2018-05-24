@@ -111,14 +111,14 @@ void ProgramHandler::initPrograms()
 
     Program programMeltHoney;
     snprintf(programMeltHoney.name, 16, "Melt Honey");
-    programMeltHoney.temperaturePreHeat = 400;
+    programMeltHoney.temperaturePreHeat = 300;
     programMeltHoney.fanSpeedPreHeat = 0;
     programMeltHoney.durationPreHeat = 0;
-    programMeltHoney.temperatureHive = 400;
+    programMeltHoney.temperatureHive = 300;
     programMeltHoney.hiveKp = 8.0;
     programMeltHoney.hiveKi = 0.2;
     programMeltHoney.hiveKd = 5.0;
-    programMeltHoney.temperaturePlate = 600;
+    programMeltHoney.temperaturePlate = 500;
     programMeltHoney.plateKp = 4.0;
     programMeltHoney.plateKi = 0.09;
     programMeltHoney.plateKd = 50.0;
