@@ -58,6 +58,7 @@ public:
     uint8_t powerPlate[CFG_MAX_NUMBER_PLATES];
     uint8_t fanSpeedPlate[CFG_MAX_NUMBER_PLATES];
     uint8_t fanSpeedHumidifier;
+    uint32_t fanTimeHumidifier;
     bool vaporizerEnabled;
     uint8_t humidity;
 

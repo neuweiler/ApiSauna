@@ -90,6 +90,7 @@ void SerialConsole::printMenu()
     Logger::console(F("MAX_HEAT_PWR=%d - maximum heater power in PWM mode (0-255, default: 170)"), configParams->maxHeaterPower);
     Logger::console(F("MIN_FAN_SPEED=%d - minimum fan speed level (0-255, default: 10)"), configParams->minFanSpeed);
     Logger::console(F("PWM=%d - enable/disable PWM (0=off, 1=on, default: 0)"), configParams->usePWM);
+    Logger::console(F("HUMID_DRY=%d - extended run time to allow humidifier fan to dry (0-255 min, default: 2)"), configParams->humidifierFanDryTime);
 
     ConfigurationSensor *configSensor = Configuration::getSensor();
     for (int i = 0; i < configParams->numberOfPlates; i++) {
@@ -293,6 +294,10 @@ bool SerialConsole::handleCmd()
         value = constrain(value, 0, CFG_MAX_NUMBER_PLATES);
         Logger::console(F("setting PWM to %d"), value);
         configParams->usePWM = value;
+    } else if (command == String(F("HUMID_DRY"))) {
+        value = constrain(value, 0, 255);
+        Logger::console(F("setting dry time of humidifier fan to %d min"), value);
+        configParams->humidifierFanDryTime = value;
     } else if (command.startsWith(String(F("ADDR_HIVE")))) {
         value = constrain(value, 0, CFG_MAX_NUMBER_PLATES);
 //        uint8_t index = getIndex(command);

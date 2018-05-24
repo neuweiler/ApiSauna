@@ -166,6 +166,7 @@ void Configuration::reset()
     configParams->plateOverTemp = 850;
     configParams->usePWM = 0;
     configParams->maxConcurrentHeaters = 2;
+    configParams->humidifierFanDryTime = 2;
 
 //TODO remove this, it's only temporary to ease testing
     configSensor->addressPlate[0].value = 0x3d0516a4f187ff28;

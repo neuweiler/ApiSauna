@@ -73,7 +73,8 @@ public:
     uint16_t plateOverTemp; // the temperature at which plates are overheated an the program aborts (in 0.1°C, default: 850)
     uint8_t usePWM; // should we use PWM or simple on/off at every loop for plates (0 or 1, default: 0)
     uint8_t maxConcurrentHeaters; // the number of allows heaters active at the same time when not using PWM (default: 2)
-    // 18 bytes used
+    uint8_t humidifierFanDryTime; // time to keep humidifier fan running after stopping the vaporizer to allow it to dry (in min, default: 2)
+    // 19 bytes used
 };
 
 class ConfigurationIO

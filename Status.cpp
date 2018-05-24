@@ -45,6 +45,7 @@ Status::Status()
     temperatureTargetPlate = 0;
     temperatureHumidifier = 0;
     fanSpeedHumidifier = 0;
+    fanTimeHumidifier = 0;
     vaporizerEnabled = false;
     humidity = 0;
 
