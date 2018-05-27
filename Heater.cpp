@@ -12,7 +12,7 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
-z
+
  The above copyright notice and this permission notice shall be included
  in all copies or substantial portions of the Software.
 
@@ -31,7 +31,8 @@ z
 /**
  * Constructor
  */
-Heater::Heater() : Heater::Heater(0)
+Heater::Heater() :
+        Heater::Heater(0)
 {
 }
 
@@ -60,6 +61,7 @@ void Heater::setPower(uint8_t power)
     analogWrite(Configuration::getIO()->heater[index], this->power);
 }
 
-uint8_t Heater::getPower() {
+uint8_t Heater::getPower()
+{
     return power;
 }

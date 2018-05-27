@@ -32,7 +32,7 @@
 #include "Device.h"
 #include "ProgramHandler.h"
 
-class SerialConsole : Device
+class SerialConsole: Device
 {
 public:
     SerialConsole();
@@ -45,7 +45,16 @@ private:
 
     bool handleShortCmd();
     bool handleCmd();
+    bool handleCmdSystem(String &command, int32_t value);
+    bool handleCmdParams(String &command, int32_t value);
+    bool handleCmdSensor(String &command, char *cmdBuffer);
+    bool handleCmdIO(String &command, int32_t value);
+    bool handleCmdProgram(String &command, int32_t value);
     uint8_t getIndex(String command);
+    void printMenuParams();
+    void printMenuSensors();
+    void printMenuIO();
+    void printMenuProgram();
 };
 
 #endif /* SERIALCONSOLE_H_ */

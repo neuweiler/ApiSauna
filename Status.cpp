@@ -52,13 +52,16 @@ Status::Status()
 
 }
 
+/**
+ * Returns the singleton instance
+ */
 Status *Status::getInstance() {
     static Status instance;
     return &instance;
 }
 
 /*
- * Retrieve the current system state.
+ * Returns the current system state.
  */
 Status::SystemState Status::getSystemState()
 {
@@ -149,7 +152,7 @@ String Status::systemStateToStr(SystemState state)
 }
 
 /*
- * Convert the current state into a string.
+ * Convert the error code into a string.
  */
 String Status::errorCodeToStr(ErrorCode code)
 {

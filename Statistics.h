@@ -37,14 +37,14 @@
 
 #define CONFIG_ADDRESS_STATISTICS   768
 
-class StatisticValues {
+class StatisticValues
+{
 public:
     uint32_t crc; // 0-3
 
     uint8_t unused;
     // 5 bytes used
 };
-
 
 class Statistics
 {

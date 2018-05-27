@@ -29,7 +29,8 @@
 
 #include "Humidifier.h"
 
-Humidifier::Humidifier() : Device()
+Humidifier::Humidifier() :
+        Device()
 {
     maximumHumidity = 0;
     minimumHumidity = 0;
@@ -83,7 +84,8 @@ Vaporizer::Mode Humidifier::getVaporizerMode()
     return vaporizer.getMode();
 }
 
-void Humidifier::initialize() {
+void Humidifier::initialize()
+{
     Device::initialize();
     sensor.init();
     fan.setControlPin(Configuration::getIO()->humidifierFan);
@@ -102,7 +104,7 @@ void Humidifier::process()
         status->vaporizerEnabled = true;
         status->fanSpeedHumidifier = fanSpeed;
         status->fanTimeHumidifier = millis();
-   }
+    }
 
     if (humidity >= maximumHumidity) {
         if ((millis() - status->fanTimeHumidifier) / 60000 > Configuration::getParams()->humidifierFanDryTime) {

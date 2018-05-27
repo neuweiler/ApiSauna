@@ -50,8 +50,7 @@ public:
 
     SimpleList& operator=(const SimpleList& from)
     {
-        if (this != &from)
-        {
+        if (this != &from) {
             _endPosition = from._endPosition;
             _allocBlocks = from._allocBlocks;
             _preAllocBlocks = from._preAllocBlocks;
@@ -59,8 +58,7 @@ public:
             delete[] _internalArray;
             _internalArray = NULL;
 
-            if (_allocBlocks)
-            {
+            if (_allocBlocks) {
                 _internalArray = new T[_allocBlocks];
 
                 for (int i = 0; i < _endPosition; ++i)
@@ -84,8 +82,7 @@ public:
     {
         if (_endPosition == _allocBlocks)
             AllocOneBlock(true);
-        else
-        {
+        else {
             for (int i = _endPosition; i > 0; --i)
                 _internalArray[i] = _internalArray[i - 1];
         }
@@ -114,8 +111,7 @@ public:
 
         if (_allocBlocks > _preAllocBlocks)
             DeAllocOneBlock(true);
-        else
-        {
+        else {
             for (int i = 0; i < _endPosition; ++i)
                 _internalArray[i] = _internalArray[i + 1];
         }
@@ -126,20 +122,18 @@ public:
         int offSet = int(position - _internalArray);
 
         if (offSet == _endPosition - 1) // Last item.
-        {
+                {
             pop_back();
             return end();
         }
 
         --_endPosition;
 
-        if (_allocBlocks > _preAllocBlocks)
-        {
+        if (_allocBlocks > _preAllocBlocks) {
             --_allocBlocks;
             T* newArray = new T[_allocBlocks];
 
-            for (int i = 0; i < _endPosition; ++i)
-            {
+            for (int i = 0; i < _endPosition; ++i) {
                 if (i >= offSet)
                     newArray[i] = _internalArray[i + 1];
                 else
@@ -148,9 +142,7 @@ public:
 
             delete[] _internalArray;
             _internalArray = newArray;
-        }
-        else
-        {
+        } else {
             for (int i = offSet; i < _endPosition; ++i)
                 _internalArray[i] = _internalArray[i + 1];
         }
@@ -177,8 +169,7 @@ public:
 
     void clear()
     {
-        if (_allocBlocks > _preAllocBlocks)
-        {
+        if (_allocBlocks > _preAllocBlocks) {
             _allocBlocks = _preAllocBlocks;
 
             T* newArray = NULL;
@@ -210,7 +201,8 @@ public:
         _internalArray = newArray;
     }
 
-    boolean contains(T *item) {
+    boolean contains(T *item)
+    {
         for (int i = 0; i < _endPosition; ++i) {
             if (&_internalArray[i] == item)
                 return true;
@@ -218,12 +210,27 @@ public:
         return false;
     }
 
-    inline iterator begin() { return _internalArray; }
-    inline iterator end() { return _internalArray + _endPosition; }
+    inline iterator begin()
+    {
+        return _internalArray;
+    }
+    inline iterator end()
+    {
+        return _internalArray + _endPosition;
+    }
 
-    inline bool empty() { return (_endPosition == 0); }
-    inline unsigned int size() { return _endPosition; }
-    inline unsigned int capacity() { return _allocBlocks; }
+    inline bool empty()
+    {
+        return (_endPosition == 0);
+    }
+    inline unsigned int size()
+    {
+        return _endPosition;
+    }
+    inline unsigned int capacity()
+    {
+        return _allocBlocks;
+    }
 
 private:
 
@@ -243,8 +250,7 @@ private:
     {
         --_allocBlocks;
 
-        if (_allocBlocks == 0)
-        {
+        if (_allocBlocks == 0) {
             delete[] _internalArray;
             _internalArray = NULL;
             return;

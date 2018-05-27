@@ -26,16 +26,22 @@
 
 #include "Statistics.h"
 
+/**
+ * Constructor
+ */
 Statistics::Statistics()
 {
 }
 
+/**
+ * Destructor
+ */
 Statistics::~Statistics()
 {
 }
 
 /**
- * Return the instance of the singleton
+ * Return the singleton
  */
 Statistics *Statistics::getInstance()
 {
@@ -43,6 +49,9 @@ Statistics *Statistics::getInstance()
     return &instance;
 }
 
+/**
+ * Load the statistic data from EEPROM and verify the CRC
+ */
 bool Statistics::load()
 {
     Logger::info(F("loading statistics"));
@@ -56,6 +65,9 @@ bool Statistics::load()
     return true;
 }
 
+/**
+ * Re-Calculate the statistic values CRC and save them to EEPROM
+ */
 void Statistics::save()
 {
     getStatistics()->crc = Crc::calculate((uint8_t*) (getStatistics()) + 4, sizeof(StatisticValues) - 4);
@@ -63,6 +75,9 @@ void Statistics::save()
     EEPROM.put(CONFIG_ADDRESS_STATISTICS, *getStatistics());
 }
 
+/**
+ * Reset the statistic values to initial condition
+ */
 void Statistics::reset()
 {
     Logger::info(F("resetting stats"));
@@ -70,6 +85,9 @@ void Statistics::reset()
     stats->unused = 0;
 }
 
+/**
+ * Return the singleton instance of the statistical values
+ */
 StatisticValues *Statistics::getStatistics()
 {
     static StatisticValues stats;

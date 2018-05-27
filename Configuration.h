@@ -44,13 +44,16 @@
 #define CONFIG_ADDRESS_STATISTICS   768
 #define CFG_EEPROM_CONFIG_TOKEN     0xbee
 
-typedef union {
+typedef union
+{
     uint64_t value;
-    struct {
+    struct
+    {
         uint32_t low;
         uint32_t high;
     };
-    struct {
+    struct
+    {
         uint16_t s0;
         uint16_t s1;
         uint16_t s2;
@@ -59,8 +62,8 @@ typedef union {
     uint8_t byte[8];
 } SensorAddress;
 
-
-class ConfigurationParams {
+class ConfigurationParams
+{
 public:
     uint32_t crc;
     uint16_t token; // identify if an apiSauna config is stored in the eeprom
@@ -107,7 +110,8 @@ public:
     // 53 bytes used
 };
 
-class ConfigurationSensor {
+class ConfigurationSensor
+{
 public:
     uint32_t crc;
 

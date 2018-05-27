@@ -33,7 +33,8 @@ bool Fan::pwmInitialized = false;
 /**
  * Constructor.
  */
-Fan::Fan() : Fan::Fan(0)
+Fan::Fan() :
+        Fan::Fan(0)
 {
 }
 
@@ -56,7 +57,8 @@ Fan::~Fan()
     this->controlPin = 0;
 }
 
-void Fan::setControlPin(uint8_t controlPin) {
+void Fan::setControlPin(uint8_t controlPin)
+{
     this->controlPin = controlPin;
     pinMode(controlPin, OUTPUT);
     setSpeed(0);

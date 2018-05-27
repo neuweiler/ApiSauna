@@ -52,9 +52,14 @@ public:
     bool changed; // the program's values were changed indicating a required update
 };
 
-enum ProgramEvent { startProgram, stopProgram };
+enum ProgramEvent
+{
+    startProgram,
+    stopProgram
+};
 
-class ProgramObserver {
+class ProgramObserver
+{
 public:
     virtual void handleEvent(ProgramEvent event, Program *program);
 };

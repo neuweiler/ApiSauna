@@ -30,7 +30,6 @@
 
 Device::Device()
 {
-
 }
 
 Device::~Device()

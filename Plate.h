@@ -40,7 +40,7 @@
 #include "TemperatureSensor.h"
 #include "PID_v1.h"
 
-class Plate : Device
+class Plate: Device
 {
 public:
     Plate();

@@ -44,5 +44,4 @@
 
 #define CFG_MAX_NUMBER_PLATES       15 // defines the maximum number of heater plates (limited by 2*x*8 bytes + checksum < 256 bytes)
 
-
 #endif /* CONFIG_H_ */

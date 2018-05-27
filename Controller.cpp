@@ -70,7 +70,7 @@ void Controller::initialize()
 {
     Logger::info(F("initializing controller"));
 
-    if(!Configuration::getInstance()->load() || !Statistics::getInstance()->load()) {
+    if (!Configuration::getInstance()->load() || !Statistics::getInstance()->load()) {
         Status::getInstance()->setSystemState(Status::error);
         return;
     }
@@ -85,7 +85,7 @@ void Controller::initialize()
     humidifier.initialize();
 
     SimpleList<SensorAddress> addressList = detectTemperatureSensors();
-    if(!assignPlateSensors(addressList) || !assignHiveSensors(addressList)) {
+    if (!assignPlateSensors(addressList) || !assignHiveSensors(addressList)) {
         Status::getInstance()->setSystemState(Status::error);
         return;
     }
@@ -178,8 +178,10 @@ bool Controller::assignPlateSensors(SimpleList<SensorAddress> &addressList)
 
     plates.reserve(Configuration::getParams()->numberOfPlates);
     for (int i = 0; i < Configuration::getParams()->numberOfPlates; i++) {
-        if (configSensor->addressPlate[i].value != 0 && containsSensorAddress(addressList, configSensor->addressPlate[i]) && configIO->fan[i] != 0 && configIO->heater[i] != 0) {
-            Logger::info(F("attaching sensor %#08lx%08lx, heater pin %d, fan pin %d to plate #%d"), configSensor->addressPlate[i].high, configSensor->addressPlate[i].low, configIO->heater[i], configIO->fan[i], i + 1);
+        if (configSensor->addressPlate[i].value != 0 && containsSensorAddress(addressList, configSensor->addressPlate[i]) && configIO->fan[i] != 0
+                && configIO->heater[i] != 0) {
+            Logger::info(F("attaching sensor %#08lx%08lx, heater pin %d, fan pin %d to plate #%d"), configSensor->addressPlate[i].high,
+                    configSensor->addressPlate[i].low, configIO->heater[i], configIO->fan[i], i + 1);
             Plate plate = Plate();
             plates.push_back(plate);
         }
@@ -208,11 +210,13 @@ bool Controller::assignHiveSensors(SimpleList<SensorAddress> &addressList)
 
     for (int i = 0; configSensor->addressHive[i].value != 0 && i < CFG_MAX_NUMBER_PLATES; i++) {
         if (containsSensorAddress(addressList, configSensor->addressHive[i])) {
-            Logger::info(F("attaching sensor %#08lx%08lx as hive sensor #%d"), configSensor->addressHive[i].high, configSensor->addressHive[i].low, i + 1);
+            Logger::info(F("attaching sensor %#08lx%08lx as hive sensor #%d"), configSensor->addressHive[i].high, configSensor->addressHive[i].low,
+                    i + 1);
             TemperatureSensor sensor = TemperatureSensor(i, false);
             hiveTempSensors.push_back(sensor);
         } else {
-            Logger::error(F("unable to locate all configured hive sensors (%#l08x%08lx missing) !!"), configSensor->addressHive[i].high, configSensor->addressHive[i].low);
+            Logger::error(F("unable to locate all configured hive sensors (%#l08x%08lx missing) !!"), configSensor->addressHive[i].high,
+                    configSensor->addressHive[i].low);
             Status::getInstance()->errorCode = Status::hiveSensorsNotFound;
             return false;
         }
@@ -278,7 +282,8 @@ void Controller::updateProgramState()
     // switch to running if pre-heating cycle is finished
     Program *runningProgram = ProgramHandler::getInstance()->getRunningProgram();
     uint32_t timeRemaining = ProgramHandler::getInstance()->getTimeRemaining();
-    if (Status::getInstance()->getSystemState() == Status::preHeat && runningProgram && (timeRemaining == 0 || retrieveHiveTemperatures() >= runningProgram->temperaturePreHeat)) {
+    if (Status::getInstance()->getSystemState() == Status::preHeat && runningProgram
+            && (timeRemaining == 0 || retrieveHiveTemperatures() >= runningProgram->temperaturePreHeat)) {
         Status::getInstance()->setSystemState(Status::running);
         pid->SetOutputLimits(runningProgram->temperatureHive, Configuration::getParams()->hiveOverTemp);
         for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {

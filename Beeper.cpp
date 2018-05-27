@@ -28,7 +28,8 @@
 
 #include "Beeper.h"
 
-Beeper::Beeper() : Device()
+Beeper::Beeper() :
+        Device()
 {
     lastState = Status::init;
     numberOfBeeps = 0;

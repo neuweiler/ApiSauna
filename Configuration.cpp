@@ -26,7 +26,6 @@
 
 #include "Configuration.h"
 
-
 Configuration::Configuration()
 {
 }
@@ -66,17 +65,17 @@ bool Configuration::load()
         Statistics::getInstance()->save();
     }
 
-    if (getParams()->crc != Crc::calculate((uint8_t *)getParams() + 4, sizeof(ConfigurationParams) - 4)) {
+    if (getParams()->crc != Crc::calculate((uint8_t *) getParams() + 4, sizeof(ConfigurationParams) - 4)) {
         Logger::error(F("invalid crc detected in parameter configuration"));
         Status::getInstance()->errorCode = Status::crcParam;
         return false;
     }
-    if (getIO()->crc != Crc::calculate((uint8_t *)getIO() + 4, sizeof(ConfigurationIO) - 4)) {
+    if (getIO()->crc != Crc::calculate((uint8_t *) getIO() + 4, sizeof(ConfigurationIO) - 4)) {
         Logger::error(F("invalid crc detected in I/O configuration"));
         Status::getInstance()->errorCode = Status::crcIo;
         return false;
     }
-    if (getSensor()->crc != Crc::calculate((uint8_t *)getSensor() + 4, sizeof(ConfigurationSensor) - 4)) {
+    if (getSensor()->crc != Crc::calculate((uint8_t *) getSensor() + 4, sizeof(ConfigurationSensor) - 4)) {
         Logger::error(F("invalid crc detected in sensor configuration"));
         Status::getInstance()->errorCode = Status::crcSensor;
         return false;

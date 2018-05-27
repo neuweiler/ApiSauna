@@ -63,6 +63,9 @@ void SerialConsole::process()
     }
 }
 
+/**
+ * Print the menu to the serial interface
+ */
 void SerialConsole::printMenu()
 {
     //Show build # here as well in case people are using the native port and don't get to see the start up messages
@@ -81,7 +84,15 @@ void SerialConsole::printMenu()
     Logger::console(F("\nConfig Commands (enter command=newvalue)\n"));
     Logger::console(F("LOGLEVEL=%d - set log level (0=debug, 1=info, 2=warn, 3=error, 4=off)"), Logger::getLogLevel());
 
-    ConfigurationParams *configParams = Configuration::getParams();
+    printMenuParams();
+    printMenuSensors();
+    printMenuIO();
+    printMenuProgram();
+}
+
+void SerialConsole::printMenuParams()
+{
+    ConfigurationParams* configParams = Configuration::getParams();
     Logger::console(F("NUM_PLATES=%d - number of installed plates (0-15, default: 4)"), configParams->numberOfPlates);
     Logger::console(F("HIVE_OT=%d - hive over-temp (in 0.1 deg C, default: 460)"), configParams->hiveOverTemp);
     Logger::console(F("HIVE_OTR=%d - hive over-temp recover (in 0.1 deg C, default: 350)"), configParams->hiveOverTempRecover);
@@ -91,28 +102,34 @@ void SerialConsole::printMenu()
     Logger::console(F("MIN_FAN_SPEED=%d - minimum fan speed level (0-255, default: 10)"), configParams->minFanSpeed);
     Logger::console(F("PWM=%d - enable/disable PWM (0=off, 1=on, default: 0)"), configParams->usePWM);
     Logger::console(F("HUMID_DRY=%d - extended run time to allow humidifier fan to dry (0-255 min, default: 2)"), configParams->humidifierFanDryTime);
+}
 
-    ConfigurationSensor *configSensor = Configuration::getSensor();
-    for (int i = 0; i < configParams->numberOfPlates; i++) {
+void SerialConsole::printMenuSensors()
+{
+    ConfigurationSensor* configSensor = Configuration::getSensor();
+    for (int i = 0; i < CFG_MAX_NUMBER_PLATES && configSensor->addressHive[i].value != 0; i++) {
         Logger::console(F("ADDR_HIVE[%d]=%#08lx%08lx - address of the hive temperature sensor"), i + 1, configSensor->addressHive[i].high,
                 configSensor->addressHive[i].low);
     }
-    for (int i = 0; i < configParams->numberOfPlates; i++) {
+    for (int i = 0; i < Configuration::getParams()->numberOfPlates; i++) {
         Logger::console(F("ADDR_PLATE[%d]=%#08lx%08lx - address of the plate temperature sensor"), i + 1, configSensor->addressPlate[i].high,
                 configSensor->addressPlate[i].low);
     }
+}
 
-    ConfigurationIO *configIO = Configuration::getIO();
+void SerialConsole::printMenuIO()
+{
+    ConfigurationIO* configIO = Configuration::getIO();
     Logger::console(F("PIN_BEEP=%d - output pin for beeper (default: 10)"), configIO->beeper);
     Logger::console(F("PIN_DOWN=%d - input pin for button down (default: 3)"), configIO->buttonDown);
     Logger::console(F("PIN_LEFT=%d - input pin for button left (default: 11)"), configIO->buttonLeft);
     Logger::console(F("PIN_RIGHT=%d - input pin for button right (default: 12)"), configIO->buttonRight);
     Logger::console(F("PIN_SELECT=%d - input pin for button select (default: 13)"), configIO->buttonSelect);
     Logger::console(F("PIN_UP=%d - input pin for button up (default: 2)"), configIO->buttonUp);
-    for (int i = 0; i < configParams->numberOfPlates; i++) {
+    for (int i = 0; i < Configuration::getParams()->numberOfPlates; i++) {
         Logger::console(F("PIN_FAN[%d]=%d - output pin for fan (default: 7, 8, 44, 45)"), i + 1, configIO->fan[i]);
     }
-    for (int i = 0; i < configParams->numberOfPlates; i++) {
+    for (int i = 0; i < Configuration::getParams()->numberOfPlates; i++) {
         Logger::console(F("PIN_HEATER[%d]=%d - output for for heater (default: 11, 12, 2, 3)"), i + 1, configIO->heater[i]);
     }
     Logger::console(F("PIN_HB=%d - output pin for heartbeat signal (default: 13)"), configIO->heartbeat);
@@ -128,8 +145,11 @@ void SerialConsole::printMenu()
     Logger::console(F("PIN_LCD_RS=%d - output pin LCD RS (default: 22)"), configIO->lcdRs);
     Logger::console(F("PIN_TEMP=%d - input pin temperature sensors (default: 4)"), configIO->temperatureSensor);
     Logger::console(F("PIN_VAPOR=%d - output pin for vaporizer (default: 5)"), configIO->vaporizer);
+}
 
-    Program *program = ProgramHandler::getInstance()->getRunningProgram();
+void SerialConsole::printMenuProgram()
+{
+    Program* program = ProgramHandler::getInstance()->getRunningProgram();
     if (program) {
         Logger::console(F("\nPROGRAM\n"));
         Logger::console(F("TEMP-PREHEAT=%d - pre-heat hive temperature (in 0.1 deg C, 0-600)"), program->temperaturePreHeat);
@@ -177,11 +197,17 @@ bool SerialConsole::handleCmd()
     int32_t value = strtol((char *) (cmdBuffer + i), NULL, 0);
     command.toUpperCase();
 
-    ConfigurationParams *configParams = Configuration::getParams();
-    ConfigurationSensor *configSensor = Configuration::getSensor();
-    ConfigurationIO *configIO = Configuration::getIO();
-    Program *program = ProgramHandler::getInstance()->getRunningProgram();
+    if (!handleCmdSystem(command, value) && !handleCmdParams(command, value) && !handleCmdSensor(command, (cmdBuffer + i))
+            && !handleCmdIO(command, value) && !handleCmdProgram(command, value)) {
+        Logger::warn("unknown command: %s", command.c_str());
+        return false;
+    } else {
+        return true;
+    }
+}
 
+bool SerialConsole::handleCmdSystem(String &command, int32_t value)
+{
     if (command == String(F("START"))) {
         if (ProgramHandler::getInstance()->getRunningProgram() == NULL) {
             Logger::info(F("starting program #%d"), value);
@@ -199,9 +225,16 @@ bool SerialConsole::handleCmd()
             Statistics::getInstance()->reset();
             Statistics::getInstance()->save();
         }
+    } else {
+        return false;
+    }
+    return true;
+}
 
-    // config params
-    } else if (command == String(F("NUM_PLATES"))) {
+bool SerialConsole::handleCmdParams(String &command, int32_t value)
+{
+    ConfigurationParams *configParams = Configuration::getParams();
+    if (command == String(F("NUM_PLATES"))) {
         value = constrain(value, 0, 15);
         Logger::console(F("setting number of installed plates to %d"), value);
         configParams->numberOfPlates = value;
@@ -237,31 +270,45 @@ bool SerialConsole::handleCmd()
         value = constrain(value, 0, 255);
         Logger::console(F("setting dry time of humidifier fan to %d min"), value);
         configParams->humidifierFanDryTime = value;
+    } else {
+        return false;
+    }
+    return true;
+}
 
-    // sensor address
-    } else if (command.startsWith(String(F("ADDR_HIVE")))) {
+bool SerialConsole::handleCmdSensor(String &command, char *parameter)
+{
+    ConfigurationSensor *configSensor = Configuration::getSensor();
+    if (command.startsWith(String(F("ADDR_HIVE")))) {
         uint8_t index = getIndex(command);
         if (index <= CFG_MAX_NUMBER_PLATES) {
-            String lowStr = String("0x") + (char *) (cmdBuffer + i + 10);
-            configSensor->addressHive[index - 1].low = (unsigned long)strtol(lowStr.c_str(), NULL, 0);
-            String highStr = String((char *) cmdBuffer + i).substring(0, 10);
-            configSensor->addressHive[index - 1].high = (unsigned long)strtol(highStr.c_str(), NULL, 0);
-            Logger::console(F("setting address of hive sensor[%d] to %#08lx%08lx"), index,
-                    configSensor->addressHive[index - 1].high, configSensor->addressHive[index - 1].low);
+            String lowStr = String("0x") + (char *) (parameter + 10);
+            configSensor->addressHive[index - 1].low = (unsigned long) strtol(lowStr.c_str(), NULL, 0);
+            String highStr = String(parameter).substring(0, 10);
+            configSensor->addressHive[index - 1].high = (unsigned long) strtol(highStr.c_str(), NULL, 0);
+            Logger::console(F("setting address of hive sensor[%d] to %#08lx%08lx"), index, configSensor->addressHive[index - 1].high,
+                    configSensor->addressHive[index - 1].low);
         }
     } else if (command.startsWith(String(F("ADDR_PLATE")))) {
         uint8_t index = getIndex(command);
-        if (index <= configParams->numberOfPlates) {
-            String lowStr = String("0x") + (char *) (cmdBuffer + i + 10);
-            configSensor->addressPlate[index - 1].low = (unsigned long)strtol(lowStr.c_str(), NULL, 0);
-            String highStr = String((char *) cmdBuffer + i).substring(0, 10);
-            configSensor->addressPlate[index - 1].high = (unsigned long)strtol(highStr.c_str(), NULL, 0);
-            Logger::console(F("setting address of plate sensor[%d] to %#08lx%08lx"), index,
-                    configSensor->addressPlate[index - 1].high, configSensor->addressPlate[index - 1].low);
+        if (index <= Configuration::getParams()->numberOfPlates) {
+            String lowStr = String("0x") + (char *) (parameter + 10);
+            configSensor->addressPlate[index - 1].low = (unsigned long) strtol(lowStr.c_str(), NULL, 0);
+            String highStr = String(parameter).substring(0, 10);
+            configSensor->addressPlate[index - 1].high = (unsigned long) strtol(highStr.c_str(), NULL, 0);
+            Logger::console(F("setting address of plate sensor[%d] to %#08lx%08lx"), index, configSensor->addressPlate[index - 1].high,
+                    configSensor->addressPlate[index - 1].low);
         }
+    } else {
+        return false;
+    }
+    return true;
+}
 
-    // config IO
-    } else if (command == String(F("PIN_BEEP"))) {
+bool SerialConsole::handleCmdIO(String &command, int32_t value)
+{
+    ConfigurationIO *configIO = Configuration::getIO();
+    if (command == String(F("PIN_BEEP"))) {
         value = constrain(value, 0, 255);
         Logger::console(F("setting output pin for beeper to %d"), value);
         configIO->beeper = value;
@@ -288,14 +335,14 @@ bool SerialConsole::handleCmd()
     } else if (command.startsWith(String(F("PIN_FAN")))) {
         value = constrain(value, 0, 255);
         uint8_t index = getIndex(command);
-        if (index <= configParams->numberOfPlates) {
+        if (index <= Configuration::getParams()->numberOfPlates) {
             Logger::console(F("setting output pin for fan[%d] to %d"), index, value);
             configIO->fan[index - 1] = value;
         }
     } else if (command.startsWith(String(F("PIN_HEATER")))) {
         value = constrain(value, 0, 255);
         uint8_t index = getIndex(command);
-        if (index <= configParams->numberOfPlates) {
+        if (index <= Configuration::getParams()->numberOfPlates) {
             Logger::console(F("setting output pin for heater[%d] to %d"), index, value);
             configIO->heater[index - 1] = value;
         }
@@ -352,81 +399,87 @@ bool SerialConsole::handleCmd()
         value = constrain(value, 0, 255);
         Logger::console(F("setting output pin for vaporizer to %d"), value);
         configIO->vaporizer = value;
+    } else {
+        return false;
+    }
+    return true;
+}
 
-    // parameters of running program changed
-    } else if (program) {
-        if (command == String(F("TEMP-PREHEAT"))) {
-            value = constrain(value, 0, 600);
-            Logger::console(F("Setting pre-heat hive temperature to %d.%d deg C"), value / 10, value % 10);
-            program->temperaturePreHeat = value;
-        } else if (command == String(F("TEMP"))) {
-            value = constrain(value, 0, 600);
-            Logger::console(F("Setting hive temperature to %d.%d deg C"), value / 10, value % 10);
-            program->temperatureHive = value;
-        } else if (command == String(F("TEMP-PLATE"))) {
-            value = constrain(value, 0, 1000);
-            Logger::console(F("Setting max. plate temperature to %d.%d deg C"), value / 10, value % 10);
-            program->temperaturePlate = value;
-        } else if (command == String(F("FANSPEED-PREHEAT"))) {
-            value = constrain(value, 0, 255);
-            Logger::console(F("Setting pre-heat fan speed to %d"), value);
-            program->fanSpeedPreHeat = value;
-            program->changed = true;
-        } else if (command == String(F("FANSPEED"))) {
-            value = constrain(value, 0, 255);
-            Logger::console(F("Setting fan speed to %d"), value);
-            program->fanSpeed = value;
-            program->changed = true;
-        } else if (command == String(F("FANSPEED-HUMID"))) {
-            value = constrain(value, 0, 255);
-            Logger::console(F("Setting speed of humidifier fan to %d"), value);
-            program->fanSpeedHumidifier = value;
-            program->changed = true;
-        } else if (command == String(F("HUMIDITY-MIN"))) {
-            value = constrain(value, 0, 100);
-            Logger::console(F("Setting relative humidity minimum to %d %%"), value);
-            program->humidityMinimum = value;
-            program->changed = true;
-        } else if (command == String(F("HUMIDITY-MAX"))) {
-            value = constrain(value, 0, 100);
-            Logger::console(F("Setting relative humidity maximum to %d %%"), value);
-            program->humidityMaximum = value;
-            program->changed = true;
-        } else if (command == String(F("DURATION-PREHEAT"))) {
-            value = constrain(value, 0, 0xffff);
-            Logger::console(F("Setting duration of pre-heat cycle to %d min"), value);
-            program->durationPreHeat = value;
-        } else if (command == String(F("DURATION"))) {
-            value = constrain(value, 0, 0xffff);
-            Logger::console(F("Setting duration of program to %d min"), value);
-            program->duration = value;
-        } else if (command == String(F("HIVE-KP"))) {
-            program->hiveKp = (double)value / (double)100.0;
-            Logger::console(F("Setting hive temperature Kp to %s"), String(program->hiveKp).c_str());
-            program->changed = true;
-        } else if (command == String(F("HIVE-KI"))) {
-            program->hiveKi = (double)value / (double)100.0;
-            Logger::console(F("Setting hive temperature Ki to %s"), String(program->hiveKi).c_str());
-            program->changed = true;
-        } else if (command == String(F("HIVE-KD"))) {
-            program->hiveKd = (double)value / (double)100.0;
-            Logger::console(F("Setting hive temperature Kd to %s"), String(program->hiveKd).c_str());
-            program->changed = true;
-        } else if (command == String(F("PLATE-KP"))) {
-            program->plateKp = (double)value / (double)100.0;
-            Logger::console(F("Setting plate temperature Kp to %s"), String(program->plateKp).c_str());
-            program->changed = true;
-        } else if (command == String(F("PLATE-KI"))) {
-            program->plateKi = (double)value / (double)100.0;
-            Logger::console(F("Setting plate temperature Ki to %s"), String(program->plateKi).c_str());
-            program->changed = true;
-        } else if (command == String(F("PLATE-KD"))) {
-            program->plateKd = (double)value / (double)100.0;
-            Logger::console(F("Setting plate temperature Kd to %s"), String(program->plateKd).c_str());
-            program->changed = true;
-        } else {
-            return false;
-        }
+bool SerialConsole::handleCmdProgram(String &command, int32_t value)
+{
+    Program *program = ProgramHandler::getInstance()->getRunningProgram();
+    if (!program) {
+        return false;
+    }
+    if (command == String(F("TEMP-PREHEAT"))) {
+        value = constrain(value, 0, 600);
+        Logger::console(F("Setting pre-heat hive temperature to %d.%d deg C"), value / 10, value % 10);
+        program->temperaturePreHeat = value;
+    } else if (command == String(F("TEMP"))) {
+        value = constrain(value, 0, 600);
+        Logger::console(F("Setting hive temperature to %d.%d deg C"), value / 10, value % 10);
+        program->temperatureHive = value;
+    } else if (command == String(F("TEMP-PLATE"))) {
+        value = constrain(value, 0, 1000);
+        Logger::console(F("Setting max. plate temperature to %d.%d deg C"), value / 10, value % 10);
+        program->temperaturePlate = value;
+    } else if (command == String(F("FANSPEED-PREHEAT"))) {
+        value = constrain(value, 0, 255);
+        Logger::console(F("Setting pre-heat fan speed to %d"), value);
+        program->fanSpeedPreHeat = value;
+        program->changed = true;
+    } else if (command == String(F("FANSPEED"))) {
+        value = constrain(value, 0, 255);
+        Logger::console(F("Setting fan speed to %d"), value);
+        program->fanSpeed = value;
+        program->changed = true;
+    } else if (command == String(F("FANSPEED-HUMID"))) {
+        value = constrain(value, 0, 255);
+        Logger::console(F("Setting speed of humidifier fan to %d"), value);
+        program->fanSpeedHumidifier = value;
+        program->changed = true;
+    } else if (command == String(F("HUMIDITY-MIN"))) {
+        value = constrain(value, 0, 100);
+        Logger::console(F("Setting relative humidity minimum to %d %%"), value);
+        program->humidityMinimum = value;
+        program->changed = true;
+    } else if (command == String(F("HUMIDITY-MAX"))) {
+        value = constrain(value, 0, 100);
+        Logger::console(F("Setting relative humidity maximum to %d %%"), value);
+        program->humidityMaximum = value;
+        program->changed = true;
+    } else if (command == String(F("DURATION-PREHEAT"))) {
+        value = constrain(value, 0, 0xffff);
+        Logger::console(F("Setting duration of pre-heat cycle to %d min"), value);
+        program->durationPreHeat = value;
+    } else if (command == String(F("DURATION"))) {
+        value = constrain(value, 0, 0xffff);
+        Logger::console(F("Setting duration of program to %d min"), value);
+        program->duration = value;
+    } else if (command == String(F("HIVE-KP"))) {
+        program->hiveKp = (double) value / (double) 100.0;
+        Logger::console(F("Setting hive temperature Kp to %s"), String(program->hiveKp).c_str());
+        program->changed = true;
+    } else if (command == String(F("HIVE-KI"))) {
+        program->hiveKi = (double) value / (double) 100.0;
+        Logger::console(F("Setting hive temperature Ki to %s"), String(program->hiveKi).c_str());
+        program->changed = true;
+    } else if (command == String(F("HIVE-KD"))) {
+        program->hiveKd = (double) value / (double) 100.0;
+        Logger::console(F("Setting hive temperature Kd to %s"), String(program->hiveKd).c_str());
+        program->changed = true;
+    } else if (command == String(F("PLATE-KP"))) {
+        program->plateKp = (double) value / (double) 100.0;
+        Logger::console(F("Setting plate temperature Kp to %s"), String(program->plateKp).c_str());
+        program->changed = true;
+    } else if (command == String(F("PLATE-KI"))) {
+        program->plateKi = (double) value / (double) 100.0;
+        Logger::console(F("Setting plate temperature Ki to %s"), String(program->plateKi).c_str());
+        program->changed = true;
+    } else if (command == String(F("PLATE-KD"))) {
+        program->plateKd = (double) value / (double) 100.0;
+        Logger::console(F("Setting plate temperature Kd to %s"), String(program->plateKd).c_str());
+        program->changed = true;
     } else {
         return false;
     }
@@ -466,6 +519,9 @@ bool SerialConsole::handleShortCmd()
     return true;
 }
 
+/**
+ * Extract the index of an parameter with array notation
+ */
 uint8_t SerialConsole::getIndex(String command)
 {
     String indexStr = command.substring(command.indexOf('[') + 1, command.indexOf(']'));

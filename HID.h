@@ -36,7 +36,8 @@
 #include "Device.h"
 #include "ProgramHandler.h"
 
-enum Action {
+enum Action
+{
     START_PROGRAM,
     MONITOR_HIVE,
     CONFIG_TEST1,
@@ -58,7 +59,7 @@ public:
     SimpleList<SubMenuEntry> subMenuEntries;
 };
 
-class HID : Device
+class HID: Device
 {
 public:
     HID();
@@ -84,7 +85,7 @@ private:
     void handleMenu(Button button);
     void selectMenu(Action action);
 
-    LiquidCrystal lcd = LiquidCrystal(0,0,0,0,0,0); // will be properly initialized later
+    LiquidCrystal lcd = LiquidCrystal(0, 0, 0, 0, 0, 0); // will be properly initialized later
     Button lastSelectedButton;
     Status::SystemState lastSystemState;
     SimpleList<MenuEntry> menuEntries;

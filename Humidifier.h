@@ -32,7 +32,7 @@
 #include "Fan.h"
 #include "Vaporizer.h"
 
-class Humidifier : Device
+class Humidifier: Device
 {
 public:
     Humidifier();
