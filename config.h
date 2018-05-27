@@ -39,7 +39,10 @@
 #define CFG_SERIAL_SPEED 115200
 #define CFG_LOOP_DELAY   100
 
-#define CFG_LOG_BUFFER_SIZE             120 // size of log output messages
-#define CFG_SERIAL_BUFFER_SIZE          80 // size of the serial input buffer
+#define CFG_LOG_BUFFER_SIZE         120 // size of log output messages
+#define CFG_SERIAL_BUFFER_SIZE      80 // size of the serial input buffer
+
+#define CFG_MAX_NUMBER_PLATES       15 // defines the maximum number of heater plates (limited by 2*x*8 bytes + checksum < 256 bytes)
+
 
 #endif /* CONFIG_H_ */

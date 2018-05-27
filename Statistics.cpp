@@ -26,10 +26,8 @@
 
 #include "Statistics.h"
 
-
 Statistics::Statistics()
 {
-    reset();
 }
 
 Statistics::~Statistics()
@@ -45,17 +43,22 @@ Statistics *Statistics::getInstance()
     return &instance;
 }
 
-void Statistics::load()
+bool Statistics::load()
 {
     Logger::info(F("loading statistics"));
     EEPROM.get(CONFIG_ADDRESS_STATISTICS, *getStatistics());
-    //TODO verify crc
+
+    if (getStatistics()->crc != Crc::calculate((uint8_t *) getStatistics() + 4, sizeof(StatisticValues) - 4)) {
+        Status::getInstance()->errorCode = Status::crcStatistics;
+        Logger::error(F("invalid crc detected in stored statistics"));
+        return false;
+    }
+    return true;
 }
 
 void Statistics::save()
 {
-//TODO calc/update the crc's of all config
-//    configUnused.crc;
+    getStatistics()->crc = Crc::calculate((uint8_t*) (getStatistics()) + 4, sizeof(StatisticValues) - 4);
     Logger::info(F("saving statistics"));
     EEPROM.put(CONFIG_ADDRESS_STATISTICS, *getStatistics());
 }
@@ -63,9 +66,7 @@ void Statistics::save()
 void Statistics::reset()
 {
     Logger::info(F("resetting stats"));
-
     StatisticValues *stats = getStatistics();
-
     stats->unused = 0;
 }
 

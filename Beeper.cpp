@@ -62,7 +62,11 @@ void Beeper::process()
         }
         lastState = state;
     }
+    beep();
+}
 
+void Beeper::beep()
+{
     if (soundOn) {
         soundOn = false;
         if (numberOfBeeps != -1) {
@@ -71,5 +75,6 @@ void Beeper::process()
     } else if (numberOfBeeps != 0) {
         soundOn = true;
     }
+
     analogWrite(Configuration::getIO()->beeper, (soundOn ? 20 : 0));
 }

@@ -151,6 +151,7 @@ void ProgramHandler::start(uint8_t programNumber)
         if (i == programNumber) {
             Logger::info(F("Starting program #%d"), i);
                 runningProgram = itr;
+                runningProgram->changed = false;
                 sendEvent(startProgram, runningProgram);
                 startTime = millis();
                 return;

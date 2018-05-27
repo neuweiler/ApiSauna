@@ -27,7 +27,7 @@
 #ifndef STATUS_H_
 #define STATUS_H_
 
-#include <Arduino.h>
+#include "config.h"
 #include "Logger.h"
 #include "Configuration.h"
 
@@ -45,11 +45,27 @@ public:
         error = 99 // the system is in an error state and not operational
     };
 
+    enum ErrorCode
+    {
+        none = 0, // no error, all green
+        crcParam = 1, // crc of parameter config invalid
+        crcIo = 2, // crc of I/O config invalid
+        crcSensor = 3, // crc of sensor config invalid
+        crcStatistics = 4, // crc of statistics invalid
+        plateSensorsNotFound = 5, // could not locate all configured plate temperature sensors
+        hiveSensorsNotFound = 6, // could not locate all configured hive temperature sensors
+        overtempHive = 7, // the temperature of the hive is too high
+        overtempPlate = 8, // the temperature of a plate is too high
+        invalidState = 9
+    };
+
     static Status *getInstance();
     SystemState getSystemState();
     SystemState setSystemState(SystemState);
     String systemStateToStr(SystemState);
+    String errorCodeToStr(ErrorCode);
 
+    ErrorCode errorCode;
     int16_t temperatureHive[CFG_MAX_NUMBER_PLATES];
     int16_t temperaturePlate[CFG_MAX_NUMBER_PLATES];
     int16_t temperatureTargetHive;

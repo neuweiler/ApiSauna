@@ -47,12 +47,8 @@ public:
     void initialize();
     void process();
     void handleEvent(ProgramEvent event, Program *program);
+    void handleProgramChange(Program *runningProgram);
     int16_t getHiveTargetTemperature();
-    void setPIDTuningHive(double kp, double ki, double kd);
-    void setPIDTuningPlate(double kp, double ki, double kd);
-    void setFanSpeed(uint8_t speed);
-    void setFanSpeedHumidifier(uint8_t speed);
-    void setHumidifierLimits(uint8_t min, uint8_t max);
 
 private:
     Controller();

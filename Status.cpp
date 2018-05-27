@@ -35,6 +35,7 @@
 Status::Status()
 {
     systemState = init;
+    errorCode = none;
     for (int i = 0; i < CFG_MAX_NUMBER_PLATES; i++) {
         temperatureHive[i] = 0;
         temperaturePlate[i] = 0;
@@ -117,13 +118,14 @@ Status::SystemState Status::setSystemState(SystemState newSystemState)
     } else {
         Logger::error(F("switching from state '%s' to '%s' is not allowed"), systemStateToStr(systemState).c_str(), systemStateToStr(newSystemState).c_str());
         systemState = error;
+        errorCode = invalidState;
     }
 
     return systemState;
 }
 
 /*
- * Convert the current state into a string.
+ * Convert the state into a string.
  */
 String Status::systemStateToStr(SystemState state)
 {
@@ -144,4 +146,34 @@ String Status::systemStateToStr(SystemState state)
         return F("error");
     }
     return F("invalid");
+}
+
+/*
+ * Convert the current state into a string.
+ */
+String Status::errorCodeToStr(ErrorCode code)
+{
+    switch (code) {
+    case none:
+        return F("no error");
+    case crcParam:
+        return F("Param config invalid CRC");
+    case crcIo:
+        return F("I/O config invalid CRC");
+    case crcSensor:
+        return F("Sensor config invalid CRC");
+    case crcStatistics:
+        return F("Statistics invalid CRC");
+    case plateSensorsNotFound:
+        return F("Not all plate sensors found");
+    case hiveSensorsNotFound:
+        return F("Not all hive sensors found");
+    case overtempHive:
+        return F("Hive over-temp");
+    case overtempPlate:
+        return F("Plate over-temp");
+    case invalidState:
+        return F("Invalid state switch");
+    }
+    return F("n/a");
 }

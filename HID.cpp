@@ -120,36 +120,8 @@ void HID::handleMenu(Button button)
             itrSubMenu = itrMenu->subMenuEntries.begin();
         }
         break;
-    case SELECT: //TODO move this stuff to separate method
-        switch (itrSubMenu->action) {
-        case START_PROGRAM: {
-            int i = 1;
-            for (SimpleList<SubMenuEntry>::iterator itr = itrMenu->subMenuEntries.begin(); itr != itrMenu->subMenuEntries.end(); ++itr && ++i) {
-                if (itrSubMenu == itr) {
-                    lcd.clear();
-                    ProgramHandler::getInstance()->start(i);
-                    return;
-                }
-            }
-            break;
-        }
-        case MONITOR_HIVE:
-            //TODO handle monitoring
-            Logger::info(F("Monitor hive..."));
-            break;
-        case CONFIG_TEST1:
-            //TODO handle configuration
-            Logger::info(F("Config test1..."));
-            break;
-        case CONFIG_TEST2:
-            //TODO handle configuration
-            Logger::info(F("Config test2..."));
-            break;
-        case CONFIG_TEST3:
-            //TODO handle configuration
-            Logger::info(F("Config test3..."));
-            break;
-        }
+    case SELECT:
+        selectMenu(itrSubMenu->action);
         break;
     case NONE:
         break;
@@ -164,13 +136,47 @@ void HID::handleMenu(Button button)
     lcd.print(itrSubMenu->name);
 }
 
+void HID::selectMenu(Action action)
+{
+    switch (action) {
+    case START_PROGRAM: {
+        int i = 1;
+        for (SimpleList<SubMenuEntry>::iterator itr = itrMenu->subMenuEntries.begin(); itr != itrMenu->subMenuEntries.end(); ++itr && ++i) {
+            if (itrSubMenu == itr) {
+                lcd.clear();
+                ProgramHandler::getInstance()->start(i);
+                break;
+            }
+        }
+        break;
+    }
+    case MONITOR_HIVE:
+        //TODO handle monitoring
+        Logger::info(F("Monitor hive..."));
+        break;
+    case CONFIG_TEST1:
+        //TODO handle configuration
+        Logger::info(F("Config test1..."));
+        break;
+    case CONFIG_TEST2:
+        //TODO handle configuration
+        Logger::info(F("Config test2..."));
+        break;
+    case CONFIG_TEST3:
+        //TODO handle configuration
+        Logger::info(F("Config test3..."));
+        break;
+    }
+}
+
 void HID::process()
 {
     Device::process();
 
     Button button = buttonPressed();
     lcd.setCursor(0, 0);
-    Status::SystemState state = Status::getInstance()->getSystemState();
+    Status *status = Status::getInstance();
+    Status::SystemState state = status->getSystemState();
     switch (state) {
     case Status::init:
         break;
@@ -190,7 +196,7 @@ void HID::process()
         lcd.print(F("OVER-TEMPERATURE !!!"));
         lcd.setCursor(0, 1);
         for (int i = 0; (Configuration::getSensor()->addressHive[i].value != 0) && (i < CFG_MAX_NUMBER_PLATES); i++) {
-            snprintf(lcdBuffer, 21, "%02d\xdf", Status::getInstance()->temperatureHive[i] / 10);
+            snprintf(lcdBuffer, 21, "%02d\xdf", status->temperatureHive[i] / 10);
             lcd.print(lcdBuffer);
         }
         logData();
@@ -204,7 +210,10 @@ void HID::process()
     case Status::error:
         if (lastSystemState != state) {
             lcd.clear();
-            lcd.print(F("ERROR !"));
+            snprintf(lcdBuffer, 21, "ERROR: %03d", status->errorCode);
+            lcd.print(lcdBuffer);
+            lcd.setCursor(0, 1);
+            lcd.print(status->errorCodeToStr(status->errorCode));
         }
         logData();
         break;

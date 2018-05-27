@@ -29,6 +29,8 @@
 
 #include "Controller.h"
 
+//TODO use statistics
+
 // solange temp nicht erreicht wurde: FAN = 250, danach runter bis auf 20 wenn alle 4 temp-sensoren bei Zieltemp +/- 1 Grad
 // wenn temp > 44 Grad: fan = 20, humidity-fan = 100%
 // wenn hive temp < target nach pre-heat --> extended pre-heat mit hoher fanspeed, program running time erst ab erreichen der temp zählen
@@ -68,7 +70,7 @@ void Controller::initialize()
 {
     Logger::info(F("initializing controller"));
 
-    if(!Configuration::getInstance()->load()) {
+    if(!Configuration::getInstance()->load() || !Statistics::getInstance()->load()) {
         Status::getInstance()->setSystemState(Status::error);
         return;
     }
@@ -191,6 +193,7 @@ bool Controller::assignPlateSensors(SimpleList<SensorAddress> &addressList)
 
     if (Configuration::getParams()->numberOfPlates != plates.size()) {
         Logger::error(F("unable to locate all configured plate sensors (%d of %d) !!"), plates.size(), Configuration::getParams()->numberOfPlates);
+        Status::getInstance()->errorCode = Status::plateSensorsNotFound;
         return false;
     }
     return true;
@@ -210,6 +213,7 @@ bool Controller::assignHiveSensors(SimpleList<SensorAddress> &addressList)
             hiveTempSensors.push_back(sensor);
         } else {
             Logger::error(F("unable to locate all configured hive sensors (%#l08x%08lx missing) !!"), configSensor->addressHive[i].high, configSensor->addressHive[i].low);
+            Status::getInstance()->errorCode = Status::hiveSensorsNotFound;
             return false;
         }
     }
@@ -264,6 +268,7 @@ void Controller::updateProgramState()
     if (actualTemperature > Configuration::getParams()->hiveOverTemp) {
         Logger::error(F("ALERT - OVER-TEMPERATURE IN HIVE ! Trying to recover, please open the cover to help cool down the hive!"));
         Status::getInstance()->setSystemState(Status::overtemp);
+        Status::getInstance()->errorCode = Status::overtempHive;
     }
     if (Status::getInstance()->getSystemState() == Status::overtemp && actualTemperature < Configuration::getParams()->hiveOverTempRecover) {
         Logger::info(F("recovered from over-temperature, shutting down."));
@@ -343,6 +348,11 @@ void Controller::process()
                 itr->setTargetTemperature(plateTemp);
                 itr->process();
             }
+            Program *runningProgram = ProgramHandler::getInstance()->getRunningProgram();
+            if (runningProgram->changed) {
+                handleProgramChange(runningProgram);
+                runningProgram->changed = false;
+            }
             break;
         }
         case Status::overtemp: // shut-down heaters, plate fan to minimum, full blow humidifier fan (fresh air) !!
@@ -382,34 +392,20 @@ void Controller::process()
     }
 }
 
-void Controller::setPIDTuningHive(double kp, double ki, double kd)
+void Controller::handleProgramChange(Program *runningProgram)
 {
-    pid->SetTunings(kp, ki, kd);
-}
+    Status::SystemState state = Status::getInstance()->getSystemState();
 
-void Controller::setPIDTuningPlate(double kp, double ki, double kd)
-{
+    Logger::info(F("Updating devices after program parameter change"));
+
+    pid->SetTunings(runningProgram->hiveKp, runningProgram->hiveKi, runningProgram->hiveKd);
     for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
-        itr->setPIDTuning(kp, ki, kd);
+        itr->setPIDTuning(runningProgram->plateKp, runningProgram->plateKi, runningProgram->plateKd);
+        itr->setFanSpeed(state == Status::running ? runningProgram->fanSpeed : runningProgram->fanSpeedPreHeat);
     }
-}
-
-void Controller::setFanSpeed(uint8_t speed)
-{
-    for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
-        itr->setFanSpeed(speed);
-    }
-}
-
-void Controller::setFanSpeedHumidifier(uint8_t speed)
-{
-    humidifier.setFanSpeed(speed);
-}
-
-void Controller::setHumidifierLimits(uint8_t min, uint8_t max)
-{
-    humidifier.setMinHumidity(min);
-    humidifier.setMaxHumidity(max);
+    humidifier.setFanSpeed(runningProgram->fanSpeedHumidifier);
+    humidifier.setMinHumidity(runningProgram->humidityMinimum);
+    humidifier.setMaxHumidity(runningProgram->humidityMaximum);
 }
 
 int16_t Controller::getHiveTargetTemperature()

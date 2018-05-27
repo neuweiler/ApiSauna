@@ -53,27 +53,32 @@ Configuration *Configuration::getInstance()
  */
 bool Configuration::load()
 {
-    Logger::info(F("loading configuration from EEPROM"));
+    Logger::info(F("loading configuration"));
     EEPROM.get(CONFIG_ADDRESS_IO, *getIO());
     EEPROM.get(CONFIG_ADDRESS_PARAMS, *getParams());
     EEPROM.get(CONFIG_ADDRESS_SENSOR, *getSensor());
 
     if (getParams()->token != CFG_EEPROM_CONFIG_TOKEN) {
-        Logger::warn(F("no ApiSauna token found in EEPROM --> resetting configuration"));
+        Logger::warn(F("no ApiSauna token found in EEPROM --> resetting configuration and statistics"));
         reset();
         save();
+        Statistics::getInstance()->reset();
+        Statistics::getInstance()->save();
     }
 
-    if (getParams()->crc != crc((uint8_t *)getParams() + 4, sizeof(ConfigurationParams) - 4)) {
+    if (getParams()->crc != Crc::calculate((uint8_t *)getParams() + 4, sizeof(ConfigurationParams) - 4)) {
         Logger::error(F("invalid crc detected in parameter configuration"));
+        Status::getInstance()->errorCode = Status::crcParam;
         return false;
     }
-    if (getIO()->crc != crc((uint8_t *)getIO() + 4, sizeof(ConfigurationIO) - 4)) {
+    if (getIO()->crc != Crc::calculate((uint8_t *)getIO() + 4, sizeof(ConfigurationIO) - 4)) {
         Logger::error(F("invalid crc detected in I/O configuration"));
+        Status::getInstance()->errorCode = Status::crcIo;
         return false;
     }
-    if (getSensor()->crc != crc((uint8_t *)getSensor() + 4, sizeof(ConfigurationSensor) - 4)) {
+    if (getSensor()->crc != Crc::calculate((uint8_t *)getSensor() + 4, sizeof(ConfigurationSensor) - 4)) {
         Logger::error(F("invalid crc detected in sensor configuration"));
+        Status::getInstance()->errorCode = Status::crcSensor;
         return false;
     }
 
@@ -89,9 +94,9 @@ bool Configuration::load()
  */
 void Configuration::updateCrc()
 {
-    getParams()->crc = crc((uint8_t*) (getParams()) + 4, sizeof(ConfigurationParams) - 4);
-    getIO()->crc = crc((uint8_t*) (getIO()) + 4, sizeof(ConfigurationIO) - 4);
-    getSensor()->crc = crc((uint8_t*) (getSensor()) + 4, sizeof(ConfigurationSensor) - 4);
+    getParams()->crc = Crc::calculate((uint8_t*) (getParams()) + 4, sizeof(ConfigurationParams) - 4);
+    getIO()->crc = Crc::calculate((uint8_t*) (getIO()) + 4, sizeof(ConfigurationIO) - 4);
+    getSensor()->crc = Crc::calculate((uint8_t*) (getSensor()) + 4, sizeof(ConfigurationSensor) - 4);
 }
 
 /**
@@ -206,26 +211,4 @@ ConfigurationSensor *Configuration::getSensor()
 {
     static ConfigurationSensor configSensor;
     return &configSensor;
-}
-
-/**
- * Calculate the CRC of a memory area defined by a location and its size.
- */
-uint32_t Configuration::crc(uint8_t *location, uint32_t size)
-{
-  const unsigned long crc_table[16] = {
-    0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
-    0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
-    0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
-    0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
-  };
-
-  unsigned long crc = ~0L;
-
-  for (uint8_t *pos = location; pos < location + size  ; ++pos) {
-    crc = crc_table[(crc ^ *pos) & 0x0f] ^ (crc >> 4);
-    crc = crc_table[(crc ^ (*pos >> 4)) & 0x0f] ^ (crc >> 4);
-    crc = ~crc;
-  }
-  return crc;
 }

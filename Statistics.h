@@ -31,6 +31,8 @@
 
 #include "config.h"
 #include "Logger.h"
+#include "Crc.h"
+#include "Status.h"
 #include <EEPROM.h>
 
 #define CONFIG_ADDRESS_STATISTICS   768
@@ -50,7 +52,7 @@ public:
     static Statistics *getInstance();
     static StatisticValues *getStatistics();
     virtual ~Statistics();
-    void load();
+    bool load();
     void save();
     void reset();
 

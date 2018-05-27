@@ -38,6 +38,7 @@ public:
 
 private:
     void playSound();
+    void beep();
 
     Status::SystemState lastState;
     int8_t numberOfBeeps;

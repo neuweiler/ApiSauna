@@ -33,9 +33,10 @@
 
 #include "config.h"
 #include "Logger.h"
+#include "Crc.h"
+#include "Status.h"
+#include "Statistics.h"
 #include <EEPROM.h>
-
-#define CFG_MAX_NUMBER_PLATES       15 // defines the maximum number of heater plates (limited by 2*x*8 bytes + checksum < 256 bytes)
 
 #define CONFIG_ADDRESS_PARAMS       0
 #define CONFIG_ADDRESS_IO           256
@@ -126,7 +127,6 @@ public:
     bool load();
     void save();
     void reset();
-    uint32_t crc(uint8_t *location, uint32_t size);
 
 private:
     Configuration();

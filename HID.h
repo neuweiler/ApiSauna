@@ -82,6 +82,7 @@ private:
     Button buttonPressed();
     void createMenu();
     void handleMenu(Button button);
+    void selectMenu(Action action);
 
     LiquidCrystal lcd = LiquidCrystal(0,0,0,0,0,0); // will be properly initialized later
     Button lastSelectedButton;

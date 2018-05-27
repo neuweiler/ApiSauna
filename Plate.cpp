@@ -157,6 +157,7 @@ uint8_t Plate::calculateHeaterPower()
     if (currentTemperature > Configuration::getParams()->plateOverTemp) {
         Logger::error(F("ALERT !!! Plate %d is over-heating !!!"), index + 1);
         Status::getInstance()->setSystemState(Status::overtemp);
+        Status::getInstance()->errorCode = Status::overtempPlate;
         power = 0;
     }
 
