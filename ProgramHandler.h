@@ -48,7 +48,7 @@ public:
     uint8_t fanSpeedHumidifier; // the fan speed of the humidifier fan (when active (0-255)
     uint8_t humidityMinimum; // the minimum relative humidity in %
     uint8_t humidityMaximum; // the maximum relative humidity in %
-
+//TODO send an event instead of using the changed flag
     bool changed; // the program's values were changed indicating a required update
 };
 

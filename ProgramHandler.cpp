@@ -36,6 +36,9 @@ ProgramHandler::~ProgramHandler()
 {
 }
 
+/**
+ * Get singleton instance
+ */
 ProgramHandler *ProgramHandler::getInstance()
 {
     static ProgramHandler instance;
@@ -133,16 +136,25 @@ void ProgramHandler::initPrograms()
 //    ControllerProgram programHealth; 39° 30min
 }
 
+/**
+ * Returns the address of the currently running program
+ */
 Program* ProgramHandler::getRunningProgram()
 {
     return runningProgram;
 }
 
+/**
+ * Returns the list of all defined programs
+ */
 SimpleList<Program>* ProgramHandler::getPrograms()
 {
     return &programs;
 }
 
+/**
+ * Start a specific program
+ */
 void ProgramHandler::start(uint8_t programNumber)
 {
     int i = 1;
@@ -161,6 +173,9 @@ void ProgramHandler::start(uint8_t programNumber)
     Logger::warn(F("program #%d not found"), programNumber);
 }
 
+/**
+ * Stop the currently running program
+ */
 void ProgramHandler::stop()
 {
     Logger::info(F("stopping program"));
@@ -169,6 +184,9 @@ void ProgramHandler::stop()
     Status::getInstance()->setSystemState(Status::shutdown);
 }
 
+/**
+ * Calculate the time the pre-heat or running phase is running
+ */
 uint32_t ProgramHandler::getTimeRunning()
 {
     Status::SystemState state = Status::getInstance()->getSystemState();
@@ -194,10 +212,16 @@ uint32_t ProgramHandler::getTimeRemaining()
     return 0;
 }
 
+/**
+ * Attach a program observer so it will get notified of future changes in program selection
+ */
 void ProgramHandler::attach(ProgramObserver *observer) {
     observers.push_back(observer);
 }
 
+/**
+ * Send an event to all attached/subscribed listeners
+ */
 void ProgramHandler::sendEvent(ProgramEvent event, Program *program) {
     Logger::debug(F("sending event %d to observers of ProgramHandler"), event);
     for (SimpleList<ProgramObserver *>::iterator itr = observers.begin(); itr != observers.end(); ++itr) {
