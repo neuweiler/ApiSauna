@@ -103,16 +103,20 @@ void Humidifier::process()
         vaporizer.setMode(Vaporizer::ON);
         status->vaporizerEnabled = true;
         status->fanSpeedHumidifier = fanSpeed;
-        status->fanTimeHumidifier = millis();
+        status->fanTimeHumidifier = 0;
     }
 
     if (humidity >= maximumHumidity) {
-        if ((millis() - status->fanTimeHumidifier) / 60000 > Configuration::getParams()->humidifierFanDryTime) {
+        vaporizer.setMode(Vaporizer::OFF);
+        status->vaporizerEnabled = false;
+
+        if (status->fanTimeHumidifier == 0) {
+            status->fanTimeHumidifier = millis();
+        }
+        if ((millis() - status->fanTimeHumidifier) > 60000 * Configuration::getParams()->humidifierFanDryTime) {
             fan.setSpeed(0);
             status->fanSpeedHumidifier = 0;
         }
-        vaporizer.setMode(Vaporizer::OFF);
-        status->vaporizerEnabled = false;
     }
 
     status->humidity = humidity;
