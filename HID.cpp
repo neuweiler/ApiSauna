@@ -227,7 +227,7 @@ void HID::process()
  */
 void HID::displayProgramInfo()
 {
-    if (tickCounter > 9) {
+    if (tickCounter > 7) {
         Status *status = Status::getInstance();
         ProgramHandler *programHandler = ProgramHandler::getInstance();
 
