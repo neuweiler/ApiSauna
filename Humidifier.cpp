@@ -113,13 +113,13 @@ void Humidifier::process()
         if (status->fanTimeHumidifier == 0) {
             status->fanTimeHumidifier = millis();
         }
-        if ((millis() - status->fanTimeHumidifier) > 60000 * Configuration::getParams()->humidifierFanDryTime) {
-            fan.setSpeed(0);
-            status->fanSpeedHumidifier = 0;
-        }
+    }
+
+    if (status->fanTimeHumidifier != 0 && (millis() - status->fanTimeHumidifier) > 60000 * Configuration::getParams()->humidifierFanDryTime) {
+        fan.setSpeed(0);
+        status->fanSpeedHumidifier = 0;
     }
 
     status->humidity = humidity;
     status->temperatureHumidifier = temperature;
-
 }
