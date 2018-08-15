@@ -54,17 +54,17 @@ void ProgramHandler::initPrograms()
 
     Program programVarroaSummer;
     snprintf(programVarroaSummer.name, 16, "Varroa Killer");
-    programVarroaSummer.temperaturePreHeat = 420; // 42 deg C
+    programVarroaSummer.temperaturePreHeat = 400; // 40 deg C
     programVarroaSummer.fanSpeedPreHeat = 250;
     programVarroaSummer.durationPreHeat = 60; // 60min
-    programVarroaSummer.temperatureHive = 430; // 430 deg C
-    programVarroaSummer.hiveKp = 8.0;
+    programVarroaSummer.temperatureHive = 410; // 41 deg C
+    programVarroaSummer.hiveKp = 4.0;
     programVarroaSummer.hiveKi = 0.2;
-    programVarroaSummer.hiveKd = 5.0;
+    programVarroaSummer.hiveKd = 7.0;
     programVarroaSummer.temperaturePlate = 700; // 70 deg C
-    programVarroaSummer.plateKp = 3.0;
-    programVarroaSummer.plateKi = 0.01;
-    programVarroaSummer.plateKd = 50.0;
+    programVarroaSummer.plateKp = 1.0;
+    programVarroaSummer.plateKi = 0.10;
+    programVarroaSummer.plateKd = 7.0;
     programVarroaSummer.fanSpeed = 200; // minimum is 10
     programVarroaSummer.humidityMinimum = 30;
     programVarroaSummer.humidityMaximum = 35;
@@ -74,10 +74,10 @@ void ProgramHandler::initPrograms()
 
     Program programVarroaWinter;
     snprintf(programVarroaWinter.name, 16, "Winter Treat");
-    programVarroaWinter.temperaturePreHeat = 420; // 42 deg C
+    programVarroaWinter.temperaturePreHeat = 400; // 40 deg C
     programVarroaWinter.fanSpeedPreHeat = 255;
     programVarroaWinter.durationPreHeat = 60; // 60min
-    programVarroaWinter.temperatureHive = 430; // 43.0 deg C
+    programVarroaWinter.temperatureHive = 420; // 41.0 deg C
     programVarroaWinter.hiveKp = 8.0;
     programVarroaWinter.hiveKi = 0.2;
     programVarroaWinter.hiveKd = 5.0;
@@ -162,11 +162,11 @@ void ProgramHandler::start(uint8_t programNumber)
     for (SimpleList<Program>::iterator itr = programs->begin(); itr != programs->end(); ++itr) {
         if (i == programNumber) {
             Logger::info(F("Starting program #%d"), i);
-                runningProgram = itr;
-                runningProgram->changed = false;
-                sendEvent(startProgram, runningProgram);
-                startTime = millis();
-                return;
+            runningProgram = itr;
+            runningProgram->changed = false;
+            sendEvent(startProgram, runningProgram);
+            startTime = millis();
+            return;
         }
         i++;
     }
@@ -180,32 +180,38 @@ void ProgramHandler::stop()
 {
     Logger::info(F("stopping program"));
     runningProgram = NULL;
+    startTime = 0;
     sendEvent(stopProgram, runningProgram);
     Status::getInstance()->setSystemState(Status::shutdown);
 }
 
 /**
- * Calculate the time the pre-heat or running phase is running
+ * When switching from pre-heat to running, we need to reset the start time. (to start with time running == 0)
  */
-uint32_t ProgramHandler::getTimeRunning()
+void ProgramHandler::resetTimer() {
+    startTime = millis();
+}
+
+/**
+ * Calculate the time the pre-heat or running phase is running (in seconds)
+ */
+uint32_t ProgramHandler::calculateTimeRunning()
 {
-    Status::SystemState state = Status::getInstance()->getSystemState();
-    if (runningProgram != NULL && (state == Status::preHeat || state == Status::running)) {
+    if (startTime != 0) {
         return (millis() - startTime) / 1000;
     }
     return 0;
 }
 
 /**
- * Returns the time the current program stage is running in seconds.
+ * Calculate the time the current program stage is running (in seconds).
  */
-uint32_t ProgramHandler::getTimeRemaining()
+uint32_t ProgramHandler::calculateTimeRemaining()
 {
     if (runningProgram != NULL) {
-        uint32_t timeRunning = getTimeRunning();
+        uint32_t timeRunning = calculateTimeRunning();
         uint32_t duration = (Status::getInstance()->getSystemState() == Status::preHeat ? runningProgram->durationPreHeat : runningProgram->duration) * 60;
-        // perform a safety check to prevent an unsigned under-flow if timeRunning is bigger than the duration
-        if (timeRunning < duration) {
+        if (timeRunning < duration) { // prevent under-flow
             return duration - timeRunning;
         }
     }

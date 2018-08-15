@@ -74,9 +74,10 @@ public:
     void start(uint8_t programNumber);
     void stop();
     Program *getRunningProgram();
-    uint32_t getTimeRunning();
-    uint32_t getTimeRemaining();
+    uint32_t calculateTimeRunning();
+    uint32_t calculateTimeRemaining();
     void attach(ProgramObserver *observer);
+    void resetTimer();
 
 private:
     ProgramHandler();
