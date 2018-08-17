@@ -42,6 +42,7 @@ Status::Status()
         powerPlate[i] = 0;
         fanSpeedPlate[i] = 0;
     }
+    temperatureActualHive = 0;
     temperatureTargetHive = 0;
     temperatureTargetPlate = 0;
     temperatureHumidifier = 0;
@@ -95,7 +96,7 @@ Status::SystemState Status::setSystemState(SystemState newSystemState)
             }
             break;
         case shutdown:
-            if (newSystemState == preHeat || newSystemState == running) {
+            if (newSystemState == ready) {
                 systemState = newSystemState;
             }
             break;

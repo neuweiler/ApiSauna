@@ -68,6 +68,7 @@ public:
     ErrorCode errorCode;
     int16_t temperatureHive[CFG_MAX_NUMBER_PLATES];
     int16_t temperaturePlate[CFG_MAX_NUMBER_PLATES];
+    int16_t temperatureActualHive;
     int16_t temperatureTargetHive;
     int16_t temperatureTargetPlate;
     int16_t temperatureHumidifier;

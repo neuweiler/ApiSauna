@@ -55,7 +55,8 @@ public:
 enum ProgramEvent
 {
     startProgram,
-    stopProgram
+    stopProgram,
+    updateProgram
 };
 
 class ProgramObserver
@@ -77,7 +78,7 @@ public:
     uint32_t calculateTimeRunning();
     uint32_t calculateTimeRemaining();
     void attach(ProgramObserver *observer);
-    void resetTimer();
+    void switchToRunning();
 
 private:
     ProgramHandler();

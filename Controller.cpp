@@ -114,27 +114,35 @@ void Controller::initOutput()
     pinMode(configIo->humidifierFan, OUTPUT);
 }
 
-void Controller::powerDownDevices()
-{
-    Logger::info(F("resetting output"));
-
-    ConfigurationIO *configIo = Configuration::getIO();
-    for (int i = 0; i < Configuration::getParams()->numberOfPlates; i++) {
-        analogWrite(configIo->heater[i], 0);
-        analogWrite(configIo->fan[i], Configuration::getParams()->minFanSpeed);
-    }
-    analogWrite(configIo->vaporizer, 0);
-    analogWrite(configIo->humidifierFan, 0);
-    delay(10); // wait a bit before trying to open the relay
-    digitalWrite(configIo->heaterRelay, LOW);
-}
-
+/**
+ * Initialize the PID to define the plateTemperature based on the targetTemperature and the
+ * actual temperature of the hive.
+ */
 void Controller::initPid()
 {
     pid = new PID(&actualTemperature, &plateTemperature, &targetTemperature, 0, 0, 0, DIRECT);
     pid->SetOutputLimits(0, Configuration::getParams()->plateOverTemp);
     pid->SetSampleTime(CFG_LOOP_DELAY);
     pid->SetMode(AUTOMATIC);
+}
+
+/**
+ * Tell all devices to power-down.
+ */
+void Controller::powerDownDevices()
+{
+    for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
+        itr->setMaximumPower(0);
+        itr->setFanSpeed(Configuration::getParams()->minFanSpeed);
+        itr->process();
+    }
+    humidifier.setMinHumidity(0);
+    humidifier.setMaxHumidity(1);
+    humidifier.setFanSpeed(0);
+    humidifier.process();
+
+    delay(100);
+    digitalWrite(Configuration::getIO()->heaterRelay, LOW);
 }
 
 /**
@@ -225,20 +233,35 @@ bool Controller::assignHiveSensors(SimpleList<SensorAddress> &addressList)
 }
 
 /**
- * Retrieve temperature data from all sensors and return highest value (in 0.1 deg C)
+ * Retrieve temperature data from all sensors and return second highest value (in 0.1 deg C)
+ *
+ * We assume that either 1 ore 3+ sensors are being used and use a bit a more aggressive
+ * approach to heat the hive - if one temp sensor is placed badly or being heated by the bees,
+ * it would take too long to heat up the entire hive.
  */
 int16_t Controller::retrieveHiveTemperatures()
 {
-    int16_t max = -999;
+    Status *status = Status::getInstance();
+    int16_t max = -999, secondMax = -999;
 
     int i = 0;
     for (SimpleList<TemperatureSensor>::iterator itr = hiveTempSensors.begin(); itr != hiveTempSensors.end(); ++itr) {
         itr->retrieveData();
         if (i < CFG_MAX_NUMBER_PLATES)
-            Status::getInstance()->temperatureHive[i++] = itr->getTemperatureCelsius();
+            status->temperatureHive[i++] = itr->getTemperatureCelsius();
         max = max(max, itr->getTemperatureCelsius());
     }
-    return max;
+
+    for (i = 0; i < CFG_MAX_NUMBER_PLATES; i++) {
+        if (status->temperatureHive[i] != max) {
+            secondMax = max(secondMax, status->temperatureHive[i]);
+        }
+    }
+    if (secondMax == -999) {
+        secondMax = max;
+    }
+    status->temperatureActualHive = secondMax;
+    return secondMax;
 }
 
 /**
@@ -265,65 +288,51 @@ int16_t Controller::calculatePlateTargetTemperature()
 }
 
 /**
- * Check if a state has reached its execution time and switch to next state.
+ * Check if a state has reached its execution time or a problem has occured
  */
 void Controller::updateProgramState()
 {
+    Status *status = Status::getInstance();
+    ProgramHandler *programHandler = ProgramHandler::getInstance();
+    Program *runningProgram = programHandler->getRunningProgram();
+    uint32_t timeRemaining = programHandler->calculateTimeRemaining();
+
     if (actualTemperature > Configuration::getParams()->hiveOverTemp) {
         Logger::error(F("ALERT - OVER-TEMPERATURE IN HIVE ! Trying to recover, please open the cover to help cool down the hive!"));
-        Status::getInstance()->setSystemState(Status::overtemp);
-        Status::getInstance()->errorCode = Status::overtempHive;
+        status->setSystemState(Status::overtemp);
+        status->errorCode = Status::overtempHive;
     }
-    if (Status::getInstance()->getSystemState() == Status::overtemp && actualTemperature < Configuration::getParams()->hiveOverTempRecover) {
+    if (status->getSystemState() == Status::overtemp && actualTemperature < Configuration::getParams()->hiveOverTempRecover) {
         Logger::info(F("recovered from over-temperature, shutting down."));
-        Status::getInstance()->setSystemState(Status::shutdown);
+        programHandler->stop();
     }
 
-    // switch to running if pre-heating cycle is finished
-    Program *runningProgram = ProgramHandler::getInstance()->getRunningProgram();
-    uint32_t timeRemaining = ProgramHandler::getInstance()->getTimeRemaining();
-    if (Status::getInstance()->getSystemState() == Status::preHeat && runningProgram
-            && (timeRemaining == 0 || retrieveHiveTemperatures() >= runningProgram->temperaturePreHeat)) {
-        Status::getInstance()->setSystemState(Status::running);
-        pid->SetOutputLimits(runningProgram->temperatureHive, Configuration::getParams()->hiveOverTemp);
-        for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
-            itr->setFanSpeed(runningProgram->fanSpeed);
-        }
+    if (status->getSystemState() == Status::running && timeRemaining < 2) {
+        Logger::info(F("program finished."));
+        programHandler->stop();
     }
 
-    // switch to shutdown when program is finished
-    if (Status::getInstance()->getSystemState() == Status::running && timeRemaining < 2) {
-        Status::getInstance()->setSystemState(Status::shutdown);
+    if (status->getSystemState() == Status::preHeat && runningProgram
+            && (timeRemaining == 0 || (actualTemperature >= runningProgram->temperaturePreHeat &&
+                    timeRemaining < programHandler->calculateTimeRunning()))) {
+        programHandler->switchToRunning();
     }
 }
 
 void Controller::handleEvent(ProgramEvent event, Program *program)
 {
-    Logger::debug("controller: incoming event %d, program: %s", event, (program ? program->name : "n/a"));
+    Logger::debug(F("controller: incoming event %d, program: %s"), event, (program ? program->name : "n/a"));
+
     switch (event) {
     case startProgram:
-        // init all plate parameters
-        for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
-            itr->setFanSpeed(program->fanSpeedPreHeat);
-            itr->setMaximumPower(Configuration::getParams()->maxHeaterPower);
-            itr->setPIDTuning(program->plateKp, program->plateKi, program->plateKd);
-        }
-        humidifier.setFanSpeed(program->fanSpeedHumidifier);
-        humidifier.setMinHumidity(program->humidityMinimum);
-        humidifier.setMaxHumidity(program->humidityMaximum);
-
-        pid->SetOutputLimits(program->temperaturePreHeat, program->temperaturePlate);
-        pid->SetTunings(program->hiveKp, program->hiveKi, program->hiveKd);
-
-        digitalWrite(Configuration::getIO()->heaterRelay, HIGH);
-        delay(500); // give it some time to close
-        Status::getInstance()->setSystemState(Status::preHeat);
+    case updateProgram:
+        handleProgramChange(program);
         break;
 
     case stopProgram:
+        powerDownDevices();
         break;
     }
-
 }
 
 /**
@@ -374,17 +383,6 @@ void Controller::process()
             digitalWrite(Configuration::getIO()->heaterRelay, LOW);
             break;
         case Status::shutdown:
-            for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
-                itr->setMaximumPower(0);
-                itr->setFanSpeed(Configuration::getParams()->minFanSpeed);
-                itr->process();
-            }
-            humidifier.setMinHumidity(0);
-            humidifier.setMaxHumidity(1);
-            humidifier.setFanSpeed(0);
-            humidifier.process();
-            delay(10);
-            digitalWrite(Configuration::getIO()->heaterRelay, LOW);
             break;
         case Status::error:
             powerDownDevices();
@@ -397,24 +395,35 @@ void Controller::process()
     }
 }
 
-void Controller::handleProgramChange(Program *runningProgram)
+void Controller::handleProgramChange(Program *program)
 {
     Status::SystemState state = Status::getInstance()->getSystemState();
+    bool preHeat = (state == Status::preHeat);
+    bool running = (state == Status::running);
 
-    Logger::info(F("Updating devices after program parameter change"));
+    Logger::info(F("Updating devices with program settings"));
 
-    pid->SetTunings(runningProgram->hiveKp, runningProgram->hiveKi, runningProgram->hiveKd);
+    // adjust the PID which defines the target temperature of the plates based on the hive temp
+    pid->SetOutputLimits((preHeat ? program->temperaturePreHeat : program->temperatureHive), program->temperaturePlate);
+    pid->SetTunings(program->hiveKp, program->hiveKi, program->hiveKd);
+
+    // adjust the parameters of the plates
     for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
-        itr->setPIDTuning(runningProgram->plateKp, runningProgram->plateKi, runningProgram->plateKd);
-        itr->setFanSpeed(state == Status::running ? runningProgram->fanSpeed : runningProgram->fanSpeedPreHeat);
+        itr->setPIDTuning(program->plateKp, program->plateKi, program->plateKd);
+        itr->setMaximumPower(Configuration::getParams()->maxHeaterPower);
+        itr->setFanSpeed(preHeat ? program->fanSpeedPreHeat : program->fanSpeed);
     }
-    humidifier.setFanSpeed(runningProgram->fanSpeedHumidifier);
-    humidifier.setMinHumidity(runningProgram->humidityMinimum);
-    humidifier.setMaxHumidity(runningProgram->humidityMaximum);
+
+    // adjust the parameters of the humidifier
+    humidifier.setFanSpeed(program->fanSpeedHumidifier);
+    humidifier.setMinHumidity(program->humidityMinimum);
+    humidifier.setMaxHumidity(program->humidityMaximum);
+
+    digitalWrite(Configuration::getIO()->heaterRelay, (running || preHeat ? HIGH : LOW));
+    delay(100); // allow the relay to open/close
 }
 
 int16_t Controller::getHiveTargetTemperature()
 {
     return targetTemperature;
 }
-

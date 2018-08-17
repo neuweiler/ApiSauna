@@ -50,7 +50,7 @@ ProgramHandler *ProgramHandler::getInstance()
  */
 void ProgramHandler::initPrograms()
 {
-    Logger::info("Loading program data");
+    Logger::info(F("Loading program data"));
 
     Program programVarroaSummer;
     snprintf(programVarroaSummer.name, 16, "Varroa Killer");
@@ -164,8 +164,9 @@ void ProgramHandler::start(uint8_t programNumber)
             Logger::info(F("Starting program #%d"), i);
             runningProgram = itr;
             runningProgram->changed = false;
-            sendEvent(startProgram, runningProgram);
             startTime = millis();
+            Status::getInstance()->setSystemState(Status::preHeat);
+            sendEvent(startProgram, runningProgram);
             return;
         }
         i++;
@@ -181,15 +182,17 @@ void ProgramHandler::stop()
     Logger::info(F("stopping program"));
     runningProgram = NULL;
     startTime = 0;
-    sendEvent(stopProgram, runningProgram);
     Status::getInstance()->setSystemState(Status::shutdown);
+    sendEvent(stopProgram, runningProgram);
 }
 
 /**
  * When switching from pre-heat to running, we need to reset the start time. (to start with time running == 0)
  */
-void ProgramHandler::resetTimer() {
+void ProgramHandler::switchToRunning() {
     startTime = millis();
+    Status::getInstance()->setSystemState(Status::running);
+    sendEvent(updateProgram, runningProgram);
 }
 
 /**
