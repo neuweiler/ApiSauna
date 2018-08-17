@@ -151,7 +151,7 @@ uint8_t Plate::getIndex()
 
 uint8_t Plate::calculateHeaterPower()
 {
-    double oldPower = power;
+    bool wasOn = (power > Configuration::getParams()->maxHeaterPower / 2);
 
     pid->Compute(); // updates power
     if (currentTemperature > Configuration::getParams()->plateOverTemp) {
@@ -168,7 +168,7 @@ uint8_t Plate::calculateHeaterPower()
             activeHeaters++;
             return 255;
         } else {
-            if (oldPower > 0 && activeHeaters > 0) {
+            if (wasOn && activeHeaters > 0) {
                 activeHeaters--;
             }
             return 0;
