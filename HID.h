@@ -84,6 +84,7 @@ private:
     void createMenu();
     void handleMenu(Button button);
     void selectMenu(Action action);
+    void displayHiveTemperatures(bool displayAll);
 
     LiquidCrystal lcd = LiquidCrystal(0, 0, 0, 0, 0, 0); // will be properly initialized later
     Button lastSelectedButton;

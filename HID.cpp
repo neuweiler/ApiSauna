@@ -195,31 +195,45 @@ void HID::process()
         lcd.clear();
         lcd.print(F("OVER-TEMPERATURE !!!"));
         lcd.setCursor(0, 1);
-        for (int i = 0; (Configuration::getSensor()->addressHive[i].value != 0) && (i < CFG_MAX_NUMBER_PLATES); i++) {
-            snprintf(lcdBuffer, 21, "%02d\xdf", status->temperatureHive[i] / 10);
-            lcd.print(lcdBuffer);
-        }
+        displayHiveTemperatures(true);
         logData();
         break;
     case Status::shutdown:
-        if (lastSystemState != state) {
-            lcd.clear();
-            lcd.print(F("Program finished"));
+        lcd.clear();
+        lcd.print(F("Program finished"));
+        lcd.setCursor(0, 2);
+        displayHiveTemperatures(true);
+        logData();
+        if (button == SELECT) {
+            status->setSystemState(Status::ready);
+            handleMenu(NONE);
+            lastSelectedButton = button;
         }
         break;
     case Status::error:
-        if (lastSystemState != state) {
-            lcd.clear();
-            snprintf(lcdBuffer, 21, "ERROR: %03d", status->errorCode);
-            lcd.print(lcdBuffer);
-            lcd.setCursor(0, 1);
-            lcd.print(status->errorCodeToStr(status->errorCode));
-        }
+        lcd.clear();
+        snprintf(lcdBuffer, 21, "ERROR: %03d", status->errorCode);
+        lcd.print(lcdBuffer);
+        lcd.setCursor(0, 1);
+        lcd.print(status->errorCodeToStr(status->errorCode));
+        lcd.setCursor(0, 3);
+        displayHiveTemperatures(true);
         logData();
         break;
     }
     lastSystemState = state;
     tickCounter++;
+}
+
+void HID::displayHiveTemperatures(bool displayAll)
+{
+    Status *status = Status::getInstance();
+    for (int i = 0; i < (displayAll ? CFG_MAX_NUMBER_PLATES : 4); i++) {
+        if (Configuration::getSensor()->addressHive[i].value != 0) {
+            snprintf(lcdBuffer, 21, "%02d\xdf", (status->temperatureHive[i] + 5) / 10);
+            lcd.print(lcdBuffer);
+        }
+    }
 }
 
 /**
@@ -236,26 +250,23 @@ void HID::displayProgramInfo()
         snprintf(lcdBuffer, 21, "%s", (status->getSystemState() == Status::preHeat ? "pre-heating" : programHandler->getRunningProgram()->name));
         lcd.print(lcdBuffer);
         lcd.setCursor(13, 0);
-        snprintf(lcdBuffer, 21, "%s", convertTime(programHandler->getTimeRunning()).c_str());
+        snprintf(lcdBuffer, 21, "%s", convertTime(programHandler->calculateTimeRunning()).c_str());
         lcd.print(lcdBuffer);
 
         // actual+target hive temperature and humidity with humidifier/fan status
         lcd.setCursor(0, 1);
-        for (int i = 0; (Configuration::getSensor()->addressHive[i].value != 0) && (i < 4); i++) {
-            snprintf(lcdBuffer, 21, "%02d\xdf", status->temperatureHive[i] / 10);
-            lcd.print(lcdBuffer);
-        }
-        snprintf(lcdBuffer, 21, "\x7e%02d\xdf%s%02d%%  ", status->temperatureTargetHive / 10,
+        displayHiveTemperatures(false);
+        snprintf(lcdBuffer, 21, "\x7e%02d\xdf%s%02d%%  ", (status->temperatureTargetHive + 5) / 10,
                 (status->vaporizerEnabled ? "*" : status->fanSpeedHumidifier > 0 ? "x" : " "), status->humidity);
         lcd.print(lcdBuffer);
 
         // actual and target plate temperatures
         lcd.setCursor(0, 2);
         for (int i = 0; (i < Configuration::getParams()->numberOfPlates) && (i < 4); i++) {
-            snprintf(lcdBuffer, 21, "%02d%c", status->temperaturePlate[i] / 10, (status->powerPlate[i] > 0 ? 0xeb : 0xdf));
+            snprintf(lcdBuffer, 21, "%02d%c", (status->temperaturePlate[i] + 5) / 10, (status->powerPlate[i] > 0 ? 0xeb : 0xdf));
             lcd.print(lcdBuffer);
         }
-        snprintf(lcdBuffer, 21, "\x7e%02d\xdf %02d\xdf", status->temperatureTargetPlate / 10, status->temperatureHumidifier / 10);
+        snprintf(lcdBuffer, 21, "\x7e%02d\xdf %02d\xdf", (status->temperatureTargetPlate + 5) / 10, (status->temperatureHumidifier + 5) / 10);
         lcd.print(lcdBuffer);
 
         // fan speed, time remaining
@@ -265,7 +276,7 @@ void HID::displayProgramInfo()
             lcd.print(lcdBuffer);
         }
         lcd.setCursor(12, 3);
-        snprintf(lcdBuffer, 21, " %s", convertTime(programHandler->getTimeRemaining()).c_str());
+        snprintf(lcdBuffer, 21, " %s", convertTime(programHandler->calculateTimeRemaining()).c_str());
         lcd.print(lcdBuffer);
 
         tickCounter = 0;
@@ -284,15 +295,13 @@ void HID::logData()
     Status *status = Status::getInstance();
     ProgramHandler *programHandler = ProgramHandler::getInstance();
 
-    Logger::info(F("time: %s, remaining: %s, status: %s"), convertTime(programHandler->getTimeRunning()).c_str(),
-            convertTime(programHandler->getTimeRemaining()).c_str(), status->systemStateToStr(status->getSystemState()).c_str());
+    Logger::info(F("time: %s, remaining: %s, status: %s"), convertTime(programHandler->calculateTimeRunning()).c_str(),
+            convertTime(programHandler->calculateTimeRemaining()).c_str(), status->systemStateToStr(status->getSystemState()).c_str());
 
-    uint16_t maxTemp = 0;
     for (int i = 0; (Configuration::getSensor()->addressHive[i].value != 0) && (i < CFG_MAX_NUMBER_PLATES); i++) {
         Logger::debug(F("sensor %d: %s C"), i + 1, toDecimal(status->temperatureHive[i], 10).c_str());
-        maxTemp = max(maxTemp, status->temperatureHive[i]);
     }
-    Logger::info(F("hive: %sC -> %sC"), toDecimal(maxTemp, 10).c_str(), toDecimal(status->temperatureTargetHive, 10).c_str());
+    Logger::info(F("hive: %sC -> %sC"), toDecimal(status->temperatureActualHive, 10).c_str(), toDecimal(status->temperatureTargetHive, 10).c_str());
 
     for (int i = 0; i < Configuration::getParams()->numberOfPlates; i++) {
         Logger::info(F("plate %d: %sC -> %sC, power=%d/%d, fan=%d"), i + 1, toDecimal(status->temperaturePlate[i], 10).c_str(),
