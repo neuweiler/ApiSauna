@@ -35,8 +35,7 @@ HID::HID() :
     lastSystemState = Status::init;
     lastSelectedButton = NONE;
     tickCounter = 0;
-    itrMenu = NULL;
-    itrSubMenu = NULL;
+    selectedProgram = NULL;
 }
 
 void HID::initialize()
@@ -47,81 +46,34 @@ void HID::initialize()
     lcd.init(1, io->lcdRs, 255, io->lcdEnable, io->lcdD0, io->lcdD1, io->lcdD2, io->lcdD3, 0, 0, 0, 0);
     lcd.begin(20, 4);
 
-    pinMode(io->buttonUp, INPUT);
-    pinMode(io->buttonDown, INPUT);
-    pinMode(io->buttonLeft, INPUT);
-    pinMode(io->buttonRight, INPUT);
+    pinMode(io->buttonNext, INPUT);
     pinMode(io->buttonSelect, INPUT);
 
-    createMenu();
-    handleMenu(NONE);
+    selectedProgram = ProgramHandler::getInstance()->getPrograms()->begin();
+    handleInput(NONE);
 }
 
-void HID::createMenu()
+void HID::handleInput(Button button)
 {
-    MenuEntry programMenu;
-    programMenu.name = F("Select Program:");
+    int i = 1;
     SimpleList<Program> *programs = ProgramHandler::getInstance()->getPrograms();
-    for (SimpleList<Program>::iterator itr = programs->begin(); itr != programs->end(); ++itr) {
-        SubMenuEntry subMenuEntry;
-        subMenuEntry.name = itr->name;
-        subMenuEntry.action = START_PROGRAM;
-        programMenu.subMenuEntries.push_back(subMenuEntry);
-    }
-    menuEntries.push_back(programMenu);
 
-    MenuEntry monitorMenu;
-    monitorMenu.name = F("Monitor:");
-    SubMenuEntry hiveSubMenuEntry;
-    hiveSubMenuEntry.name = F("Hive");
-    monitorMenu.subMenuEntries.push_back(hiveSubMenuEntry);
-    menuEntries.push_back(monitorMenu);
-
-    MenuEntry configMenu;
-    configMenu.name = F("Configuration:");
-    SubMenuEntry configTest1SubMenuEntry;
-    configTest1SubMenuEntry.name = F("Test1");
-    monitorMenu.subMenuEntries.push_back(configTest1SubMenuEntry);
-    SubMenuEntry configTest2SubMenuEntry;
-    configTest2SubMenuEntry.name = F("Test2");
-    monitorMenu.subMenuEntries.push_back(configTest2SubMenuEntry);
-    SubMenuEntry configTest3SubMenuEntry;
-    configTest3SubMenuEntry.name = F("Test3");
-    monitorMenu.subMenuEntries.push_back(configTest3SubMenuEntry);
-    menuEntries.push_back(configMenu);
-
-    // init the iterators to display the first entry
-    itrMenu = menuEntries.begin();
-    itrSubMenu = itrMenu->subMenuEntries.begin();
-}
-
-void HID::handleMenu(Button button)
-{
     switch (button) {
-    case UP:
-        if (itrSubMenu != itrMenu->subMenuEntries.begin()) {
-            itrSubMenu--;
-        }
-        break;
-    case DOWN:
-        if (itrSubMenu + 1 != itrMenu->subMenuEntries.end()) {
-            itrSubMenu++;
-        }
-        break;
-    case LEFT:
-        if (itrMenu != menuEntries.begin()) {
-            itrMenu--;
-            itrSubMenu = itrMenu->subMenuEntries.begin();
-        }
-        break;
-    case RIGHT:
-        if (itrMenu + 1 != menuEntries.end()) {
-            itrMenu++;
-            itrSubMenu = itrMenu->subMenuEntries.begin();
+    case NEXT:
+        if (selectedProgram + 1 != programs->end()) {
+            selectedProgram++;
+        } else {
+            selectedProgram = programs->begin();
         }
         break;
     case SELECT:
-        selectMenu(itrSubMenu->action);
+        for (SimpleList<Program>::iterator itr = programs->begin(); itr != programs->end(); ++itr && ++i) {
+            if (itr == selectedProgram) {
+                lcd.clear();
+                ProgramHandler::getInstance()->start(i);
+                break;
+            }
+        }
         break;
     case NONE:
         break;
@@ -131,42 +83,9 @@ void HID::handleMenu(Button button)
     lcd.setCursor(0, 0);
     lcd.print(CFG_VERSION);
     lcd.setCursor(0, 2);
-    lcd.print(itrMenu->name);
+    lcd.print(F("Select Program:"));
     lcd.setCursor(1, 3);
-    lcd.print(itrSubMenu->name);
-}
-
-void HID::selectMenu(Action action)
-{
-    switch (action) {
-    case START_PROGRAM: {
-        int i = 1;
-        for (SimpleList<SubMenuEntry>::iterator itr = itrMenu->subMenuEntries.begin(); itr != itrMenu->subMenuEntries.end(); ++itr && ++i) {
-            if (itrSubMenu == itr) {
-                lcd.clear();
-                ProgramHandler::getInstance()->start(i);
-                break;
-            }
-        }
-        break;
-    }
-    case MONITOR_HIVE:
-        //TODO handle monitoring
-        Logger::info(F("Monitor hive..."));
-        break;
-    case CONFIG_TEST1:
-        //TODO handle configuration
-        Logger::info(F("Config test1..."));
-        break;
-    case CONFIG_TEST2:
-        //TODO handle configuration
-        Logger::info(F("Config test2..."));
-        break;
-    case CONFIG_TEST3:
-        //TODO handle configuration
-        Logger::info(F("Config test3..."));
-        break;
-    }
+    lcd.print(selectedProgram->name);
 }
 
 void HID::process()
@@ -182,7 +101,7 @@ void HID::process()
         break;
     case Status::ready: // allow user to navigate through menu
         if (lastSelectedButton != button) {
-            handleMenu(button);
+            handleInput(button);
             lastSelectedButton = button;
         }
         break;
@@ -206,7 +125,7 @@ void HID::process()
         logData();
         if (button == SELECT) {
             status->setSystemState(Status::ready);
-            handleMenu(NONE);
+            handleInput(NONE);
             lastSelectedButton = button;
         }
         break;
@@ -323,14 +242,8 @@ HID::Button HID::buttonPressed()
 {
     ConfigurationIO *io = Configuration::getIO();
 
-    if (digitalRead(io->buttonUp))
-        return UP;
-    if (digitalRead(io->buttonDown))
-        return DOWN;
-    if (digitalRead(io->buttonLeft))
-        return LEFT;
-    if (digitalRead(io->buttonRight))
-        return RIGHT;
+    if (digitalRead(io->buttonNext))
+        return NEXT;
     if (digitalRead(io->buttonSelect))
         return SELECT;
 

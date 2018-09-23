@@ -36,29 +36,6 @@
 #include "Device.h"
 #include "ProgramHandler.h"
 
-enum Action
-{
-    START_PROGRAM,
-    MONITOR_HIVE,
-    CONFIG_TEST1,
-    CONFIG_TEST2,
-    CONFIG_TEST3
-};
-
-class SubMenuEntry
-{
-public:
-    String name;
-    Action action;
-};
-
-class MenuEntry
-{
-public:
-    String name;
-    SimpleList<SubMenuEntry> subMenuEntries;
-};
-
 class HID: Device
 {
 public:
@@ -69,10 +46,7 @@ public:
 private:
     enum Button
     {
-        RIGHT,
-        UP,
-        DOWN,
-        LEFT,
+        NEXT,
         SELECT,
         NONE
     };
@@ -81,17 +55,13 @@ private:
     String convertTime(uint32_t millis);
     String toDecimal(int16_t number, uint8_t divisor);
     Button buttonPressed();
-    void createMenu();
-    void handleMenu(Button button);
-    void selectMenu(Action action);
+    void handleInput(Button button);
     void displayHiveTemperatures(bool displayAll);
 
     LiquidCrystal lcd = LiquidCrystal(0, 0, 0, 0, 0, 0); // will be properly initialized later
     Button lastSelectedButton;
     Status::SystemState lastSystemState;
-    SimpleList<MenuEntry> menuEntries;
-    SimpleList<MenuEntry>::iterator itrMenu;
-    SimpleList<SubMenuEntry>::iterator itrSubMenu;
+    SimpleList<Program>::iterator selectedProgram;
     uint8_t tickCounter;
     char lcdBuffer[21];
 };

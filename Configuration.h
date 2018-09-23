@@ -95,11 +95,8 @@ public:
     uint8_t heaterRelay; // pin which controls the main relay for all heaters, emergency switch (default: 54 = A0)
     uint8_t heater[CFG_MAX_NUMBER_PLATES]; // the pin assignments to control the heaters (default: 11, 12, 2, 3)
     uint8_t fan[CFG_MAX_NUMBER_PLATES]; // the pin assignments to control the heater fans (default: 7, 8, 44, 45)
-    uint8_t buttonLeft; // pin to which the left button is connected (default: 11)
-    uint8_t buttonRight; // pin to which the right button is connected (default: 12)
-    uint8_t buttonUp; // pin to which the up button is connected (default: 2)
-    uint8_t buttonDown; // pin to which the down button is connected (default: 3)
-    uint8_t buttonSelect; // pin to which the select button is connected (default: 13)
+    uint8_t buttonNext; // pin to which the next button is connected (default: 55 = A1)
+    uint8_t buttonSelect; // pin to which the select button is connected (default: 56 = A2)
     uint8_t beeper; // pin which is connected to the piezo beeper (default: 10)
     uint8_t lcdRs; // pin which controls the lcd's RS pin (default: 22)
     uint8_t lcdEnable; // pin which controls the lcd's enable pin (default: 23)
@@ -107,7 +104,7 @@ public:
     uint8_t lcdD1; // pin which controls the lcd's D1 pin (default: 25)
     uint8_t lcdD2; // pin which controls the lcd's D2 pin (default: 26)
     uint8_t lcdD3; // pin which controls the lcd's D3 pin (default: 27)
-    // 53 bytes used
+    // 22 bytes used
 };
 
 class ConfigurationSensor

@@ -121,11 +121,8 @@ void SerialConsole::printMenuIO()
 {
     ConfigurationIO* configIO = Configuration::getIO();
     Logger::console(F("PIN_BEEP=%d - output pin for beeper (default: 10)"), configIO->beeper);
-    Logger::console(F("PIN_DOWN=%d - input pin for button down (default: 3)"), configIO->buttonDown);
-    Logger::console(F("PIN_LEFT=%d - input pin for button left (default: 11)"), configIO->buttonLeft);
-    Logger::console(F("PIN_RIGHT=%d - input pin for button right (default: 12)"), configIO->buttonRight);
-    Logger::console(F("PIN_SELECT=%d - input pin for button select (default: 13)"), configIO->buttonSelect);
-    Logger::console(F("PIN_UP=%d - input pin for button up (default: 2)"), configIO->buttonUp);
+    Logger::console(F("PIN_NEXT=%d - input pin for button next (default: 55 = A1)"), configIO->buttonNext);
+    Logger::console(F("PIN_SELECT=%d - input pin for button select (default: 56 = A2)"), configIO->buttonSelect);
     for (int i = 0; i < Configuration::getParams()->numberOfPlates; i++) {
         Logger::console(F("PIN_FAN[%d]=%d - output pin for fan (default: 7, 8, 44, 45)"), i + 1, configIO->fan[i]);
     }
@@ -312,26 +309,14 @@ bool SerialConsole::handleCmdIO(String &command, int32_t value)
         value = constrain(value, 0, 255);
         Logger::console(F("setting output pin for beeper to %d"), value);
         configIO->beeper = value;
-    } else if (command == String(F("PIN_DOWN"))) {
+    } else if (command == String(F("PIN_NEXT"))) {
         value = constrain(value, 0, 255);
-        Logger::console(F("setting input pin for button down to %d"), value);
-        configIO->buttonDown = value;
-    } else if (command == String(F("PIN_LEFT"))) {
-        value = constrain(value, 0, 255);
-        Logger::console(F("setting input pin for button left  to %d"), value);
-        configIO->buttonLeft = value;
-    } else if (command == String(F("PIN_RIGHT"))) {
-        value = constrain(value, 0, 255);
-        Logger::console(F("setting input pin for button right to %d"), value);
-        configIO->buttonRight = value;
+        Logger::console(F("setting input pin for button next to %d"), value);
+        configIO->buttonNext = value;
     } else if (command == String(F("PIN_SELECT"))) {
         value = constrain(value, 0, 255);
         Logger::console(F("setting input pin for button select to %d"), value);
         configIO->buttonSelect = value;
-    } else if (command == String(F("PIN_UP"))) {
-        value = constrain(value, 0, 255);
-        Logger::console(F("setting input pin for button up to %d"), value);
-        configIO->buttonUp = value;
     } else if (command.startsWith(String(F("PIN_FAN")))) {
         value = constrain(value, 0, 255);
         uint8_t index = getIndex(command);

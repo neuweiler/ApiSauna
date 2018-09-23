@@ -149,11 +149,8 @@ void Configuration::reset()
     configIO->fan[1] = 8;
     configIO->fan[2] = 44;
     configIO->fan[3] = 45;
-    configIO->buttonLeft = 11;
-    configIO->buttonRight = 12;
-    configIO->buttonUp = 2;
-    configIO->buttonDown = 3;
-    configIO->buttonSelect = 13;
+    configIO->buttonNext = A1;
+    configIO->buttonSelect = A2;
     configIO->beeper = 10;
     configIO->lcdRs = 22;
     configIO->lcdEnable = 23;
