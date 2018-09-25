@@ -36,6 +36,7 @@ HID::HID() :
     tickCounter = 0;
     lastButtons = 0;
     resetStamp = 0;
+    statusLed = false;
     selectedProgram = NULL;
 }
 
@@ -50,8 +51,9 @@ void HID::initialize()
     pinMode(io->buttonNext, INPUT);
     pinMode(io->buttonSelect, INPUT);
 
+    beeper.initialize();
+
     selectedProgram = ProgramHandler::getInstance()->getPrograms()->begin();
-    printProgramMenu();
 }
 
 void HID::handleProgramMenu()
@@ -65,6 +67,7 @@ void HID::handleProgramMenu()
     SimpleList<Program> *programs = ProgramHandler::getInstance()->getPrograms();
 
     if (buttons & NEXT) {
+        beeper.click();
         if (selectedProgram + 1 != programs->end()) {
             selectedProgram++;
         } else {
@@ -73,6 +76,7 @@ void HID::handleProgramMenu()
         printProgramMenu();
     }
     if (buttons & SELECT) {
+        beeper.click();
         int i = 1;
         for (SimpleList<Program>::iterator itr = programs->begin(); itr != programs->end(); ++itr && ++i) {
             if (itr == selectedProgram) {
@@ -119,6 +123,7 @@ bool HID::modal(String request, String negative, String positive, uint8_t timeou
         delay(100);
     }
     lcd.clear();
+    beeper.click();
 
     ProgramHandler::getInstance()->resume();
     return readButtons() & SELECT;
@@ -132,8 +137,9 @@ void HID::handleProgramInput()
     }
     lastButtons = buttons;
 
-    Status::SystemState state = Status::getInstance()->getSystemState();
+    Status::SystemState state = status.getSystemState();
     if (buttons & NEXT) {
+        beeper.click();
         if (state == Status::preHeat) {
             if (modal(F("Skip pre-heating?"), F("no"), F("yes"))) {
                 ProgramHandler::getInstance()->switchToRunning();
@@ -147,17 +153,76 @@ void HID::handleProgramInput()
     }
 }
 
+void HID::handleFinishedInput()
+{
+    uint8_t buttons = readButtons();
+    if (lastButtons == buttons) {
+        return;
+    }
+    lastButtons = buttons;
+
+    if (buttons & NEXT) {
+        beeper.click();
+        if (modal(F("Extend program?"), F("no"), F("yes"))) {
+            ProgramHandler::getInstance()->addTime(1800);
+        } else {
+            printFinishedMenu();
+        }
+    }
+    if (buttons & SELECT) {
+        beeper.click();
+        status.setSystemState(Status::ready);
+    }
+}
+
+
 void HID::checkReset()
 {
     uint8_t buttons = readButtons();
     if ((buttons & NEXT) && (buttons & SELECT)) {
         if (resetStamp == 0) {
             resetStamp = millis();
-        } else if (millis() - resetStamp > 5000) {
+        } else if (millis() - resetStamp > 3000) {
             softReset();
+        } else {
+            beeper.click();
         }
     } else {
         resetStamp = 0;
+    }
+}
+
+void HID::printFinishedMenu()
+{
+    lcd.print(F("Program finished"));
+    lcd.setCursor(0, 3);
+    lcd.print(F("+30min          menu"));
+}
+
+void HID::stateSwitch(Status::SystemState fromState, Status::SystemState toState)
+{
+    lcd.clear();
+    switch (toState) {
+    case Status::ready:
+        printProgramMenu();
+        beeper.beep(2);
+        break;
+    case Status::overtemp:
+        lcd.print(F("OVER-TEMPERATURE !!!"));
+        beeper.beep(-1);
+        break;
+    case Status::shutdown:
+        printFinishedMenu();
+        break;
+    case Status::error:
+        beeper.beep(20);
+        snprintf(lcdBuffer, 21, "ERROR: %03d", status.errorCode);
+        lcd.print(lcdBuffer);
+        lcd.setCursor(0, 1);
+        lcd.print(status.getError());
+        break;
+    default:
+        beeper.beep(2);
     }
 }
 
@@ -166,7 +231,14 @@ void HID::process()
     Device::process();
     checkReset();
 
-    switch (Status::getInstance()->getSystemState()) {
+    Status::SystemState state = status.getSystemState();
+
+    if (state != lastSystemState) {
+        stateSwitch(lastSystemState, state);
+        lastSystemState = state;
+    }
+
+    switch (state) {
     case Status::init:
         break;
     case Status::ready:
@@ -175,49 +247,39 @@ void HID::process()
     case Status::preHeat:
     case Status::running:
         displayProgramInfo();
-        logData();
         handleProgramInput();
         break;
     case Status::overtemp:
-        lcd.clear();
-        lcd.print(F("OVER-TEMPERATURE !!!"));
-        lcd.setCursor(0, 1);
-        displayHiveTemperatures(true);
-        logData();
+        displayHiveTemperatures(1, true);
         break;
     case Status::shutdown:
-        lcd.clear();
-        lcd.print(F("Program finished"));
-        lcd.setCursor(0, 2);
-        displayHiveTemperatures(true);
-        logData();
-//        if (button == SELECT) {
-//            status->setSystemState(Status::ready);
-//            handleProgramMenu (NONE);
-//            lastSelectedButton = button;
-//        }
+        displayHiveTemperatures(1, true);
+        handleFinishedInput();
         break;
     case Status::error:
-        lcd.clear();
-//        snprintf(lcdBuffer, 21, "ERROR: %03d", status->errorCode);
-//        lcd.print(lcdBuffer);
-//        lcd.setCursor(0, 1);
-//        lcd.print(status->errorCodeToStr(status->errorCode));
-        lcd.setCursor(0, 3);
-        displayHiveTemperatures(true);
-        logData();
+        displayHiveTemperatures(3, true);
         break;
     }
-//    lastSystemState = state;
-    tickCounter++;
+
+    beeper.process();
+    logData();
+
+    statusLed = !statusLed;
+    digitalWrite(Configuration::getIO()->heartbeat, statusLed); // some kind of heart-beat
+
+    if (tickCounter++ > 8)
+        tickCounter = 0;
 }
 
-void HID::displayHiveTemperatures(bool displayAll)
+void HID::displayHiveTemperatures(uint8_t row, bool displayAll)
 {
-    Status *status = Status::getInstance();
+    if (tickCounter != 0)
+        return;
+
+    lcd.setCursor(0, row);
     for (int i = 0; i < (displayAll ? CFG_MAX_NUMBER_PLATES : 4); i++) {
         if (Configuration::getSensor()->addressHive[i].value != 0) {
-            snprintf(lcdBuffer, 21, "%02d\xdf", (status->temperatureHive[i] + 5) / 10);
+            snprintf(lcdBuffer, 4, "%02d\xdf", (status.temperatureHive[i] + 5) / 10);
             lcd.print(lcdBuffer);
         }
     }
@@ -228,46 +290,43 @@ void HID::displayHiveTemperatures(bool displayAll)
  */
 void HID::displayProgramInfo()
 {
-    if (tickCounter > 7) {
-        Status *status = Status::getInstance();
-        ProgramHandler *programHandler = ProgramHandler::getInstance();
+    if (tickCounter != 0)
+        return;
 
-        // program name and time running
-        lcd.setCursor(0, 0);
-        snprintf(lcdBuffer, 21, "%s", (status->getSystemState() == Status::preHeat ? "pre-heating" : programHandler->getRunningProgram()->name));
-        lcd.print(lcdBuffer);
-        lcd.setCursor(13, 0);
-        snprintf(lcdBuffer, 21, "%s", convertTime(programHandler->calculateTimeRunning()).c_str());
-        lcd.print(lcdBuffer);
+    ProgramHandler *programHandler = ProgramHandler::getInstance();
 
-        // actual+target hive temperature and humidity with humidifier/fan status
-        lcd.setCursor(0, 1);
-        displayHiveTemperatures(false);
-        snprintf(lcdBuffer, 21, "\x7e%02d\xdf%s%02d%%  ", (status->temperatureTargetHive + 5) / 10,
-                (status->vaporizerEnabled ? "*" : status->fanSpeedHumidifier > 0 ? "x" : " "), status->humidity);
-        lcd.print(lcdBuffer);
+    // program name and time running
+    lcd.setCursor(0, 0);
+    snprintf(lcdBuffer, 14, "%-13s", (status.getSystemState() == Status::preHeat ? "pre-heating" : programHandler->getRunningProgram()->name));
+    lcd.print(lcdBuffer);
+    lcd.setCursor(13, 0);
+    snprintf(lcdBuffer, 8, "%s", convertTime(programHandler->calculateTimeRunning()).c_str());
+    lcd.print(lcdBuffer);
 
-        // actual and target plate temperatures
-        lcd.setCursor(0, 2);
-        for (int i = 0; (i < Configuration::getParams()->numberOfPlates) && (i < 4); i++) {
-            snprintf(lcdBuffer, 21, "%02d%c", (status->temperaturePlate[i] + 5) / 10, (status->powerPlate[i] > 0 ? 0xeb : 0xdf));
-            lcd.print(lcdBuffer);
-        }
-        snprintf(lcdBuffer, 21, "\x7e%02d\xdf %02d\xdf", (status->temperatureTargetPlate + 5) / 10, (status->temperatureHumidifier + 5) / 10);
-        lcd.print(lcdBuffer);
+    // actual+target hive temperature and humidity with humidifier/fan status
+    displayHiveTemperatures(1, false);
+    snprintf(lcdBuffer, 21, "\x7e%02d\xdf%s%02d%%  ", (status.temperatureTargetHive + 5) / 10,
+            (status.vaporizerEnabled ? "*" : status.fanSpeedHumidifier > 0 ? "x" : " "), status.humidity);
+    lcd.print(lcdBuffer);
 
-        // fan speed, time remaining
-        lcd.setCursor(0, 3);
-        for (int i = 0; i < Configuration::getParams()->numberOfPlates && i < 4; i++) {
-            snprintf(lcdBuffer, 21, "%02ld ", map(status->fanSpeedPlate[i], Configuration::getParams()->minFanSpeed, 255, 0, 99));
-            lcd.print(lcdBuffer);
-        }
-        lcd.setCursor(12, 3);
-        snprintf(lcdBuffer, 21, " %s", convertTime(programHandler->calculateTimeRemaining()).c_str());
+    // actual and target plate temperatures
+    lcd.setCursor(0, 2);
+    for (int i = 0; (i < Configuration::getParams()->numberOfPlates) && (i < 4); i++) {
+        snprintf(lcdBuffer, 4, "%02d%c", (status.temperaturePlate[i] + 5) / 10, (status.powerPlate[i] > 0 ? 0xeb : 0xdf));
         lcd.print(lcdBuffer);
-
-        tickCounter = 0;
     }
+    snprintf(lcdBuffer, 9, "\x7e%02d\xdf %02d\xdf", (status.temperatureTargetPlate + 5) / 10, (status.temperatureHumidifier + 5) / 10);
+    lcd.print(lcdBuffer);
+
+    // fan speed, time remaining
+    lcd.setCursor(0, 3);
+    for (int i = 0; i < Configuration::getParams()->numberOfPlates && i < 4; i++) {
+        snprintf(lcdBuffer, 4, "%02ld ", map(status.fanSpeedPlate[i], Configuration::getParams()->minFanSpeed, 255, 0, 99));
+        lcd.print(lcdBuffer);
+    }
+    lcd.setCursor(13, 3);
+    snprintf(lcdBuffer, 8, "%s", convertTime(programHandler->calculateTimeRemaining()).c_str());
+    lcd.print(lcdBuffer);
 }
 
 /**
@@ -276,29 +335,28 @@ void HID::displayProgramInfo()
  */
 void HID::logData()
 {
-    if (tickCounter != 0)
+    if (tickCounter != 3)
         return;
 
-    Status *status = Status::getInstance();
     ProgramHandler *programHandler = ProgramHandler::getInstance();
 
     Logger::info(F("time: %s, remaining: %s, status: %s"), convertTime(programHandler->calculateTimeRunning()).c_str(),
-            convertTime(programHandler->calculateTimeRemaining()).c_str(), status->systemStateToStr(status->getSystemState()).c_str());
+            convertTime(programHandler->calculateTimeRemaining()).c_str(), status.systemStateToStr(status.getSystemState()).c_str());
 
     for (int i = 0; (Configuration::getSensor()->addressHive[i].value != 0) && (i < CFG_MAX_NUMBER_PLATES); i++) {
-        Logger::debug(F("sensor %d: %s C"), i + 1, toDecimal(status->temperatureHive[i], 10).c_str());
+        Logger::debug(F("sensor %d: %s C"), i + 1, toDecimal(status.temperatureHive[i], 10).c_str());
     }
-    Logger::info(F("hive: %sC -> %sC"), toDecimal(status->temperatureActualHive, 10).c_str(), toDecimal(status->temperatureTargetHive, 10).c_str());
+    Logger::info(F("hive: %sC -> %sC"), toDecimal(status.temperatureActualHive, 10).c_str(), toDecimal(status.temperatureTargetHive, 10).c_str());
 
     for (int i = 0; i < Configuration::getParams()->numberOfPlates; i++) {
-        Logger::info(F("plate %d: %sC -> %sC, power=%d/%d, fan=%d"), i + 1, toDecimal(status->temperaturePlate[i], 10).c_str(),
-                toDecimal(status->temperatureTargetPlate, 10).c_str(), status->powerPlate[i], Configuration::getParams()->maxHeaterPower,
-                status->fanSpeedPlate[i]);
+        Logger::info(F("plate %d: %sC -> %sC, power=%d/%d, fan=%d"), i + 1, toDecimal(status.temperaturePlate[i], 10).c_str(),
+                toDecimal(status.temperatureTargetPlate, 10).c_str(), status.powerPlate[i], Configuration::getParams()->maxHeaterPower,
+                status.fanSpeedPlate[i]);
     }
 
-    Logger::info(F("humidity: relHumidity=%d (%d-%d), vapor=%d, fan=%d, temp=%s C"), status->humidity,
-            programHandler->getRunningProgram()->humidityMinimum, programHandler->getRunningProgram()->humidityMaximum, status->vaporizerEnabled,
-            status->fanSpeedHumidifier, toDecimal(status->temperatureHumidifier, 10).c_str());
+    Logger::info(F("humidity: relHumidity=%d (%d-%d), vapor=%d, fan=%d, temp=%s C"), status.humidity,
+            programHandler->getRunningProgram()->humidityMinimum, programHandler->getRunningProgram()->humidityMaximum, status.vaporizerEnabled,
+            status.fanSpeedHumidifier, toDecimal(status.temperatureHumidifier, 10).c_str());
 }
 
 /**

@@ -78,6 +78,7 @@ public:
     void stop();
     void pause();
     void resume();
+    void addTime(uint16_t seconds);
     Program *getRunningProgram();
     uint32_t calculateTimeRunning();
     uint32_t calculateTimeRemaining();

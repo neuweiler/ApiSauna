@@ -35,6 +35,7 @@
 #include "SimpleList.h"
 #include "Device.h"
 #include "ProgramHandler.h"
+#include "Beeper.h"
 
 class HID: Device
 {
@@ -58,10 +59,13 @@ private:
     void handleProgramMenu();
     void printProgramMenu();
     void handleProgramInput();
+    void handleFinishedInput();
     void checkReset();
-    void displayHiveTemperatures(bool displayAll);
+    void displayHiveTemperatures(uint8_t row, bool displayAll);
     bool modal(String request, String negative, String positive, uint8_t timeout);
+    void stateSwitch(Status::SystemState fromState, Status::SystemState toState);
     void softReset();
+    void printFinishedMenu();
 
     LiquidCrystal lcd = LiquidCrystal(0, 0, 0, 0, 0, 0); // will be properly initialized later
     Status::SystemState lastSystemState;
@@ -70,6 +74,8 @@ private:
     uint8_t lastButtons;
     uint32_t resetStamp;
     char lcdBuffer[21];
+    bool statusLed;
+    Beeper beeper;
 };
 
 #endif /* HID_H_ */

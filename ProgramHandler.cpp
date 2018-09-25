@@ -95,8 +95,8 @@ void ProgramHandler::initPrograms()
     Program programCleaning;
     snprintf(programCleaning.name, 16, "Cleaning");
     programCleaning.temperaturePreHeat = 380; // 38 deg C
-    programCleaning.fanSpeedPreHeat = 0;
-    programCleaning.durationPreHeat = 0; // 30min
+    programCleaning.fanSpeedPreHeat = 10;
+    programCleaning.durationPreHeat = 0;
     programCleaning.temperatureHive = 425; // 42.5 deg C
     programCleaning.hiveKp = 8.0;
     programCleaning.hiveKi = 0.2;
@@ -105,7 +105,7 @@ void ProgramHandler::initPrograms()
     programCleaning.plateKp = 4.0;
     programCleaning.plateKi = 0.09;
     programCleaning.plateKd = 50.0;
-    programCleaning.fanSpeed = 0; // minimum is 10
+    programCleaning.fanSpeed = 10; // minimum is 10
     programCleaning.humidityMinimum = 1;
     programCleaning.humidityMaximum = 2;
     programCleaning.fanSpeedHumidifier = 0; // only works from 230 to 255
@@ -115,7 +115,7 @@ void ProgramHandler::initPrograms()
     Program programMeltHoney;
     snprintf(programMeltHoney.name, 16, "Melt Honey");
     programMeltHoney.temperaturePreHeat = 300;
-    programMeltHoney.fanSpeedPreHeat = 0;
+    programMeltHoney.fanSpeedPreHeat = 10;
     programMeltHoney.durationPreHeat = 0;
     programMeltHoney.temperatureHive = 300;
     programMeltHoney.hiveKp = 8.0;
@@ -125,7 +125,7 @@ void ProgramHandler::initPrograms()
     programMeltHoney.plateKp = 4.0;
     programMeltHoney.plateKi = 0.09;
     programMeltHoney.plateKd = 50.0;
-    programMeltHoney.fanSpeed = 0;
+    programMeltHoney.fanSpeed = 10;
     programMeltHoney.humidityMinimum = 1;
     programMeltHoney.humidityMaximum = 2;
     programMeltHoney.fanSpeedHumidifier = 0; // only works from 230 to 255
@@ -165,7 +165,7 @@ void ProgramHandler::start(uint8_t programNumber)
             runningProgram = itr;
             runningProgram->changed = false;
             startTime = millis();
-            Status::getInstance()->setSystemState(Status::preHeat);
+            status.setSystemState(Status::preHeat);
             sendEvent(startProgram, runningProgram);
             return;
         }
@@ -182,7 +182,7 @@ void ProgramHandler::stop()
     Logger::info(F("stopping program"));
     runningProgram = NULL;
     startTime = 0;
-    Status::getInstance()->setSystemState(Status::shutdown);
+    status.setSystemState(Status::shutdown);
     sendEvent(stopProgram, runningProgram);
 }
 
@@ -204,12 +204,19 @@ void ProgramHandler::resume()
     sendEvent(resumeProgram, runningProgram);
 }
 
+void ProgramHandler::addTime(uint16_t seconds) {
+    startTime = millis() ;//- runningProgram->duration * 60000 + seconds * 1000;
+    status.setSystemState(Status::ready);
+    status.setSystemState(Status::running);
+    sendEvent(startProgram, runningProgram);
+}
+
 /**
  * When switching from pre-heat to running, we need to reset the start time. (to start with time running == 0)
  */
 void ProgramHandler::switchToRunning() {
     startTime = millis();
-    Status::getInstance()->setSystemState(Status::running);
+    status.setSystemState(Status::running);
     sendEvent(updateProgram, runningProgram);
 }
 
@@ -231,7 +238,7 @@ uint32_t ProgramHandler::calculateTimeRemaining()
 {
     if (runningProgram != NULL) {
         uint32_t timeRunning = calculateTimeRunning();
-        uint32_t duration = (Status::getInstance()->getSystemState() == Status::preHeat ? runningProgram->durationPreHeat : runningProgram->duration) * 60;
+        uint32_t duration = (status.getSystemState() == Status::preHeat ? runningProgram->durationPreHeat : runningProgram->duration) * 60;
         if (timeRunning < duration) { // prevent under-flow
             return duration - timeRunning;
         }
