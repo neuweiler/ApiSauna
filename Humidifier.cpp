@@ -79,47 +79,55 @@ int16_t Humidifier::getTemperature()
     return temperature;
 }
 
-Vaporizer::Mode Humidifier::getVaporizerMode()
-{
-    return vaporizer.getMode();
-}
-
+/**
+ * Initialize the humidifier and its devices
+ */
 void Humidifier::initialize()
 {
     Device::initialize();
     sensor.init();
     fan.setControlPin(Configuration::getIO()->humidifierFan);
+    pinMode(Configuration::getIO()->vaporizer, OUTPUT);
 }
 
+/**
+ * Read the humidity and activate/deactivate the vaporizer/fan.
+ */
 void Humidifier::process()
 {
     Device::process();
-    Status *status = Status::getInstance();
     humidity = sensor.getRelativeHumidity();
     temperature = sensor.getTemperature();
 
     if (humidity != 0 && humidity < minimumHumidity) {
         fan.setSpeed(fanSpeed);
-        vaporizer.setMode(Vaporizer::ON);
-        status->vaporizerEnabled = true;
-        status->fanSpeedHumidifier = fanSpeed;
-        status->fanTimeHumidifier = 0;
+        enableVaporizer(true);
+        status.fanSpeedHumidifier = fanSpeed;
+        status.fanTimeHumidifier = 0;
     }
 
     if (humidity >= maximumHumidity) {
-        vaporizer.setMode(Vaporizer::OFF);
-        status->vaporizerEnabled = false;
+        enableVaporizer(false);
 
-        if (status->fanTimeHumidifier == 0) {
-            status->fanTimeHumidifier = millis();
+        if (status.fanTimeHumidifier == 0) {
+            status.fanTimeHumidifier = millis();
         }
     }
 
-    if (status->fanTimeHumidifier != 0 && (millis() - status->fanTimeHumidifier) > 60000 * Configuration::getParams()->humidifierFanDryTime) {
+    // let the fan run longer than the vaporizer to let it dry
+    if (status.fanTimeHumidifier != 0 && (millis() - status.fanTimeHumidifier) > 60000 * Configuration::getParams()->humidifierFanDryTime) {
         fan.setSpeed(0);
-        status->fanSpeedHumidifier = 0;
+        status.fanSpeedHumidifier = 0;
     }
 
-    status->humidity = humidity;
-    status->temperatureHumidifier = temperature;
+    status.humidity = humidity;
+    status.temperatureHumidifier = temperature;
+}
+
+void Humidifier::enableVaporizer(bool enable)
+{
+    if (Configuration::getIO()->vaporizer != 0) {
+        digitalWrite(Configuration::getIO()->vaporizer, enable);
+    }
+    status.vaporizerEnabled = enable;
 }

@@ -106,7 +106,7 @@ uint8_t Plate::getMaximumPower()
 void Plate::setFanSpeed(uint8_t speed)
 {
     fan->setSpeed(speed);
-    Status::getInstance()->fanSpeedPlate[index] = speed;
+    status.fanSpeedPlate[index] = speed;
 }
 
 /**
@@ -149,22 +149,28 @@ uint8_t Plate::getIndex()
     return index;
 }
 
+/**
+ * Update the plat's PID data and derive the power level to command (0-255 for PWM, 0 / 255 for non-PWM).
+ * In non-PWM mode, the number of concurrently active plates is also limited to the configured amount.
+ *
+ */
 uint8_t Plate::calculateHeaterPower()
 {
-    bool wasOn = (power > Configuration::getParams()->maxHeaterPower / 2);
+    ConfigurationParams *params = Configuration::getParams();
+    bool wasOn = (power > params->maxHeaterPower / 2);
 
     pid->Compute(); // updates power
-    if (currentTemperature > Configuration::getParams()->plateOverTemp) {
+    if (currentTemperature > params->plateOverTemp) {
         Logger::error(F("ALERT !!! Plate %d is over-heating !!!"), index + 1);
-        Status::getInstance()->setSystemState(Status::overtemp);
-        Status::getInstance()->errorCode = Status::overtempPlate;
+        status.setSystemState(Status::overtemp);
+        status.errorCode = Status::overtempPlate;
         power = 0;
     }
 
-    if (Configuration::getParams()->usePWM) {
+    if (params->usePWM) {
         return constrain(power, (double )0, maxPower);
     } else {
-        if ((power > Configuration::getParams()->maxHeaterPower / 2) && (activeHeaters < Configuration::getParams()->maxConcurrentHeaters)) {
+        if ((power > params->maxHeaterPower / 2) && (activeHeaters < params->maxConcurrentHeaters)) {
             activeHeaters++;
             return 255;
         } else {
@@ -186,10 +192,10 @@ void Plate::process()
     Device::process();
     sensorHeater->retrieveData();
     currentTemperature = sensorHeater->getTemperatureCelsius();
-    Status::getInstance()->temperaturePlate[index] = currentTemperature;
+    status.temperaturePlate[index] = currentTemperature;
 
     uint8_t power = calculateHeaterPower();
-    Status::getInstance()->powerPlate[index] = power;
+    status.powerPlate[index] = power;
     heater->setPower(power);
 
 }

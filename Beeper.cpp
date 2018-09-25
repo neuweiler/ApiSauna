@@ -31,11 +31,13 @@
 Beeper::Beeper() :
         Device()
 {
-    lastState = Status::init;
     numberOfBeeps = 0;
     soundOn = false;
 }
 
+/**
+ * Initialize the beeper
+ */
 void Beeper::initialize()
 {
     Device::initialize();
@@ -44,30 +46,12 @@ void Beeper::initialize()
     digitalWrite(pin, LOW);
 }
 
+/**
+ * Process the pending beep requests and turn on/off piezo device
+ */
 void Beeper::process()
 {
     Device::process();
-    Status::SystemState state = Status::getInstance()->getSystemState();
-
-    if (lastState != state) {
-        switch (state) {
-        case Status::overtemp:
-            numberOfBeeps = -1; // unlimited
-            break;
-        case Status::error:
-            numberOfBeeps = 20;
-            break;
-        default:
-            numberOfBeeps = 2;
-            break;
-        }
-        lastState = state;
-    }
-    beep();
-}
-
-void Beeper::beep()
-{
     if (soundOn) {
         soundOn = false;
         if (numberOfBeeps != -1) {
@@ -78,4 +62,22 @@ void Beeper::beep()
     }
 
     analogWrite(Configuration::getIO()->beeper, (soundOn ? 20 : 0));
+}
+
+/**
+ * Request a specified amount of beeps
+ */
+void Beeper::beep(int8_t numberOfBeeps)
+{
+    this->numberOfBeeps = numberOfBeeps;
+}
+
+/**
+ * Produce a short click, e.g. for feedback to interactive input
+ */
+void Beeper::click()
+{
+    analogWrite(Configuration::getIO()->beeper, 30);
+    delay(20);
+    analogWrite(Configuration::getIO()->beeper, 0);
 }

@@ -53,7 +53,6 @@ Heater::~Heater()
 
 /**
  * Set the power of the heater (value 0-255).
- * The value is automatically limited to the configured max HeaterPower
  */
 void Heater::setPower(uint8_t power)
 {

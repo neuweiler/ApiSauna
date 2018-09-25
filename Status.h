@@ -59,11 +59,11 @@ public:
         invalidState = 9
     };
 
-    static Status *getInstance();
+    Status();
     SystemState getSystemState();
     SystemState setSystemState(SystemState);
     String systemStateToStr(SystemState);
-    String errorCodeToStr(ErrorCode);
+    String getError();
 
     ErrorCode errorCode;
     int16_t temperatureHive[CFG_MAX_NUMBER_PLATES];
@@ -80,11 +80,9 @@ public:
     uint8_t humidity;
 
 private:
-    Status();
-    Status(Status const&); // copy disabled
-    void operator=(Status const&); // assigment disabled
-
     SystemState systemState; // the current state of the system, to be modified by the state machine of this class only
 };
+
+extern Status status;
 
 #endif /* STATUS_H_ */

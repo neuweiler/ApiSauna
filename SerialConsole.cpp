@@ -70,7 +70,7 @@ void SerialConsole::printMenu()
 {
     //Show build # here as well in case people are using the native port and don't get to see the start up messages
     Logger::console(F("\n%s"), CFG_VERSION);
-    Logger::console(F("System State: %s"), Status::getInstance()->systemStateToStr(Status::getInstance()->getSystemState()).c_str());
+    Logger::console(F("System State: %s"), status.systemStateToStr(status.getSystemState()).c_str());
     Logger::console(F("System Menu:\n"));
     Logger::console(F("Enable line endings of some sort (LF, CR, CRLF)\n"));
     Logger::console(F("Commands:"));

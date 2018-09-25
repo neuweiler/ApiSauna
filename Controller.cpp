@@ -29,19 +29,11 @@
 
 #include "Controller.h"
 
-//TODO use statistics
-
-// solange temp nicht erreicht wurde: FAN = 250, danach runter bis auf 20 wenn alle 4 temp-sensoren bei Zieltemp +/- 1 Grad
-// wenn temp > 44 Grad: fan = 20, humidity-fan = 100%
-// wenn hive temp < target nach pre-heat --> extended pre-heat mit hoher fanspeed, program running time erst ab erreichen der temp zählen
-// jeder hive-temp sensor steuert eine platte.. --> sensoren durch löcher in abdeckplatte führen für genaue positionierung
-
 Controller::Controller()
 {
     actualTemperature = -999;
     targetTemperature = 0;
     plateTemperature = 0;
-    statusLed = false;
     tickCounter = 0;
     pid = NULL;
 }
@@ -55,9 +47,9 @@ Controller::~Controller()
 }
 
 /**
- * Return the instance of the singleton (must only be used in ApiSauna.ino setup() and loop() !
+ * Return the instance of the singleton
  */
-Controller *Controller::getSetupLoopInstance()
+Controller *Controller::getInstance()
 {
     static Controller instance;
     return &instance;
@@ -71,7 +63,7 @@ void Controller::initialize()
     Logger::info(F("initializing controller"));
 
     if (!Configuration::getInstance()->load() || !Statistics::getInstance()->load()) {
-        Status::getInstance()->setSystemState(Status::error);
+        status.setSystemState(Status::error);
         return;
     }
 
@@ -81,17 +73,16 @@ void Controller::initialize()
     ProgramHandler::getInstance()->initPrograms();
     ProgramHandler::getInstance()->attach(this);
     hid.initialize();
-    beeper.initialize();
     humidifier.initialize();
 
     SimpleList<SensorAddress> addressList = detectTemperatureSensors();
     if (!assignPlateSensors(addressList) || !assignHiveSensors(addressList)) {
-        Status::getInstance()->setSystemState(Status::error);
+        status.setSystemState(Status::error);
         return;
     }
 
     initPid();
-    Status::getInstance()->setSystemState(Status::ready);
+    status.setSystemState(Status::ready);
     serialConsole.printMenu();
 }
 
@@ -203,7 +194,7 @@ bool Controller::assignPlateSensors(SimpleList<SensorAddress> &addressList)
 
     if (Configuration::getParams()->numberOfPlates != plates.size()) {
         Logger::error(F("unable to locate all configured plate sensors (%d of %d) !!"), plates.size(), Configuration::getParams()->numberOfPlates);
-        Status::getInstance()->errorCode = Status::plateSensorsNotFound;
+        status.errorCode = Status::plateSensorsNotFound;
         return false;
     }
     return true;
@@ -225,7 +216,7 @@ bool Controller::assignHiveSensors(SimpleList<SensorAddress> &addressList)
         } else {
             Logger::error(F("unable to locate all configured hive sensors (%#l08x%08lx missing) !!"), configSensor->addressHive[i].high,
                     configSensor->addressHive[i].low);
-            Status::getInstance()->errorCode = Status::hiveSensorsNotFound;
+            status.errorCode = Status::hiveSensorsNotFound;
             return false;
         }
     }
@@ -241,26 +232,25 @@ bool Controller::assignHiveSensors(SimpleList<SensorAddress> &addressList)
  */
 int16_t Controller::retrieveHiveTemperatures()
 {
-    Status *status = Status::getInstance();
     int16_t max = -999, secondMax = -999;
 
     int i = 0;
     for (SimpleList<TemperatureSensor>::iterator itr = hiveTempSensors.begin(); itr != hiveTempSensors.end(); ++itr) {
         itr->retrieveData();
         if (i < CFG_MAX_NUMBER_PLATES)
-            status->temperatureHive[i++] = itr->getTemperatureCelsius();
+            status.temperatureHive[i++] = itr->getTemperatureCelsius();
         max = max(max, itr->getTemperatureCelsius());
     }
 
     for (i = 0; i < CFG_MAX_NUMBER_PLATES; i++) {
-        if (status->temperatureHive[i] != max) {
-            secondMax = max(secondMax, status->temperatureHive[i]);
+        if (status.temperatureHive[i] != max) {
+            secondMax = max(secondMax, status.temperatureHive[i]);
         }
     }
     if (secondMax == -999) {
         secondMax = max;
     }
-    status->temperatureActualHive = secondMax;
+    status.temperatureActualHive = secondMax;
     return secondMax;
 }
 
@@ -274,7 +264,7 @@ int16_t Controller::calculatePlateTargetTemperature()
         return 0;
     }
 
-    if (Status::getInstance()->getSystemState() == Status::preHeat) {
+    if (status.getSystemState() == Status::preHeat) {
         targetTemperature = runningProgram->temperaturePreHeat;
     } else {
         targetTemperature = runningProgram->temperatureHive;
@@ -282,8 +272,8 @@ int16_t Controller::calculatePlateTargetTemperature()
 
     pid->Compute();
     int16_t temp = constrain(plateTemperature, (double )0, runningProgram->temperaturePlate);
-    Status::getInstance()->temperatureTargetHive = targetTemperature;
-    Status::getInstance()->temperatureTargetPlate = temp;
+    status.temperatureTargetHive = targetTemperature;
+    status.temperatureTargetPlate = temp;
     return temp;
 }
 
@@ -292,27 +282,26 @@ int16_t Controller::calculatePlateTargetTemperature()
  */
 void Controller::updateProgramState()
 {
-    Status *status = Status::getInstance();
     ProgramHandler *programHandler = ProgramHandler::getInstance();
     Program *runningProgram = programHandler->getRunningProgram();
     uint32_t timeRemaining = programHandler->calculateTimeRemaining();
 
     if (actualTemperature > Configuration::getParams()->hiveOverTemp) {
         Logger::error(F("ALERT - OVER-TEMPERATURE IN HIVE ! Trying to recover, please open the cover to help cool down the hive!"));
-        status->setSystemState(Status::overtemp);
-        status->errorCode = Status::overtempHive;
+        status.setSystemState(Status::overtemp);
+        status.errorCode = Status::overtempHive;
     }
-    if (status->getSystemState() == Status::overtemp && actualTemperature < Configuration::getParams()->hiveOverTempRecover) {
+    if (status.getSystemState() == Status::overtemp && actualTemperature < Configuration::getParams()->hiveOverTempRecover) {
         Logger::info(F("recovered from over-temperature, shutting down."));
         programHandler->stop();
     }
 
-    if (status->getSystemState() == Status::running && timeRemaining < 2) {
+    if (status.getSystemState() == Status::running && timeRemaining < 2) {
         Logger::info(F("program finished."));
         programHandler->stop();
     }
 
-    if (status->getSystemState() == Status::preHeat && runningProgram
+    if (status.getSystemState() == Status::preHeat && runningProgram
             && (timeRemaining == 0 || (actualTemperature >= runningProgram->temperaturePreHeat &&
                     timeRemaining < programHandler->calculateTimeRunning()))) {
         programHandler->switchToRunning();
@@ -340,7 +329,6 @@ void Controller::handleEvent(ProgramEvent event, Program *program)
  */
 void Controller::process()
 {
-    beeper.process();
     hid.process();
     serialConsole.process();
 
@@ -350,7 +338,7 @@ void Controller::process()
         actualTemperature = retrieveHiveTemperatures();
         updateProgramState();
 
-        switch (Status::getInstance()->getSystemState()) {
+        switch (status.getSystemState()) {
         case Status::init:
             break;
         case Status::ready:
@@ -389,15 +377,12 @@ void Controller::process()
             break;
         }
         TemperatureSensor::prepareData();
-
-        statusLed = !statusLed;
-        digitalWrite(Configuration::getIO()->heartbeat, statusLed); // some kind of heart-beat
     }
 }
 
 void Controller::handleProgramChange(Program *program)
 {
-    Status::SystemState state = Status::getInstance()->getSystemState();
+    Status::SystemState state = status.getSystemState();
     bool preHeat = (state == Status::preHeat);
     bool running = (state == Status::running);
 

@@ -35,12 +35,10 @@ public:
     Beeper();
     void initialize();
     void process();
+    void beep(int8_t numberOfBeeps);
+    void click();
 
 private:
-    void playSound();
-    void beep();
-
-    Status::SystemState lastState;
     int8_t numberOfBeeps;
     bool soundOn;
 };

@@ -53,14 +53,6 @@ Status::Status()
 
 }
 
-/**
- * Returns the singleton instance
- */
-Status *Status::getInstance() {
-    static Status instance;
-    return &instance;
-}
-
 /*
  * Returns the current system state.
  */
@@ -155,9 +147,9 @@ String Status::systemStateToStr(SystemState state)
 /*
  * Convert the error code into a string.
  */
-String Status::errorCodeToStr(ErrorCode code)
+String Status::getError()
 {
-    switch (code) {
+    switch (errorCode) {
     case none:
         return F("no error");
     case crcParam:
@@ -181,3 +173,6 @@ String Status::errorCodeToStr(ErrorCode code)
     }
     return F("n/a");
 }
+
+Status status;
+

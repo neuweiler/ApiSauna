@@ -67,17 +67,17 @@ bool Configuration::load()
 
     if (getParams()->crc != Crc::calculate((uint8_t *) getParams() + 4, sizeof(ConfigurationParams) - 4)) {
         Logger::error(F("invalid crc detected in parameter configuration"));
-        Status::getInstance()->errorCode = Status::crcParam;
+        status.errorCode = Status::crcParam;
         return false;
     }
     if (getIO()->crc != Crc::calculate((uint8_t *) getIO() + 4, sizeof(ConfigurationIO) - 4)) {
         Logger::error(F("invalid crc detected in I/O configuration"));
-        Status::getInstance()->errorCode = Status::crcIo;
+        status.errorCode = Status::crcIo;
         return false;
     }
     if (getSensor()->crc != Crc::calculate((uint8_t *) getSensor() + 4, sizeof(ConfigurationSensor) - 4)) {
         Logger::error(F("invalid crc detected in sensor configuration"));
-        Status::getInstance()->errorCode = Status::crcSensor;
+        status.errorCode = Status::crcSensor;
         return false;
     }
 
@@ -169,15 +169,14 @@ void Configuration::reset()
     configParams->maxConcurrentHeaters = 2;
     configParams->humidifierFanDryTime = 2;
 
-//TODO remove this, it's only temporary to ease testing
-    configSensor->addressPlate[0].value = 0x3d0516a4f187ff28;
-    configSensor->addressPlate[1].value = 0x9a0516a50124ff28;
-    configSensor->addressPlate[2].value = 0xe10316a5188cff28;
-    configSensor->addressPlate[3].value = 0xed0316a48290ff28;
-    configSensor->addressHive[0].value = 0xc00416a4cf26ff28;
-    configSensor->addressHive[1].value = 0x1f0115a86b01ff28;
-    configSensor->addressHive[2].value = 0x4d0416a4d157ff28;
-    configSensor->addressHive[3].value = 0xf70315a86f2fff28;
+    configSensor->addressPlate[0].value = 0x0;
+    configSensor->addressPlate[1].value = 0x0;
+    configSensor->addressPlate[2].value = 0x0;
+    configSensor->addressPlate[3].value = 0x0;
+    configSensor->addressHive[0].value = 0x0;
+    configSensor->addressHive[1].value = 0x0;
+    configSensor->addressHive[2].value = 0x0;
+    configSensor->addressHive[3].value = 0x0;
 
     updateCrc();
 }

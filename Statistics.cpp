@@ -58,7 +58,7 @@ bool Statistics::load()
     EEPROM.get(CONFIG_ADDRESS_STATISTICS, *getStatistics());
 
     if (getStatistics()->crc != Crc::calculate((uint8_t *) getStatistics() + 4, sizeof(StatisticValues) - 4)) {
-        Status::getInstance()->errorCode = Status::crcStatistics;
+        status.errorCode = Status::crcStatistics;
         Logger::error(F("invalid crc detected in stored statistics"));
         return false;
     }
@@ -80,7 +80,7 @@ void Statistics::save()
  */
 void Statistics::reset()
 {
-    Logger::info(F("resetting stats"));
+    Logger::info(F("resetting statistics"));
     StatisticValues *stats = getStatistics();
     stats->unused = 0;
 }

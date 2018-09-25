@@ -36,7 +36,7 @@ void setup()
     Serial.begin(CFG_SERIAL_SPEED);
     Serial.println(CFG_VERSION);
 
-    Controller::getSetupLoopInstance()->initialize();
+    Controller::getInstance()->initialize();
 }
 
 /**
@@ -44,7 +44,7 @@ void setup()
  */
 void loop()
 {
-    Controller::getSetupLoopInstance()->process();
+    Controller::getInstance()->process();
 
     delay(CFG_LOOP_DELAY);
 }

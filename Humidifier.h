@@ -30,7 +30,6 @@
 #include "Device.h"
 #include "HumiditySensor.h"
 #include "Fan.h"
-#include "Vaporizer.h"
 
 class Humidifier: Device
 {
@@ -46,10 +45,9 @@ public:
     uint8_t getFanSpeed();
     uint8_t getHumidity();
     int16_t getTemperature();
-    Vaporizer::Mode getVaporizerMode();
 
 private:
-    Vaporizer vaporizer;
+    void enableVaporizer(bool on);
     HumiditySensor sensor;
     Fan fan;
     uint8_t maximumHumidity;

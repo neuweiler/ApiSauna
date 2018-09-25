@@ -33,7 +33,6 @@
 #include "Humidifier.h"
 #include "Plate.h"
 #include "Status.h"
-#include "Beeper.h"
 #include "PID_v1.h"
 #include "SerialConsole.h"
 #include "HID.h"
@@ -42,7 +41,7 @@
 class Controller: public ProgramObserver
 {
 public:
-    static Controller *getSetupLoopInstance();
+    static Controller *getInstance();
     virtual ~Controller();
     void initialize();
     void process();
@@ -69,12 +68,10 @@ private:
     SimpleList<Plate> plates;
     SimpleList<TemperatureSensor> hiveTempSensors;
     Humidifier humidifier;
-    Beeper beeper;
     HID hid;
     SerialConsole serialConsole;
     double actualTemperature, targetTemperature, plateTemperature; // values for/set by the PID controller
     PID *pid; // pointer to PID controller
-    bool statusLed;
     uint8_t tickCounter;
 };
 
