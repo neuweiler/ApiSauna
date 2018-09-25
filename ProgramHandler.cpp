@@ -187,6 +187,24 @@ void ProgramHandler::stop()
 }
 
 /**
+ * Pause the currently running program
+ */
+void ProgramHandler::pause()
+{
+    Logger::info(F("pausing program"));
+    sendEvent(pauseProgram, runningProgram);
+}
+
+/**
+ * Resume the currently running program
+ */
+void ProgramHandler::resume()
+{
+    Logger::info(F("resuming program"));
+    sendEvent(resumeProgram, runningProgram);
+}
+
+/**
  * When switching from pre-heat to running, we need to reset the start time. (to start with time running == 0)
  */
 void ProgramHandler::switchToRunning() {

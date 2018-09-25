@@ -46,23 +46,29 @@ public:
 private:
     enum Button
     {
-        NEXT,
-        SELECT,
-        NONE
+        NEXT    = 1 << 0,
+        SELECT  = 1 << 1
     };
+
     void displayProgramInfo();
     void logData();
     String convertTime(uint32_t millis);
     String toDecimal(int16_t number, uint8_t divisor);
-    Button buttonPressed();
-    void handleInput(Button button);
+    uint8_t readButtons();
+    void handleProgramMenu();
+    void printProgramMenu();
+    void handleProgramInput();
+    void checkReset();
     void displayHiveTemperatures(bool displayAll);
+    bool modal(String request, String negative, String positive, uint8_t timeout);
+    void softReset();
 
     LiquidCrystal lcd = LiquidCrystal(0, 0, 0, 0, 0, 0); // will be properly initialized later
-    Button lastSelectedButton;
     Status::SystemState lastSystemState;
     SimpleList<Program>::iterator selectedProgram;
     uint8_t tickCounter;
+    uint8_t lastButtons;
+    uint32_t resetStamp;
     char lcdBuffer[21];
 };
 

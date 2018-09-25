@@ -56,6 +56,8 @@ enum ProgramEvent
 {
     startProgram,
     stopProgram,
+    pauseProgram,
+    resumeProgram,
     updateProgram
 };
 
@@ -74,6 +76,8 @@ public:
     SimpleList<Program> *getPrograms();
     void start(uint8_t programNumber);
     void stop();
+    void pause();
+    void resume();
     Program *getRunningProgram();
     uint32_t calculateTimeRunning();
     uint32_t calculateTimeRemaining();

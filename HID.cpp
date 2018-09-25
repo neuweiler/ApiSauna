@@ -33,8 +33,9 @@ HID::HID() :
         Device()
 {
     lastSystemState = Status::init;
-    lastSelectedButton = NONE;
     tickCounter = 0;
+    lastButtons = 0;
+    resetStamp = 0;
     selectedProgram = NULL;
 }
 
@@ -50,23 +51,29 @@ void HID::initialize()
     pinMode(io->buttonSelect, INPUT);
 
     selectedProgram = ProgramHandler::getInstance()->getPrograms()->begin();
-    handleInput(NONE);
+    printProgramMenu();
 }
 
-void HID::handleInput(Button button)
+void HID::handleProgramMenu()
 {
-    int i = 1;
+    uint8_t buttons = readButtons();
+    if (lastButtons == buttons) {
+        return;
+    }
+    lastButtons = buttons;
+
     SimpleList<Program> *programs = ProgramHandler::getInstance()->getPrograms();
 
-    switch (button) {
-    case NEXT:
+    if (buttons & NEXT) {
         if (selectedProgram + 1 != programs->end()) {
             selectedProgram++;
         } else {
             selectedProgram = programs->begin();
         }
-        break;
-    case SELECT:
+        printProgramMenu();
+    }
+    if (buttons & SELECT) {
+        int i = 1;
         for (SimpleList<Program>::iterator itr = programs->begin(); itr != programs->end(); ++itr && ++i) {
             if (itr == selectedProgram) {
                 lcd.clear();
@@ -74,41 +81,102 @@ void HID::handleInput(Button button)
                 break;
             }
         }
-        break;
-    case NONE:
-        break;
     }
+}
 
+void HID::printProgramMenu()
+{
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print(CFG_VERSION);
-    lcd.setCursor(0, 2);
+    lcd.setCursor(0, 1);
     lcd.print(F("Select Program:"));
-    lcd.setCursor(1, 3);
+    lcd.setCursor(1, 2);
     lcd.print(selectedProgram->name);
+    lcd.setCursor(0, 3);
+    lcd.print(F("next           start"));
+}
+
+bool HID::modal(String request, String negative, String positive, uint8_t timeout = 5)
+{
+    ProgramHandler::getInstance()->pause(); // make sure the heater's are off during the modal
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(request);
+    lcd.setCursor(0, 3);
+    lcd.print(negative);
+    lcd.setCursor(20 - positive.length(), 3);
+    lcd.print(positive);
+
+    // wait for button release or timeout
+    uint16_t countdown = timeout * 10;
+    while (countdown-- > 0 && readButtons() != 0) {
+        delay(100);
+    }
+    // wait for button press or timeout
+    while (countdown-- > 0 && readButtons() == 0) {
+        delay(100);
+    }
+    lcd.clear();
+
+    ProgramHandler::getInstance()->resume();
+    return readButtons() & SELECT;
+}
+
+void HID::handleProgramInput()
+{
+    uint8_t buttons = readButtons();
+    if (lastButtons == buttons) {
+        return;
+    }
+    lastButtons = buttons;
+
+    Status::SystemState state = Status::getInstance()->getSystemState();
+    if (buttons & NEXT) {
+        if (state == Status::preHeat) {
+            if (modal(F("Skip pre-heating?"), F("no"), F("yes"))) {
+                ProgramHandler::getInstance()->switchToRunning();
+            }
+        }
+        if (state == Status::running) {
+            if (modal(F("Abort program?"), F("no"), F("yes"))) {
+                ProgramHandler::getInstance()->stop();
+            }
+        }
+    }
+}
+
+void HID::checkReset()
+{
+    uint8_t buttons = readButtons();
+    if ((buttons & NEXT) && (buttons & SELECT)) {
+        if (resetStamp == 0) {
+            resetStamp = millis();
+        } else if (millis() - resetStamp > 5000) {
+            softReset();
+        }
+    } else {
+        resetStamp = 0;
+    }
 }
 
 void HID::process()
 {
     Device::process();
+    checkReset();
 
-    Button button = buttonPressed();
-    lcd.setCursor(0, 0);
-    Status *status = Status::getInstance();
-    Status::SystemState state = status->getSystemState();
-    switch (state) {
+    switch (Status::getInstance()->getSystemState()) {
     case Status::init:
         break;
-    case Status::ready: // allow user to navigate through menu
-        if (lastSelectedButton != button) {
-            handleInput(button);
-            lastSelectedButton = button;
-        }
+    case Status::ready:
+        handleProgramMenu();
         break;
     case Status::preHeat:
     case Status::running:
         displayProgramInfo();
         logData();
+        handleProgramInput();
         break;
     case Status::overtemp:
         lcd.clear();
@@ -123,24 +191,24 @@ void HID::process()
         lcd.setCursor(0, 2);
         displayHiveTemperatures(true);
         logData();
-        if (button == SELECT) {
-            status->setSystemState(Status::ready);
-            handleInput(NONE);
-            lastSelectedButton = button;
-        }
+//        if (button == SELECT) {
+//            status->setSystemState(Status::ready);
+//            handleProgramMenu (NONE);
+//            lastSelectedButton = button;
+//        }
         break;
     case Status::error:
         lcd.clear();
-        snprintf(lcdBuffer, 21, "ERROR: %03d", status->errorCode);
-        lcd.print(lcdBuffer);
-        lcd.setCursor(0, 1);
-        lcd.print(status->errorCodeToStr(status->errorCode));
+//        snprintf(lcdBuffer, 21, "ERROR: %03d", status->errorCode);
+//        lcd.print(lcdBuffer);
+//        lcd.setCursor(0, 1);
+//        lcd.print(status->errorCodeToStr(status->errorCode));
         lcd.setCursor(0, 3);
         displayHiveTemperatures(true);
         logData();
         break;
     }
-    lastSystemState = state;
+//    lastSystemState = state;
     tickCounter++;
 }
 
@@ -234,20 +302,17 @@ void HID::logData()
 }
 
 /**
- * \brief Finds out which button on the LCD display/button combo was pressed.
+ * \brief Read which buttons are pressed.
  *
- * \return the mapped button
+ * \return the pressed button in a bitmask
  */
-HID::Button HID::buttonPressed()
+uint8_t HID::readButtons()
 {
     ConfigurationIO *io = Configuration::getIO();
-
-    if (digitalRead(io->buttonNext))
-        return NEXT;
-    if (digitalRead(io->buttonSelect))
-        return SELECT;
-
-    return NONE;
+    uint8_t buttons = 0;
+    buttons |= digitalRead(io->buttonNext) ? NEXT : 0;
+    buttons |= digitalRead(io->buttonSelect) ? SELECT : 0;
+    return buttons;
 }
 
 /**
@@ -272,4 +337,9 @@ String HID::toDecimal(int16_t number, uint8_t divisor)
     char buffer[10];
     snprintf(buffer, 9, "%d.%d", number / divisor, abs(number % divisor));
     return String(buffer);
+}
+
+void HID::softReset()
+{
+    asm volatile ("  jmp 0");
 }
