@@ -43,6 +43,7 @@ Plate::Plate() :
     sensorHeater = NULL;
     heater = NULL;
     fan = NULL;
+    paused = false;
 }
 
 void Plate::initialize()
@@ -150,6 +151,21 @@ uint8_t Plate::getIndex()
 }
 
 /**
+ * Interrupt the heating
+ */
+void Plate::pause() {
+    paused = true;
+    heater->setPower(0);
+}
+
+/**
+ * Resume normal operation
+ */
+void Plate::resume() {
+    paused = false;
+}
+
+/**
  * Update the plat's PID data and derive the power level to command (0-255 for PWM, 0 / 255 for non-PWM).
  * In non-PWM mode, the number of concurrently active plates is also limited to the configured amount.
  *
@@ -194,8 +210,7 @@ void Plate::process()
     currentTemperature = sensorHeater->getTemperatureCelsius();
     status.temperaturePlate[index] = currentTemperature;
 
-    uint8_t power = calculateHeaterPower();
+    uint8_t power = (paused ? 0 : calculateHeaterPower());
     status.powerPlate[index] = power;
     heater->setPower(power);
-
 }

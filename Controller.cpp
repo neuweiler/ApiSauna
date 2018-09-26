@@ -317,9 +317,18 @@ void Controller::handleEvent(ProgramEvent event, Program *program)
     case updateProgram:
         handleProgramChange(program);
         break;
-
     case stopProgram:
         powerDownDevices();
+        break;
+    case pauseProgram:
+        for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
+            itr->pause();
+        }
+        break;
+    case resumeProgram:
+        for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
+            itr->resume();
+        }
         break;
     }
 }
@@ -386,7 +395,7 @@ void Controller::handleProgramChange(Program *program)
     bool preHeat = (state == Status::preHeat);
     bool running = (state == Status::running);
 
-    Logger::info(F("Updating devices with program settings"));
+    Logger::info(F("Updating devices with new program settings"));
 
     // adjust the PID which defines the target temperature of the plates based on the hive temp
     pid->SetOutputLimits((preHeat ? program->temperaturePreHeat : program->temperatureHive), program->temperaturePlate);

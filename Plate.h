@@ -54,6 +54,8 @@ public:
     uint8_t getMaximumPower();
     void setFanSpeed(uint8_t speed);
     void setPIDTuning(double kp, double ki, double kd);
+    void pause();
+    void resume();
     int16_t getTemperature();
     uint8_t getPower();
     uint8_t getFanSpeed();
@@ -72,6 +74,7 @@ private:
     uint8_t maxPower; // maximum power applied to heater (0-255)
     uint8_t index; // the id/number of the plate
     PID *pid; // pointer to PID controller
+    bool paused; // flag indicating if the plate is in paused mode
 };
 
 #endif /* PLATE_H_ */
