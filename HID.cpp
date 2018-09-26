@@ -73,7 +73,7 @@ void HID::handleProgramMenu()
         } else {
             selectedProgram = programs->begin();
         }
-        printProgramMenu();
+        displayProgramMenu();
     }
     if (buttons & SELECT) {
         beeper.click();
@@ -88,7 +88,7 @@ void HID::handleProgramMenu()
     }
 }
 
-void HID::printProgramMenu()
+void HID::displayProgramMenu()
 {
     lcd.clear();
     lcd.setCursor(0, 0);
@@ -164,9 +164,9 @@ void HID::handleFinishedInput()
     if (buttons & NEXT) {
         beeper.click();
         if (modal(F("Extend program?"), F("no"), F("yes"))) {
-            ProgramHandler::getInstance()->addTime(1800);
+            ProgramHandler::getInstance()->addTime(30);
         } else {
-            printFinishedMenu();
+            displayFinishedMenu();
         }
     }
     if (buttons & SELECT) {
@@ -192,7 +192,7 @@ void HID::checkReset()
     }
 }
 
-void HID::printFinishedMenu()
+void HID::displayFinishedMenu()
 {
     lcd.print(F("Program finished"));
     lcd.setCursor(0, 3);
@@ -204,7 +204,7 @@ void HID::stateSwitch(Status::SystemState fromState, Status::SystemState toState
     lcd.clear();
     switch (toState) {
     case Status::ready:
-        printProgramMenu();
+        displayProgramMenu();
         beeper.beep(2);
         break;
     case Status::overtemp:
@@ -212,7 +212,7 @@ void HID::stateSwitch(Status::SystemState fromState, Status::SystemState toState
         beeper.beep(-1);
         break;
     case Status::shutdown:
-        printFinishedMenu();
+        displayFinishedMenu();
         break;
     case Status::error:
         beeper.beep(20);
@@ -299,8 +299,9 @@ void HID::displayProgramInfo()
     lcd.setCursor(0, 0);
     snprintf(lcdBuffer, 14, "%-13s", (status.getSystemState() == Status::preHeat ? "pre-heating" : programHandler->getRunningProgram()->name));
     lcd.print(lcdBuffer);
-    lcd.setCursor(13, 0);
-    snprintf(lcdBuffer, 8, "%s", convertTime(programHandler->calculateTimeRunning()).c_str());
+    String timeRunning = convertTime(programHandler->calculateTimeRunning());
+    lcd.setCursor(timeRunning.length() == 7 ? 13 : 12, 0);
+    snprintf(lcdBuffer, 9, "%s", timeRunning.c_str());
     lcd.print(lcdBuffer);
 
     // actual+target hive temperature and humidity with humidifier/fan status
@@ -324,8 +325,9 @@ void HID::displayProgramInfo()
         snprintf(lcdBuffer, 4, "%02ld ", map(status.fanSpeedPlate[i], Configuration::getParams()->minFanSpeed, 255, 0, 99));
         lcd.print(lcdBuffer);
     }
-    lcd.setCursor(13, 3);
-    snprintf(lcdBuffer, 8, "%s", convertTime(programHandler->calculateTimeRemaining()).c_str());
+    String timeRemaining = convertTime(programHandler->calculateTimeRemaining());
+    lcd.setCursor(timeRemaining.length() == 7 ? 13 : 12, 3);
+    snprintf(lcdBuffer, 9, "%s", timeRemaining.c_str());
     lcd.print(lcdBuffer);
 }
 

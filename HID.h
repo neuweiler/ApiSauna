@@ -57,7 +57,7 @@ private:
     String toDecimal(int16_t number, uint8_t divisor);
     uint8_t readButtons();
     void handleProgramMenu();
-    void printProgramMenu();
+    void displayProgramMenu();
     void handleProgramInput();
     void handleFinishedInput();
     void checkReset();
@@ -65,7 +65,7 @@ private:
     bool modal(String request, String negative, String positive, uint8_t timeout);
     void stateSwitch(Status::SystemState fromState, Status::SystemState toState);
     void softReset();
-    void printFinishedMenu();
+    void displayFinishedMenu();
 
     LiquidCrystal lcd = LiquidCrystal(0, 0, 0, 0, 0, 0); // will be properly initialized later
     Status::SystemState lastSystemState;
