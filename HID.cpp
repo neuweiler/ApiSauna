@@ -326,8 +326,8 @@ void HID::displayProgramInfo()
         lcd.print(lcdBuffer);
     }
     String timeRemaining = convertTime(programHandler->calculateTimeRemaining());
-    lcd.setCursor(timeRemaining.length() == 7 ? 13 : 12, 3);
-    snprintf(lcdBuffer, 9, "%s", timeRemaining.c_str());
+    lcd.setCursor(timeRemaining.length() == 7 ? 12 : 11, 3);
+    snprintf(lcdBuffer, 10, " %s", timeRemaining.c_str());
     lcd.print(lcdBuffer);
 }
 
