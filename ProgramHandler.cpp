@@ -131,9 +131,6 @@ void ProgramHandler::initPrograms()
     programMeltHoney.fanSpeedHumidifier = 0; // only works from 230 to 255
     programMeltHoney.duration = 720; // 12 hours
     programs.push_back(programMeltHoney);
-
-//    ControllerProgram programWellness; 38°, 3h
-//    ControllerProgram programHealth; 39° 30min
 }
 
 /**
@@ -158,14 +155,13 @@ SimpleList<Program>* ProgramHandler::getPrograms()
 void ProgramHandler::start(uint8_t programNumber)
 {
     int i = 1;
-    SimpleList<Program>* programs = ProgramHandler::getInstance()->getPrograms();
-    for (SimpleList<Program>::iterator itr = programs->begin(); itr != programs->end(); ++itr) {
+    for (SimpleList<Program>::iterator itr = programs.begin(); itr != programs.end(); ++itr) {
         if (i == programNumber) {
             Logger::info(F("Starting program #%d"), i);
             runningProgram = itr;
             runningProgram->changed = false;
             startTime = millis();
-            status.setSystemState(Status::preHeat);
+            status.setSystemState(runningProgram->durationPreHeat == 0 ? Status::running : Status::preHeat);
             sendEvent(startProgram, runningProgram);
             return;
         }
@@ -180,7 +176,6 @@ void ProgramHandler::start(uint8_t programNumber)
 void ProgramHandler::stop()
 {
     Logger::info(F("stopping program"));
-    runningProgram = NULL;
     startTime = 0;
     status.setSystemState(Status::shutdown);
     sendEvent(stopProgram, runningProgram);
@@ -204,8 +199,26 @@ void ProgramHandler::resume()
     sendEvent(resumeProgram, runningProgram);
 }
 
-void ProgramHandler::addTime(uint16_t seconds) {
-    startTime = millis() ;//- runningProgram->duration * 60000 + seconds * 1000;
+void ProgramHandler::addTime(uint16_t duration) {
+    Program *clone = new Program();
+    clone->duration = duration;
+    clone->fanSpeed = runningProgram->fanSpeed;
+    clone->fanSpeedHumidifier = runningProgram->fanSpeedHumidifier;
+    clone->hiveKp = runningProgram->hiveKp;
+    clone->hiveKi = runningProgram->hiveKi;
+    clone->hiveKd = runningProgram->hiveKd;
+    clone->humidityMinimum = runningProgram->humidityMinimum;
+    clone->humidityMaximum = runningProgram->humidityMaximum;
+    strcpy(clone->name, runningProgram->name);
+    clone->plateKp = runningProgram->plateKp;
+    clone->plateKi = runningProgram->plateKi;
+    clone->plateKd = runningProgram->plateKd;
+    clone->temperatureHive = runningProgram->temperatureHive;
+    clone->temperaturePlate = runningProgram->temperaturePlate;
+    runningProgram = clone;
+
+    Logger::info(F("extending program %s by %dmin"), runningProgram->name, duration);
+    startTime = millis();
     status.setSystemState(Status::ready);
     status.setSystemState(Status::running);
     sendEvent(startProgram, runningProgram);
