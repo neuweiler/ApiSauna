@@ -134,10 +134,10 @@ void SerialConsole::printMenuIO()
     Logger::console(F("PIN_FAN_HUMID=%d - output pin for humidifier fan (default: 6)"), configIO->humidifierFan);
     Logger::console(F("PIN_HUMID=%d - input pin for humdity sensor (default: 9)"), configIO->humiditySensor);
     Logger::console(F("HUMID_TYPE=%d - humidity sensor type (11, 21, 22, default: 22)"), configIO->humiditySensorType);
-    Logger::console(F("PIN_LCD_D0=%d - output pin LCD D0 (default: 24)"), configIO->lcdD0);
-    Logger::console(F("PIN_LCD_D1=%d - output pin LCD D1 (default: 25)"), configIO->lcdD1);
-    Logger::console(F("PIN_LCD_D2=%d - output pin LCD D2 (default: 26)"), configIO->lcdD2);
-    Logger::console(F("PIN_LCD_D3=%d - output pin LCD D3 (default: 27)"), configIO->lcdD3);
+    Logger::console(F("PIN_LCD_D4=%d - output pin LCD D4 (default: 24)"), configIO->lcdD4);
+    Logger::console(F("PIN_LCD_D5=%d - output pin LCD D5 (default: 25)"), configIO->lcdD5);
+    Logger::console(F("PIN_LCD_D6=%d - output pin LCD D6 (default: 26)"), configIO->lcdD6);
+    Logger::console(F("PIN_LCD_D7=%d - output pin LCD D7 (default: 27)"), configIO->lcdD7);
     Logger::console(F("PIN_LCD_EN=%d - output pin LCD enable (default: 23)"), configIO->lcdEnable);
     Logger::console(F("PIN_LCD_RS=%d - output pin LCD RS (default: 22)"), configIO->lcdRs);
     Logger::console(F("PIN_TEMP=%d - input pin temperature sensors (default: 4)"), configIO->temperatureSensor);
@@ -353,22 +353,22 @@ bool SerialConsole::handleCmdIO(String &command, int32_t value)
             value = 22;
         Logger::console(F("setting humidity sensor type to %d"), value);
         configIO->humiditySensorType = value;
-    } else if (command == String(F("PIN_LCD_D0"))) {
+    } else if (command == String(F("PIN_LCD_D4"))) {
         value = constrain(value, 0, 255);
-        Logger::console(F("setting output pin LCD D0 to %d"), value);
-        configIO->lcdD0 = value;
-    } else if (command == String(F("PIN_LCD_D1"))) {
+        Logger::console(F("setting output pin LCD D4 to %d"), value);
+        configIO->lcdD4 = value;
+    } else if (command == String(F("PIN_LCD_D5"))) {
         value = constrain(value, 0, 255);
-        Logger::console(F("setting output pin LCD D1 to %d"), value);
-        configIO->lcdD1 = value;
-    } else if (command == String(F("PIN_LCD_D2"))) {
+        Logger::console(F("setting output pin LCD D5 to %d"), value);
+        configIO->lcdD5 = value;
+    } else if (command == String(F("PIN_LCD_D6"))) {
         value = constrain(value, 0, 255);
-        Logger::console(F("setting output pin LCD D2 to %d"), value);
-        configIO->lcdD2 = value;
-    } else if (command == String(F("PIN_LCD_D3"))) {
+        Logger::console(F("setting output pin LCD D6 to %d"), value);
+        configIO->lcdD6 = value;
+    } else if (command == String(F("PIN_LCD_D7"))) {
         value = constrain(value, 0, 255);
-        Logger::console(F("setting output pin LCD D3 to %d"), value);
-        configIO->lcdD3 = value;
+        Logger::console(F("setting output pin LCD D7 to %d"), value);
+        configIO->lcdD7 = value;
     } else if (command == String(F("PIN_LCD_EN"))) {
         value = constrain(value, 0, 255);
         Logger::console(F("setting output pin LCD enable to %d"), value);

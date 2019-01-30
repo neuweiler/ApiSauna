@@ -154,10 +154,10 @@ void Configuration::reset()
     configIO->beeper = 10;
     configIO->lcdRs = 22;
     configIO->lcdEnable = 23;
-    configIO->lcdD0 = 24;
-    configIO->lcdD1 = 25;
-    configIO->lcdD2 = 26;
-    configIO->lcdD3 = 27;
+    configIO->lcdD4 = 24;
+    configIO->lcdD5 = 25;
+    configIO->lcdD6 = 26;
+    configIO->lcdD7 = 27;
 
     configParams->numberOfPlates = 4;
     configParams->maxHeaterPower = 170;

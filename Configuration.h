@@ -101,10 +101,10 @@ public:
     uint8_t beeper; // pin which is connected to the piezo beeper (default: 10)
     uint8_t lcdRs; // pin which controls the lcd's RS pin (default: 22)
     uint8_t lcdEnable; // pin which controls the lcd's enable pin (default: 23)
-    uint8_t lcdD0; // pin which controls the lcd's D0 pin (default: 24)
-    uint8_t lcdD1; // pin which controls the lcd's D1 pin (default: 25)
-    uint8_t lcdD2; // pin which controls the lcd's D2 pin (default: 26)
-    uint8_t lcdD3; // pin which controls the lcd's D3 pin (default: 27)
+    uint8_t lcdD4; // pin which controls the lcd's D0 pin (default: 24)
+    uint8_t lcdD5; // pin which controls the lcd's D1 pin (default: 25)
+    uint8_t lcdD6; // pin which controls the lcd's D2 pin (default: 26)
+    uint8_t lcdD7; // pin which controls the lcd's D3 pin (default: 27)
     // 22 bytes used
 };
 

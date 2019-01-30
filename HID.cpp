@@ -45,7 +45,7 @@ void HID::initialize()
     Logger::info(F("initializing HID"));
     Device::initialize();
     ConfigurationIO *io = Configuration::getIO();
-    lcd.init(1, io->lcdRs, 255, io->lcdEnable, io->lcdD0, io->lcdD1, io->lcdD2, io->lcdD3, 0, 0, 0, 0);
+    lcd.init(1, io->lcdRs, 255, io->lcdEnable, io->lcdD4, io->lcdD5, io->lcdD6, io->lcdD7, 0, 0, 0, 0);
     lcd.begin(20, 4);
 
     pinMode(io->buttonNext, INPUT);
