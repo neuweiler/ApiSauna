@@ -212,10 +212,6 @@ bool SerialConsole::handleCmdSystem(String &command, int32_t value)
         } else {
             Logger::console(F("a program is already running"));
         }
-    } else if (command == String(F("LOGLEVEL"))) {
-        value = constrain(value, 0, 4);
-        Logger::console(F("setting loglevel to %d"), value);
-        Logger::setLoglevel((Logger::LogLevel) value);
     } else if (command == String(F("STATS"))) {
         if (value == 0) {
             Logger::console(F("resetting statistics"));
@@ -267,6 +263,11 @@ bool SerialConsole::handleCmdParams(String &command, int32_t value)
         value = constrain(value, 0, 255);
         Logger::console(F("setting dry time of humidifier fan to %d min"), value);
         configParams->humidifierFanDryTime = value;
+    } else if (command == String(F("LOGLEVEL"))) {
+        value = constrain(value, 0, 4);
+        Logger::console(F("setting loglevel to %d"), value);
+        Logger::setLoglevel((Logger::LogLevel) value);
+        configParams->loglevel = value;
     } else {
         return false;
     }

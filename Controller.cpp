@@ -66,6 +66,7 @@ void Controller::initialize()
         status.setSystemState(Status::error);
         return;
     }
+    Logger::setLoglevel((Logger::LogLevel)Configuration::getInstance()->getParams()->loglevel);
 
     initOutput();
     powerDownDevices();
@@ -77,6 +78,9 @@ void Controller::initialize()
 
     SimpleList<SensorAddress> addressList = detectTemperatureSensors();
     if (!assignPlateSensors(addressList) || !assignHiveSensors(addressList)) {
+        for (SimpleList<SensorAddress>::iterator itr = addressList.begin(); itr != addressList.end(); ++itr) {
+            Logger::info(F("  found sensor: %#08lx%08lx"), itr->high, itr->low);
+        }
         status.setSystemState(Status::error);
         return;
     }

@@ -141,10 +141,10 @@ void Configuration::reset()
     configIO->vaporizer = 5;
     configIO->humidifierFan = 6;
     configIO->heaterRelay = A0;
-    configIO->heater[0] = 11;
-    configIO->heater[1] = 12;
-    configIO->heater[2] = 2;
-    configIO->heater[3] = 3;
+    configIO->heater[0] = 2;
+    configIO->heater[1] = 3;
+    configIO->heater[2] = 11;
+    configIO->heater[3] = 12;
     configIO->fan[0] = 7;
     configIO->fan[1] = 8;
     configIO->fan[2] = 44;
@@ -168,6 +168,7 @@ void Configuration::reset()
     configParams->usePWM = 0;
     configParams->maxConcurrentHeaters = 2;
     configParams->humidifierFanDryTime = 2;
+    configParams->loglevel = Logger::Info;
 
     configSensor->addressPlate[0].value = 0x0;
     configSensor->addressPlate[1].value = 0x0;
