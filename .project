@@ -34,42 +34,42 @@
 		<link>
 			<name>core/core</name>
 			<type>2</type>
-			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/arduino/hardware/avr/1.6.11/cores/arduino</locationURI>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/arduino/hardware/avr/1.6.23/cores/arduino</locationURI>
 		</link>
 		<link>
 			<name>core/variant</name>
 			<type>2</type>
-			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/arduino/hardware/avr/1.6.11/variants/mega</locationURI>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/arduino/hardware/avr/1.6.23/variants/mega</locationURI>
 		</link>
 		<link>
 			<name>libraries/Adafruit_Unified_Sensor</name>
 			<type>2</type>
-			<locationURI>ECLIPSE_HOME/arduinoPlugin/libraries/Adafruit_Unified_Sensor/1.0.2</locationURI>
+			<location>/Users/michaeln/Documents/Arduino/libraries/Adafruit_Unified_Sensor</location>
 		</link>
 		<link>
 			<name>libraries/DHT_sensor_library</name>
 			<type>2</type>
-			<locationURI>ECLIPSE_HOME/arduinoPlugin/libraries/DHT_sensor_library/1.3.0</locationURI>
+			<location>/Users/michaeln/Documents/Arduino/libraries/DHT_sensor_library</location>
 		</link>
 		<link>
 			<name>libraries/EEPROM</name>
 			<type>2</type>
-			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/arduino/hardware/avr/1.6.11/libraries/EEPROM</locationURI>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/arduino/hardware/avr/1.6.23/libraries/EEPROM</locationURI>
 		</link>
 		<link>
 			<name>libraries/LiquidCrystal</name>
 			<type>2</type>
-			<locationURI>ECLIPSE_HOME/arduinoPlugin/libraries/LiquidCrystal/1.0.4</locationURI>
+			<location>/Users/michaeln/Documents/Arduino/libraries/LiquidCrystal</location>
 		</link>
 		<link>
 			<name>libraries/OneWire</name>
 			<type>2</type>
-			<locationURI>ECLIPSE_HOME/arduinoPlugin/libraries/OneWire/2.3.3</locationURI>
+			<location>/Users/michaeln/Documents/Arduino/libraries/OneWire</location>
 		</link>
 		<link>
 			<name>libraries/PID</name>
 			<type>2</type>
-			<locationURI>ECLIPSE_HOME/arduinoPlugin/libraries/PID/1.2.0</locationURI>
+			<location>/Users/michaeln/Documents/Arduino/libraries/PID</location>
 		</link>
 	</linkedResources>
 </projectDescription>
