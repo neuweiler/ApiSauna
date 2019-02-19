@@ -306,6 +306,7 @@ void HID::displayProgramInfo()
 
     // actual+target hive temperature and humidity with humidifier/fan status
     displayHiveTemperatures(1, false);
+    lcd.setCursor(12, 1);
     snprintf(lcdBuffer, 21, "\x7e%02d\xdf%s%02d%%  ", (status.temperatureTargetHive + 5) / 10,
             (status.vaporizerEnabled ? "*" : status.fanSpeedHumidifier > 0 ? "x" : " "), status.humidity);
     lcd.print(lcdBuffer);
@@ -316,6 +317,7 @@ void HID::displayProgramInfo()
         snprintf(lcdBuffer, 4, "%02d%c", (status.temperaturePlate[i] + 5) / 10, (status.powerPlate[i] > 0 ? 0xeb : 0xdf));
         lcd.print(lcdBuffer);
     }
+    lcd.setCursor(12, 2);
     snprintf(lcdBuffer, 9, "\x7e%02d\xdf %02d\xdf", (status.temperatureTargetPlate + 5) / 10, (status.temperatureHumidifier + 5) / 10);
     lcd.print(lcdBuffer);
 
