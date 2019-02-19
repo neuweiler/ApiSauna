@@ -107,9 +107,12 @@ void SerialConsole::printMenuParams()
 void SerialConsole::printMenuSensors()
 {
     ConfigurationSensor* configSensor = Configuration::getSensor();
-    for (int i = 0; i < CFG_MAX_NUMBER_PLATES && configSensor->addressHive[i].value != 0; i++) {
+    for (int i = 0; configSensor->addressHive[i].value != 0 && i < CFG_MAX_NUMBER_PLATES; i++) {
         Logger::console(F("ADDR_HIVE[%d]=%#08lx%08lx - address of the hive temperature sensor"), i + 1, configSensor->addressHive[i].high,
                 configSensor->addressHive[i].low);
+    }
+    if (configSensor->addressHive[0].value == 0) {
+        Logger::console(F("ADDR_HIVE[0]=0x0000000000000000 - address of the hive temperature sensor"));
     }
     for (int i = 0; i < Configuration::getParams()->numberOfPlates; i++) {
         Logger::console(F("ADDR_PLATE[%d]=%#08lx%08lx - address of the plate temperature sensor"), i + 1, configSensor->addressPlate[i].high,
@@ -279,23 +282,23 @@ bool SerialConsole::handleCmdSensor(String &command, char *parameter)
     ConfigurationSensor *configSensor = Configuration::getSensor();
     if (command.startsWith(String(F("ADDR_HIVE")))) {
         uint8_t index = getIndex(command);
-        if (index <= CFG_MAX_NUMBER_PLATES) {
+        if (index-- <= CFG_MAX_NUMBER_PLATES) {
             String lowStr = String("0x") + (char *) (parameter + 10);
-            configSensor->addressHive[index - 1].low = (unsigned long) strtol(lowStr.c_str(), NULL, 0);
+            configSensor->addressHive[index].low = strtoul(lowStr.c_str(), NULL, 0);
             String highStr = String(parameter).substring(0, 10);
-            configSensor->addressHive[index - 1].high = (unsigned long) strtol(highStr.c_str(), NULL, 0);
-            Logger::console(F("setting address of hive sensor[%d] to %#08lx%08lx"), index, configSensor->addressHive[index - 1].high,
-                    configSensor->addressHive[index - 1].low);
+            configSensor->addressHive[index].high = strtoul(highStr.c_str(), NULL, 0);
+            Logger::console(F("setting address of hive sensor[%d] to %#08lx%08lx"), index + 1, configSensor->addressHive[index].high,
+                    configSensor->addressHive[index].low);
         }
     } else if (command.startsWith(String(F("ADDR_PLATE")))) {
         uint8_t index = getIndex(command);
-        if (index <= Configuration::getParams()->numberOfPlates) {
+        if (index-- <= Configuration::getParams()->numberOfPlates) {
             String lowStr = String("0x") + (char *) (parameter + 10);
-            configSensor->addressPlate[index - 1].low = (unsigned long) strtol(lowStr.c_str(), NULL, 0);
+            configSensor->addressPlate[index].low = strtoul(lowStr.c_str(), NULL, 0);
             String highStr = String(parameter).substring(0, 10);
-            configSensor->addressPlate[index - 1].high = (unsigned long) strtol(highStr.c_str(), NULL, 0);
-            Logger::console(F("setting address of plate sensor[%d] to %#08lx%08lx"), index, configSensor->addressPlate[index - 1].high,
-                    configSensor->addressPlate[index - 1].low);
+            configSensor->addressPlate[index].high = strtoul(highStr.c_str(), NULL, 0);
+            Logger::console(F("setting address of plate sensor[%d] to %#08lx%08lx"), index + 1, configSensor->addressPlate[index].high,
+                    configSensor->addressPlate[index].low);
         }
     } else {
         return false;
