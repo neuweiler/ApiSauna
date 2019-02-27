@@ -75,6 +75,7 @@ private:
     uint8_t index; // the id/number of the plate
     PID *pid; // pointer to PID controller
     bool paused; // flag indicating if the plate is in paused mode
+    bool on; // flag to indicate if the plate is heating
 };
 
 #endif /* PLATE_H_ */

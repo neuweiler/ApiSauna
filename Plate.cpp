@@ -44,6 +44,7 @@ Plate::Plate() :
     heater = NULL;
     fan = NULL;
     paused = false;
+    on = false;
 }
 
 void Plate::initialize()
@@ -153,7 +154,8 @@ uint8_t Plate::getIndex()
 /**
  * Interrupt the heating
  */
-void Plate::pause() {
+void Plate::pause()
+{
     paused = true;
     heater->setPower(0);
 }
@@ -161,7 +163,8 @@ void Plate::pause() {
 /**
  * Resume normal operation
  */
-void Plate::resume() {
+void Plate::resume()
+{
     paused = false;
 }
 
@@ -173,10 +176,9 @@ void Plate::resume() {
 uint8_t Plate::calculateHeaterPower()
 {
     ConfigurationParams *params = Configuration::getParams();
-    bool wasOn = (power > params->maxHeaterPower / 2);
 
     pid->Compute(); // updates power
-    if(Logger::isDebug()) {
+    if (Logger::isDebug()) {
         Logger::debug(F("Calculated power for plate %d: %d"), index, power);
     }
 
@@ -190,13 +192,16 @@ uint8_t Plate::calculateHeaterPower()
     if (params->usePWM) {
         return constrain(power, (double )0, maxPower);
     } else {
+Logger::info(F("active heaters: %d"), activeHeaters);
         if ((power > params->maxHeaterPower / 2) && (activeHeaters < params->maxConcurrentHeaters)) {
-            if (!wasOn) {
-              activeHeaters++;
+            if (!on) {
+                on = true;
+                activeHeaters++;
             }
             return 255;
         } else {
-            if (wasOn && activeHeaters > 0) {
+            if (on) {
+                on = false;
                 activeHeaters--;
             }
             return 0;
