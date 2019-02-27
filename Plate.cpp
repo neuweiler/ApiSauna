@@ -176,6 +176,10 @@ uint8_t Plate::calculateHeaterPower()
     bool wasOn = (power > params->maxHeaterPower / 2);
 
     pid->Compute(); // updates power
+    if(Logger::isDebug()) {
+        Logger::debug(F("Calculated power for plate %d: %d"), index, power);
+    }
+
     if (currentTemperature > params->plateOverTemp) {
         Logger::error(F("ALERT !!! Plate %d is over-heating !!!"), index + 1);
         status.setSystemState(Status::overtemp);
@@ -187,7 +191,9 @@ uint8_t Plate::calculateHeaterPower()
         return constrain(power, (double )0, maxPower);
     } else {
         if ((power > params->maxHeaterPower / 2) && (activeHeaters < params->maxConcurrentHeaters)) {
-            activeHeaters++;
+            if (!wasOn) {
+              activeHeaters++;
+            }
             return 255;
         } else {
             if (wasOn && activeHeaters > 0) {

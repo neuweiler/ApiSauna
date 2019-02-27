@@ -33,7 +33,7 @@
 
 #include <Arduino.h>
 
-#define CFG_VERSION                 "ApiSauna v1.1"
+#define CFG_VERSION                 "ApiSauna v1.2"
 #define CFG_DEFAULT_LOGLEVEL        Logger::Info
 
 #define CFG_SERIAL_SPEED 115200
