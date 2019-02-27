@@ -192,7 +192,6 @@ uint8_t Plate::calculateHeaterPower()
     if (params->usePWM) {
         return constrain(power, (double )0, maxPower);
     } else {
-Logger::info(F("active heaters: %d"), activeHeaters);
         if ((power > params->maxHeaterPower / 2) && (activeHeaters < params->maxConcurrentHeaters)) {
             if (!on) {
                 on = true;
