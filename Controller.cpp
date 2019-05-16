@@ -34,6 +34,8 @@ Controller::Controller()
     actualTemperature = -999;
     targetTemperature = 0;
     plateTemperature = 0;
+    plateTargetTemperature = 0;
+
     tickCounter = 0;
     pid = NULL;
 }
@@ -130,13 +132,14 @@ void Controller::powerDownDevices()
         itr->setMaximumPower(0);
         itr->setFanSpeed(Configuration::getParams()->minFanSpeed);
         itr->process();
+        itr->pause();
     }
     humidifier.setMinHumidity(0);
     humidifier.setMaxHumidity(1);
     humidifier.setFanSpeed(0);
     humidifier.process();
 
-    delay(100);
+    delay(500);
     digitalWrite(Configuration::getIO()->heaterRelay, LOW);
 }
 
@@ -259,7 +262,7 @@ int16_t Controller::retrieveHiveTemperatures()
 }
 
 /**
- * Calculate the maximum plate temperature based on the hive temperature and the current state. (in 0.1 deg C)
+ * Calculate the desired plate temperature based on the hive temperature and the current state. (in 0.1 deg C)
  */
 int16_t Controller::calculatePlateTargetTemperature()
 {
@@ -275,10 +278,18 @@ int16_t Controller::calculatePlateTargetTemperature()
     }
 
     pid->Compute();
-    int16_t temp = constrain(plateTemperature, (double )0, runningProgram->temperaturePlate);
+
+    // don't set directly as plateTemperature tends to jump. Dampen with 0.1 deg per second
+    if (plateTemperature > plateTargetTemperature)
+        plateTargetTemperature++;
+    else if (plateTemperature < plateTargetTemperature)
+        plateTargetTemperature--;
+
+    plateTargetTemperature = constrain(plateTargetTemperature, 0, runningProgram->temperaturePlate);
     status.temperatureTargetHive = targetTemperature;
-    status.temperatureTargetPlate = temp;
-    return temp;
+    status.temperatureTargetPlate = plateTargetTemperature;
+
+    return plateTargetTemperature;
 }
 
 /**
@@ -380,7 +391,7 @@ void Controller::process()
             humidifier.setMaxHumidity(100);
             humidifier.setFanSpeed(255);
             humidifier.process();
-            delay(10); // wait a bit before trying to open the relay
+            delay(200); // wait a bit before trying to open the relay
             digitalWrite(Configuration::getIO()->heaterRelay, LOW);
             break;
         case Status::shutdown:
@@ -404,6 +415,7 @@ void Controller::handleProgramChange(Program *program)
     // adjust the PID which defines the target temperature of the plates based on the hive temp
     pid->SetOutputLimits((preHeat ? program->temperaturePreHeat : program->temperatureHive), program->temperaturePlate);
     pid->SetTunings(program->hiveKp, program->hiveKi, program->hiveKd);
+    plateTargetTemperature = program->temperaturePlate;
 
     // adjust the parameters of the plates
     for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
@@ -418,7 +430,7 @@ void Controller::handleProgramChange(Program *program)
     humidifier.setMaxHumidity(program->humidityMaximum);
 
     digitalWrite(Configuration::getIO()->heaterRelay, (running || preHeat ? HIGH : LOW));
-    delay(100); // allow the relay to open/close
+    delay(200); // allow the relay to open/close
 }
 
 int16_t Controller::getHiveTargetTemperature()

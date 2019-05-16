@@ -76,7 +76,7 @@ Plate::~Plate()
 }
 
 /**
- * Set the maximum temperature of the plate (in 0.1 deg C)
+ * Set the desired temperature of the plate (in 0.1 deg C)
  */
 void Plate::setTargetTemperature(int16_t temperature)
 {

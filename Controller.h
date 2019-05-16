@@ -71,6 +71,7 @@ private:
     HID hid;
     SerialConsole serialConsole;
     double actualTemperature, targetTemperature, plateTemperature; // values for/set by the PID controller
+    int16_t plateTargetTemperature;
     PID *pid; // pointer to PID controller
     uint8_t tickCounter;
 };
