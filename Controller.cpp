@@ -149,7 +149,6 @@ void Controller::powerDownDevices()
 SimpleList<SensorAddress> Controller::detectTemperatureSensors()
 {
     SimpleList<SensorAddress> addressList;
-
     Logger::info(F("detecting temperature sensors"));
     TemperatureSensor::resetSearch();
 
@@ -157,7 +156,7 @@ SimpleList<SensorAddress> Controller::detectTemperatureSensors()
         SensorAddress address = TemperatureSensor::search();
         if (address.value == 0)
             break;
-        Logger::debug(F("  found sensor: %#08lx%08lx"), address.high, address.low);
+        Logger::info(F("  found sensor: %#08lx%08lx"), address.high, address.low);
         addressList.push_back(address);
     }
     TemperatureSensor::prepareData(); // kick the sensors to prepare data
@@ -370,7 +369,17 @@ void Controller::process()
         case Status::preHeat:
         case Status::running: {
             int16_t plateTemp = calculatePlateTargetTemperature();
+int i = 0;
             for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
+if (i == 2 || i == 3) {
+	if (status.temperatureHive[2] <390 && status.temperatureHive[3] < 390)
+		plateTemp = 750;
+	else if (status.temperatureHive[2] <400 && status.temperatureHive[3] < 400)
+		plateTemp = 700;
+	else if (status.temperatureHive[2] <410 && status.temperatureHive[3] < 410)
+		plateTemp = 650;
+}
+i++;
                 itr->setTargetTemperature(plateTemp);
                 itr->process();
             }

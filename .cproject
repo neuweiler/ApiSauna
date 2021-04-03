@@ -47,13 +47,13 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/DHT_sensor_library}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/LiquidCrystal/src}&quot;"/>
-                                    									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/PID}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/OneWire}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/EEPROM/src}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/OneWire}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/LiquidCrystal/src}&quot;"/>
                                     								
                                 </option>
                                 								
@@ -73,13 +73,13 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/DHT_sensor_library}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/LiquidCrystal/src}&quot;"/>
-                                    									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/PID}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/OneWire}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/EEPROM/src}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/OneWire}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/LiquidCrystal/src}&quot;"/>
                                     								
                                 </option>
                                 								
@@ -99,13 +99,13 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/DHT_sensor_library}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/LiquidCrystal/src}&quot;"/>
-                                    									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/PID}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/OneWire}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/EEPROM/src}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/OneWire}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/ApiSauna/libraries/LiquidCrystal/src}&quot;"/>
                                     								
                                 </option>
                                 								
