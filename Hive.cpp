@@ -58,7 +58,7 @@ void Hive::handleEvent(Event event, ...) {
 }
 
 void Hive::initialize() {
-	logger.info(F("initializing hive"));
+	logger.info(F("initializing hive (%x)"), this);
 
 	uint8_t heaterRelay = configuration.getIO()->heaterRelay;
 	pinMode(heaterRelay, OUTPUT);

@@ -116,7 +116,7 @@ void HID::handleEvent(Event event, ...) {
 }
 
 void HID::initialize() {
-	logger.info(F("initializing HID"));
+	logger.info(F("initializing HID (%x)"), this);
 
 	ConfigurationIO *io = configuration.getIO();
 	lcd.init(1, io->lcdRs, 255, io->lcdEnable, io->lcdD4, io->lcdD5, io->lcdD6, io->lcdD7, 0, 0, 0, 0);

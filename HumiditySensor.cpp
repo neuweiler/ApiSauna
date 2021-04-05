@@ -40,7 +40,7 @@ HumiditySensor::~HumiditySensor() {
 }
 
 void HumiditySensor::initialize() {
-	logger.info(F("initializing humidity sensor"));
+	logger.info(F("initializing humidity sensor (%x)"), this);
 	if (dht != NULL) {
 		delete dht;
 	}

@@ -88,7 +88,7 @@ void Plate::handleEvent(Event event, ...) {
 }
 
 void Plate::initialize() {
-	logger.info(F("initializing plate %d"), id);
+	logger.info(F("initializing plate %d (%x)"), id, this);
 	ConfigurationIO *configIo = configuration.getIO();
 
 	sensor.setAddress(configuration.getSensor()->addressPlate[id]);

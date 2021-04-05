@@ -43,7 +43,7 @@ Heater::~Heater() {
  * specify PWM pin to control the power of the heater.
  */
 void Heater::initialize(uint8_t controlPin) {
-	logger.info(F("initializing heater on pin %d"), controlPin);
+	logger.info(F("initializing heater on pin %d (%x)"), controlPin, this);
 
 	this->controlPin = controlPin;
 	pinMode(controlPin, OUTPUT);

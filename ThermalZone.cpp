@@ -68,10 +68,11 @@ void ThermalZone::handleEvent(Event event, ...) {
 	case PROGRAM_RESUME:
 		break;
 	}
+	va_end(args);
 }
 
 void ThermalZone::initialize() {
-	logger.info(F("initializing thermal zone %d"), status.id);
+	logger.info(F("initializing thermal zone %d (%x)"), status.id, this);
 
 	initPid();
 	eventHandler.subscribe(this);

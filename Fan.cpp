@@ -43,7 +43,7 @@ Fan::~Fan() {
 }
 
 void Fan::initialize(uint8_t controlPin, uint8_t minimumSpeed) {
-	logger.info(F("initializing fan on pin %d"), controlPin);
+	logger.info(F("initializing fan on pin %d (%x)"), controlPin, this);
 
 	initializePWM();
 

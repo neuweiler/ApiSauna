@@ -39,21 +39,21 @@ SerialConsole::~SerialConsole() {
 }
 
 void SerialConsole::handleEvent(Event event, ...) {
+	va_list args;
+	va_start(args, event);
 	switch (event) {
 	case PROCESS:
 		process();
 		break;
 	case PROGRAM_UPDATE:
-		va_list args;
-		va_start(args, event);
 		program = va_arg(args, Program);
-		va_end(args);
 		break;
 	}
+	va_end(args);
 }
 
 void SerialConsole::initialize() {
-	logger.info(F("initializing serial console"));
+	logger.info(F("initializing serial console (%x)"), this);
 	eventHandler.subscribe(this);
 }
 

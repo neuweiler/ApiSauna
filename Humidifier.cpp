@@ -84,7 +84,7 @@ void Humidifier::handleEvent(Event event, ...) {
  * Initialize the humidifier and its devices
  */
 void Humidifier::initialize() {
-	logger.info(F("initializing humidifier"));
+	logger.info(F("initializing humidifier (%x)"), this);
 
 	sensor.initialize();
 	fan.initialize(configuration.getIO()->humidifierFan, 0);
@@ -138,7 +138,7 @@ void Humidifier::programChange(const Program &program) {
 }
 
 void Humidifier::enableVaporizer(bool enable) {
-	logger.debug(F("vaporizer %s"), enable ? F("on") : F("off"));
+//	logger.debug(F("vaporizer %s"), enable ? F("on") : F("off"));
 	if (configuration.getIO()->vaporizer != 0) {
 		digitalWrite(configuration.getIO()->vaporizer, enable);
 	}
