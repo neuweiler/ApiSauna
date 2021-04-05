@@ -43,6 +43,7 @@ ThermalZone::ThermalZone() {
 }
 
 ThermalZone::~ThermalZone() {
+	logger.debug(F("ThermalZone %d destroyed"), status.id);
 	if (pid) {
 		delete pid;
 		pid = NULL;
@@ -83,8 +84,8 @@ void ThermalZone::process() {
 	status.temperatureActual = actualTemperature;
 
 	int16_t plateTemp = calculatePlateTargetTemperature();
-	for (SimpleList<Plate>::iterator plate = plates.begin(); plate != plates.end(); ++plate) {
-		plate->setTargetTemperature(plateTemp);
+	for (SimpleList<Plate *>::iterator plate = plates.begin(); plate != plates.end(); ++plate) {
+		(*plate)->setTargetTemperature(plateTemp);
 	}
 
 	if (actualTemperature > configuration.getParams()->hiveMaxTemp && !temperatureHigh) {
@@ -132,10 +133,10 @@ void ThermalZone::initPid() {
 int16_t ThermalZone::retrieveTemperature() {
 	int16_t max = -999;
 
-	for (SimpleList<TemperatureSensor>::iterator sensor = temperatureSensors.begin();
+	for (SimpleList<TemperatureSensor *>::iterator sensor = temperatureSensors.begin();
 			sensor != temperatureSensors.end(); ++sensor) {
-		sensor->retrieveData();
-		max = max(max, sensor->getTemperatureCelsius());
+		(*sensor)->retrieveData();
+		max = max(max, (*sensor)->getTemperatureCelsius());
 	}
 	return max;
 }
@@ -165,10 +166,10 @@ int16_t ThermalZone::calculatePlateTargetTemperature() {
 	return plateTargetTemperature;
 }
 
-void ThermalZone::addSensor(TemperatureSensor sensor) {
+void ThermalZone::addSensor(TemperatureSensor *sensor) {
 	temperatureSensors.push_back(sensor);
 }
 
-void ThermalZone::addPlate(Plate plate) {
+void ThermalZone::addPlate(Plate *plate) {
 	plates.push_back(plate);
 }

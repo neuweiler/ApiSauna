@@ -42,8 +42,8 @@ public:
 	virtual ~ThermalZone();
 	void initialize();
 	void handleEvent(Event event, ...);
-	void addSensor(TemperatureSensor sensor);
-	void addPlate(Plate plate);
+	void addSensor(TemperatureSensor *sensor);
+	void addPlate(Plate *plate);
 
 private:
 	void process();
@@ -53,8 +53,8 @@ private:
 	int16_t calculatePlateTargetTemperature();
 
 	static uint8_t zoneCounter;
-	SimpleList<TemperatureSensor> temperatureSensors;
-	SimpleList<Plate> plates;
+	SimpleList<TemperatureSensor *> temperatureSensors;
+	SimpleList<Plate *> plates;
 	PID *pid; // pointer to PID controller
 	double actualTemperature, targetTemperature, plateTemperature; // values for/set by the PID controller
 	int16_t plateTargetTemperature;
