@@ -3,7 +3,7 @@
  *
  * Class which controls a fan via PWM.
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -33,32 +33,22 @@ bool Fan::pwmInitialized = false;
 /**
  * Constructor.
  */
-Fan::Fan() :
-        Fan::Fan(0)
+Fan::Fan()
 {
-}
-
-/**
- * Constructor, specify PWM pin to control the speed of the fan.
- * Also initialize the PWM timers the first time.
- */
-Fan::Fan(uint8_t controlPin)
-{
-    if (!pwmInitialized) {
-        initializePWM();
-    }
-
-    setControlPin(controlPin);
+    controlPin = 0;
+    minimumSpeed = 0;
+    speed = 0;
 }
 
 Fan::~Fan()
 {
-    setSpeed(0);
-    this->controlPin = 0;
 }
 
-void Fan::setControlPin(uint8_t controlPin)
+void Fan::initialize(uint8_t controlPin, uint8_t minimumSpeed)
 {
+    initializePWM();
+
+    this->minimumSpeed = minimumSpeed;
     this->controlPin = controlPin;
     pinMode(controlPin, OUTPUT);
     setSpeed(0);
@@ -79,14 +69,16 @@ void Fan::setControlPin(uint8_t controlPin)
  */
 void Fan::initializePWM()
 {
-    // set timer 4 to 31kHz for controlling PWM fans
-    TCCR4B &= ~7;
-    TCCR4B |= 1;
-    // set timer 5 to 31kHz for controlling PWM fans
-    TCCR5B &= ~7;
-    TCCR5B |= 1;
+    if (!pwmInitialized) {
+        // set timer 4 to 31kHz for controlling PWM fans
+        TCCR4B &= ~7;
+        TCCR4B |= 1;
+        // set timer 5 to 31kHz for controlling PWM fans
+        TCCR5B &= ~7;
+        TCCR5B |= 1;
 
-    pwmInitialized = true;
+        pwmInitialized = true;
+    }
 }
 
 /**
@@ -94,8 +86,10 @@ void Fan::initializePWM()
  */
 void Fan::setSpeed(uint8_t speed)
 {
-    this->speed = speed;
-    analogWrite(controlPin, this->speed);
+    if (controlPin > 0) {
+        this->speed = constrain(speed, minimumSpeed, 255);
+        analogWrite(controlPin, this->speed);
+    }
 }
 
 /**

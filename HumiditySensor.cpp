@@ -3,7 +3,7 @@
  *
  * Read the data from the humidity sensor.
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -41,12 +41,12 @@ HumiditySensor::~HumiditySensor()
     }
 }
 
-void HumiditySensor::init()
+void HumiditySensor::initialize()
 {
     if (dht != NULL) {
         delete dht;
     }
-    dht = new DHT(Configuration::getIO()->humiditySensor, Configuration::getIO()->humiditySensorType);
+    dht = new DHT(configuration.getIO()->humiditySensor, configuration.getIO()->humiditySensorType);
     dht->begin();
 }
 

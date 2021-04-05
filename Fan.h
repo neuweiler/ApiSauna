@@ -1,7 +1,7 @@
 /*
  * Fan.h
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -28,22 +28,22 @@
 #define FAN_H_
 
 #include <Arduino.h>
-#include "Device.h"
 
 class Fan
 {
 public:
     Fan();
-    Fan(uint8_t controlPin);
     virtual ~Fan();
-    void setControlPin(uint8_t controlPin);
+    void initialize(uint8_t controlPin, uint8_t minimumSpeed);
     void setSpeed(uint8_t speed);
     uint8_t getSpeed();
 
 private:
     void initializePWM();
-    uint8_t controlPin;
-    uint8_t speed;
+
     static bool pwmInitialized;
+    uint8_t controlPin;
+    uint8_t minimumSpeed;
+    uint8_t speed;
 };
 #endif /* FAN_H_ */

@@ -3,7 +3,7 @@
  *
  * Controls the power of the heater device.
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -31,23 +31,23 @@
 /**
  * Constructor
  */
-Heater::Heater() :
-        Heater::Heater(0)
+Heater::Heater()
 {
-}
-
-/**
- * Constructor, specify PWM pin to control the power of the heater.
- */
-Heater::Heater(uint8_t index)
-{
-    this->index = constrain(index, 0, CFG_MAX_NUMBER_PLATES - 1);
-    pinMode(Configuration::getIO()->heater[this->index], OUTPUT);
-    setPower(0);
+    controlPin = 0;
+    power = 0;
 }
 
 Heater::~Heater()
 {
+}
+
+/**
+ * specify PWM pin to control the power of the heater.
+ */
+void Heater::begin(uint8_t controlPin)
+{
+    this->controlPin = controlPin;
+    pinMode(controlPin, OUTPUT);
     setPower(0);
 }
 
@@ -56,8 +56,10 @@ Heater::~Heater()
  */
 void Heater::setPower(uint8_t power)
 {
-    this->power = power;
-    analogWrite(Configuration::getIO()->heater[index], this->power);
+    if (controlPin > 0) {
+        this->power = power;
+        analogWrite(controlPin, this->power);
+    }
 }
 
 uint8_t Heater::getPower()

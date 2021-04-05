@@ -1,7 +1,7 @@
 /*
- * Controller.h
+ * ThermalZone.h
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -24,56 +24,45 @@
 
  */
 
-#ifndef CONTROLLER_H_
-#define CONTROLLER_H_
+#ifndef THERMALZONE_H_
+#define THERMALZONE_H_
 
 #include "SimpleList.h"
 #include "Configuration.h"
 #include "TemperatureSensor.h"
-#include "Humidifier.h"
 #include "Plate.h"
-#include "Status.h"
 #include "PID_v1.h"
-#include "SerialConsole.h"
-#include "HID.h"
-#include "ProgramHandler.h"
 
-class Controller: public ProgramObserver
+#include "EventHandler.h"
+#include "Program.h"
+
+class ThermalZone: public EventListener
 {
 public:
-    static Controller *getInstance();
-    virtual ~Controller();
+    ThermalZone();
+    virtual ~ThermalZone();
     void initialize();
-    void process();
-    void handleEvent(ProgramEvent event, Program *program);
-    void handleProgramChange(Program *runningProgram);
-    int16_t getHiveTargetTemperature();
+    void handleEvent(Event event, ...);
+    void addSensor(TemperatureSensor sensor);
+    void addPlate(Plate plate);
 
 private:
-    Controller();
-    Controller(Controller const&); // copy disabled
-    void operator=(Controller const&); // assigment disabled
-    void initOutput();
-    void initPrograms();
-    void powerDownDevices();
-    SimpleList<SensorAddress> detectTemperatureSensors();
-    bool containsSensorAddress(SimpleList<SensorAddress> &addressList, SensorAddress address);
-    bool assignPlateSensors(SimpleList<SensorAddress> &addressList);
-    bool assignHiveSensors(SimpleList<SensorAddress> &addressList);
-    int16_t retrieveHiveTemperatures();
-    int16_t calculatePlateTargetTemperature();
-    void updateProgramState();
+    void process();
+    void programChange(const Program &program);
     void initPid();
+    int16_t retrieveTemperature();
+    int16_t calculatePlateTargetTemperature();
 
+    static uint8_t zoneCounter;
+    uint8_t id;
+    SimpleList<TemperatureSensor> temperatureSensors;
     SimpleList<Plate> plates;
-    SimpleList<TemperatureSensor> hiveTempSensors;
-    Humidifier humidifier;
-    HID hid;
-    SerialConsole serialConsole;
+    PID *pid; // pointer to PID controller
     double actualTemperature, targetTemperature, plateTemperature; // values for/set by the PID controller
     int16_t plateTargetTemperature;
-    PID *pid; // pointer to PID controller
-    uint8_t tickCounter;
+    int16_t plateMaxTemperatureProgram;
+    bool temperatureHigh;
+    StatusTemperature status;
 };
 
-#endif /* CONTROLLER_H_ */
+#endif /* THERMALZONE_H_ */

@@ -5,7 +5,7 @@
  *
  *  The 1k is split into 4 blocks of 255+1 bytes so the can be individually expanded without impacting other blocks
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -28,6 +28,7 @@
 
  */
 
+
 #ifndef CONFIGURATION_H_
 #define CONFIGURATION_H_
 
@@ -37,11 +38,12 @@
 #include "Status.h"
 #include "Statistics.h"
 #include <EEPROM.h>
+#include "EventHandler.h"
 
 #define CONFIG_ADDRESS_PARAMS       0
 #define CONFIG_ADDRESS_IO           256
 #define CONFIG_ADDRESS_SENSOR       512
-#define CONFIG_ADDRESS_STATISTICS   768
+//#define CONFIG_ADDRESS_STATISTICS   768
 #define CFG_EEPROM_CONFIG_TOKEN     0xbee
 
 typedef union
@@ -73,13 +75,14 @@ public:
     uint8_t maxHeaterPower; // the maximum heater power to be applied by PWM on a single plate (0-255, default: 170)
     uint8_t minFanSpeed; // the minimum setting of the heater fan speed (default: 10)
     uint16_t hiveOverTemp; // the temperature at which an emergency is declared because the hive overheats (in 0.1°C, default: 460)
-    uint16_t hiveOverTempRecover; // the temperature at which an over-temp situation is recovered (in 0.1°C, default: 350)
+    uint16_t hiveMaxTemp; // the temperature at which all heaters are paused (in 0.1°C, default: 350)
     uint16_t plateOverTemp; // the temperature at which plates are overheated an the program aborts (in 0.1°C, default: 850)
     uint8_t usePWM; // should we use PWM or simple on/off at every loop for plates (0 or 1, default: 0)
     uint8_t maxConcurrentHeaters; // the number of allows heaters active at the same time when not using PWM (default: 2)
     uint8_t humidifierFanDryTime; // time to keep humidifier fan running after stopping the vaporizer to allow it to dry (in min, default: 2)
     uint8_t loglevel; // the loglevel
-    // 20 bytes used
+    uint8_t thermalZones; // in what way the thermal zones should be aggregated with heatern plates
+    // 21 bytes used
 };
 
 class ConfigurationIO
@@ -121,20 +124,21 @@ public:
 class Configuration
 {
 public:
-    static Configuration *getInstance();
-    static ConfigurationIO *getIO();
-    static ConfigurationParams *getParams();
-    static ConfigurationSensor *getSensor();
+    Configuration();
     virtual ~Configuration();
+    ConfigurationIO *getIO();
+    ConfigurationParams *getParams();
+    ConfigurationSensor *getSensor();
     bool load();
     void save();
     void reset();
 
 private:
-    Configuration();
     Configuration(Configuration const&); // copy disabled
     void operator=(Configuration const&); // assigment disabled
     void updateCrc();
 };
+
+extern Configuration configuration;
 
 #endif /* CONFIGURATION_H_ */

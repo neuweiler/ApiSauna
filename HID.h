@@ -1,10 +1,7 @@
 /*
  * HID.h
  *
- * Main part of the bee sauna control software. It initializes all devices
- * and controls the main loop.
- *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -33,16 +30,17 @@
 #include <Arduino.h>
 #include <LiquidCrystal.h>
 #include "SimpleList.h"
-#include "Device.h"
-#include "ProgramHandler.h"
+#include "ProgramList.h"
 #include "Beeper.h"
+#include "EventHandler.h"
 
-class HID: Device
+class HID: EventListener
 {
 public:
     HID();
+    virtual ~HID();
     void initialize();
-    void process();
+    void handleEvent(Event event, ...);
 
 private:
     enum Button
@@ -51,6 +49,7 @@ private:
         SELECT  = 1 << 1
     };
 
+    void process();
     void displayProgramInfo();
     void logData();
     String convertTime(uint32_t millis);
@@ -61,21 +60,29 @@ private:
     void handleProgramInput();
     void handleFinishedInput();
     void checkReset();
+    void start(uint8_t programNumber);
+    void addTime(uint16_t seconds);
+    void switchToRunning();
     void displayHiveTemperatures(uint8_t row, bool displayAll);
     bool modal(String request, String negative, String positive, uint8_t timeout);
-    void stateSwitch(Status::SystemState fromState, Status::SystemState toState);
     void softReset();
     void displayFinishedMenu();
+    uint32_t calculateTimeRunning();
+    uint32_t calculateTimeRemaining();
 
+    Beeper beeper;
     LiquidCrystal lcd = LiquidCrystal(0, 0, 0, 0, 0, 0); // will be properly initialized later
-    Status::SystemState lastSystemState;
     SimpleList<Program>::iterator selectedProgram;
+    Program runningProgram;
     uint8_t tickCounter;
     uint8_t lastButtons;
     uint32_t resetStamp;
+    uint32_t startTime; // timestamp when the program started (in millis)
+
     char lcdBuffer[21];
     bool statusLed;
-    Beeper beeper;
 };
+
+extern HID hid;
 
 #endif /* HID_H_ */

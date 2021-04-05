@@ -3,7 +3,7 @@
  *
  * Logger to output formatted messages to the serial bus (monitoring / debugging)
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the

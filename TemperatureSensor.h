@@ -1,7 +1,7 @@
 /*
  * TemperatureSensor.h
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -31,6 +31,7 @@
 #include <OneWire.h>
 #include "Configuration.h"
 #include "Logger.h"
+#include "SimpleList.h"
 
 class TemperatureSensor
 {
@@ -44,26 +45,28 @@ public:
     };
 
     TemperatureSensor();
-    TemperatureSensor(uint8_t index, bool plate);
+    TemperatureSensor(SensorAddress address, uint8_t id);
+    static SimpleList<SensorAddress> detectTemperatureSensors();
     static void prepareData();
-    static void resetSearch();
-    static SensorAddress search();
+    void retrieveData();
     DeviceType getType();
     String getTypeStr();
     SensorAddress getAddress();
-    void setAddress(SensorAddress sensorAddress);
+    void setAddress(SensorAddress address);
     void setResolution(byte resolution);
-    void retrieveData();
     int16_t getTemperatureCelsius();
     int16_t getTemperatureFahrenheit();
+    uint8_t getId();
 protected:
 
 private:
-    uint8_t index;
+    static SensorAddress findNextSensor();
+
+    static OneWire *ds;
     SensorAddress address;
+    uint8_t id;
     DeviceType type;
     int16_t temperature; // integer representation of temperature
-    static OneWire *ds;
 };
 
 #endif /* TEMPERATURESENSOR_H_ */

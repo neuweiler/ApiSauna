@@ -3,7 +3,7 @@
  *
  *  Statistics stored in EEPROM. Align with addresses in Configuration.cpp
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -49,7 +49,7 @@ public:
 class Statistics
 {
 public:
-    static Statistics *getInstance();
+    Statistics();
     static StatisticValues *getStatistics();
     virtual ~Statistics();
     bool load();
@@ -57,9 +57,10 @@ public:
     void reset();
 
 private:
-    Statistics();
     Statistics(Statistics const&); // copy disabled
     void operator=(Statistics const&); // assigment disabled
 };
+
+extern Statistics statistics;
 
 #endif /* STATISTICS_H_ */

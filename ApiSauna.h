@@ -1,7 +1,7 @@
 /*
  * ApiSauna.h
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -28,7 +28,12 @@
 #define APISAUNA_H_
 
 #include <Arduino.h>
-#include "Controller.h"
+
+#include "EventHandler.h"
+#include "Hive.h"
+#include "Humidifier.h"
+#include "SerialConsole.h"
+#include "HID.h"
 
 #ifdef __cplusplus
 extern "C"

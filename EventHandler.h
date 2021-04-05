@@ -1,9 +1,7 @@
 /*
- * Device.cpp
+ * EventHandler.h
  *
- * The base class for all devices
- *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -26,27 +24,28 @@
 
  */
 
-#include "Device.h"
+#ifndef EVENTHANDLER_H_
+#define EVENTHANDLER_H_
 
-Device::Device()
-{
-}
+#include <Arduino.h>
+#include "SimpleList.h"
+#include "EventListener.h"
+#include "Logger.h"
 
-Device::~Device()
+class EventHandler
 {
-}
+public:
+    EventHandler();
+    virtual ~EventHandler();
+    void subscribe(EventListener *listener);
+    void publish(EventListener::Event event, ...);
+private:
+    EventHandler(EventHandler const&); // copy disabled
+    void operator=(EventHandler const&); // assignment disabled
 
-/**
- * Initialize the device.
- * Note: Most devices depend on a pre-loaded configuration!
- */
-void Device::initialize()
-{
-}
+    SimpleList<EventListener *> listeners;
+};
 
-/**
- * The controller regularly calls this to allow the device to process its data/input/output
- */
-void Device::process()
-{
-}
+extern EventHandler eventHandler;
+
+#endif /* EVENTHANDLER_H_ */

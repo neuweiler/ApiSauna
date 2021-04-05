@@ -1,5 +1,5 @@
 /*
- * SerialConsole.h
+ * ProgramList.h
  *
  Copyright (c) 2017-2021 Michael Neuweiler
 
@@ -24,44 +24,29 @@
 
  */
 
-#ifndef SERIALCONSOLE_H_
-#define SERIALCONSOLE_H_
+#ifndef PROGRAMLIST_H_
+#define PROGRAMLIST_H_
 
 #include <Arduino.h>
 #include "Logger.h"
-#include "ProgramList.h"
-#include "Configuration.h"
-#include "EventHandler.h"
+#include "SimpleList.h"
+#include "Program.h"
 
-class SerialConsole: EventListener
+class ProgramList
 {
 public:
-    SerialConsole();
-    virtual ~SerialConsole();
-    void initialize();
-    void handleEvent(Event event, ...);
+    ProgramList();
+    virtual ~ProgramList();
+    SimpleList<Program> *getPrograms();
 
 private:
-    void process();
-    bool handleShortCmd();
-    bool handleCmd();
-    bool handleCmdSystem(String &command, int32_t value);
-    bool handleCmdParams(String &command, int32_t value);
-    bool handleCmdSensor(String &command, char *cmdBuffer);
-    bool handleCmdIO(String &command, int32_t value);
-    bool handleCmdProgram(String &command, int32_t value);
-    uint8_t getIndex(String command);
-    void printMenu();
-    void printMenuParams();
-    void printMenuSensors();
-    void printMenuIO();
-    void printMenuProgram();
+    ProgramList(ProgramList const&); // copy disabled
+    void operator=(ProgramList const&); // assigment disabled    SimpleList<Program> programs;
+    void initPrograms();
 
-    char cmdBuffer[CFG_SERIAL_BUFFER_SIZE + 1];
-    int ptrBuffer;
-    Program program;
+    SimpleList<Program> programs;
 };
 
-extern SerialConsole serialConsole;
+extern ProgramList programList;
 
-#endif /* SERIALCONSOLE_H_ */
+#endif /* PROGRAMLIST_H_ */

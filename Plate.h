@@ -1,14 +1,7 @@
 /*
  * Plate.h
  *
- * Class to which TickObserver objects can register to be triggered
- * on a certain interval.
- * TickObserver with the same interval are grouped to the same timer
- * and triggered in sequence per timer interrupt.
- *
- * NOTE: The initialize() method must be called before a observer is registered !
- *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -34,49 +27,39 @@
 #ifndef PLATE_H_
 #define PLATE_H_
 
-#include "Device.h"
+#include <Arduino.h>
 #include "Fan.h"
 #include "Heater.h"
 #include "TemperatureSensor.h"
 #include "PID_v1.h"
 
-class Plate: Device
+#include "EventHandler.h"
+#include "Program.h"
+
+class Plate: EventListener
 {
 public:
     Plate();
-    void initialize();
-    void initialize(uint8_t index);
+    Plate(uint8_t number);
     virtual ~Plate();
-    void process();
+    void initialize();
+    void handleEvent(Event event, ...);
     void setTargetTemperature(int16_t temperature);
-    int16_t getTargetTemperature();
-    void setMaximumPower(uint8_t power);
-    uint8_t getMaximumPower();
-    void setFanSpeed(uint8_t speed);
-    void setPIDTuning(double kp, double ki, double kd);
-    void pause();
-    void resume();
-    int16_t getTemperature();
-    uint8_t getPower();
-    uint8_t getFanSpeed();
-    uint8_t getIndex();
-
-protected:
 
 private:
+    void process();
     uint8_t calculateHeaterPower();
+    void programChange(const Program& program);
 
     static uint8_t activeHeaters; // a static counter to establish how many heaters are active in non-PWM mode
-    TemperatureSensor *sensorHeater;
-    Heater *heater;
-    Fan *fan;
+    uint8_t number;
+    TemperatureSensor sensor;
+    Heater heater;
+    Fan fan;
     double targetTemperature, currentTemperature, power;
-    uint8_t maxPower; // maximum power applied to heater (0-255)
-    uint8_t index; // the id/number of the plate
     PID *pid; // pointer to PID controller
     bool paused; // flag indicating if the plate is in paused mode
-    bool on; // flag to indicate if the plate is heating
+    bool running; // is a program running?
 };
 
 #endif /* PLATE_H_ */
-

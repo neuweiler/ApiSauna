@@ -1,7 +1,7 @@
 /*
  * Program.h
  *
- Copyright (c) 2018 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -24,17 +24,14 @@
 
  */
 
-#ifndef PROGRAMHANDLER_H_
-#define PROGRAMHANDLER_H_
-
-#include <Arduino.h>
-#include "Logger.h"
-#include "SimpleList.h"
-#include "Status.h"
+#ifndef PROGRAM_H_
+#define PROGRAM_H_
 
 class Program
 {
 public:
+    bool running; // flag indicating if the program is currently running
+    bool preHeat; // flag indicating if we're in the pre-heating phase (only if running is also true)
     char name[17]; // name to be displayed in menu
     int16_t temperaturePreHeat; // the target hive temperature during pre-heat (in 0.1 deg C)
     int16_t temperatureHive; // the target hive temperature (in 0.1 deg C)
@@ -48,54 +45,6 @@ public:
     uint8_t fanSpeedHumidifier; // the fan speed of the humidifier fan (when active (0-255)
     uint8_t humidityMinimum; // the minimum relative humidity in %
     uint8_t humidityMaximum; // the maximum relative humidity in %
-//TODO send an event instead of using the changed flag
-    bool changed; // the program's values were changed indicating a required update
 };
 
-enum ProgramEvent
-{
-    startProgram,
-    stopProgram,
-    pauseProgram,
-    resumeProgram,
-    updateProgram
-};
-
-class ProgramObserver
-{
-public:
-    virtual void handleEvent(ProgramEvent event, Program *program);
-};
-
-class ProgramHandler
-{
-public:
-    static ProgramHandler *getInstance();
-    virtual ~ProgramHandler();
-    void initPrograms();
-    SimpleList<Program> *getPrograms();
-    void start(uint8_t programNumber);
-    void stop();
-    void pause();
-    void resume();
-    void addTime(uint16_t seconds);
-    Program *getRunningProgram();
-    uint32_t calculateTimeRunning();
-    uint32_t calculateTimeRemaining();
-    void attach(ProgramObserver *observer);
-    void switchToRunning();
-
-private:
-    ProgramHandler();
-    ProgramHandler(ProgramHandler const&); // copy disabled
-    void operator=(ProgramHandler const&); // assigment disabled    SimpleList<Program> programs;
-    void sendEvent(ProgramEvent event, Program *program);
-
-    Program *runningProgram;
-    SimpleList<Program> programs;
-    SimpleList<ProgramObserver *> observers;
-    uint32_t startTime; // timestamp when the program started (in millis)
-
-};
-
-#endif /* PROGRAMHANDLER_H_ */
+#endif /* PROGRAM_H_ */

@@ -1,9 +1,9 @@
 /*
  * Beeper.cpp
  *
- * Makes sounds depending on system state.
+ * Makes sounds via a piezo beeper
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -28,20 +28,32 @@
 
 #include "Beeper.h"
 
-Beeper::Beeper() :
-        Device()
+Beeper::Beeper()
 {
     numberOfBeeps = 0;
     soundOn = false;
+
+    eventHandler.subscribe(this); // register ourself
 }
 
-/**
- * Initialize the beeper
- */
-void Beeper::initialize()
+Beeper::~Beeper()
 {
-    Device::initialize();
-    uint8_t pin = Configuration::getIO()->beeper;
+}
+
+void Beeper::handleEvent(Event event, ...)
+{
+    switch(event) {
+    case PROCESS:
+        process();
+        break;
+    }
+}
+
+void Beeper::initialize() {
+    numberOfBeeps = 0;
+    soundOn = false;
+
+    uint8_t pin = configuration.getIO()->beeper;
     pinMode(pin, OUTPUT);
     digitalWrite(pin, LOW);
 }
@@ -51,7 +63,6 @@ void Beeper::initialize()
  */
 void Beeper::process()
 {
-    Device::process();
     if (soundOn) {
         soundOn = false;
         if (numberOfBeeps != -1) {
@@ -61,7 +72,7 @@ void Beeper::process()
         soundOn = true;
     }
 
-    analogWrite(Configuration::getIO()->beeper, (soundOn ? 20 : 0));
+    analogWrite(configuration.getIO()->beeper, (soundOn ? 20 : 0));
 }
 
 /**
@@ -77,7 +88,7 @@ void Beeper::beep(int8_t numberOfBeeps)
  */
 void Beeper::click()
 {
-    analogWrite(Configuration::getIO()->beeper, 30);
+    analogWrite(configuration.getIO()->beeper, 30);
     delay(20);
-    analogWrite(Configuration::getIO()->beeper, 0);
+    analogWrite(configuration.getIO()->beeper, 0);
 }

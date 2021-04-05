@@ -1,5 +1,5 @@
 /*
- * SerialConsole.h
+ * HiveFactory.h
  *
  Copyright (c) 2017-2021 Michael Neuweiler
 
@@ -24,44 +24,23 @@
 
  */
 
-#ifndef SERIALCONSOLE_H_
-#define SERIALCONSOLE_H_
+#ifndef HIVEFACTORY_H_
+#define HIVEFACTORY_H_
 
-#include <Arduino.h>
-#include "Logger.h"
-#include "ProgramList.h"
+#include "SimpleList.h"
 #include "Configuration.h"
-#include "EventHandler.h"
+#include "ThermalZone.h"
 
-class SerialConsole: EventListener
-{
+class HiveFactory {
 public:
-    SerialConsole();
-    virtual ~SerialConsole();
-    void initialize();
-    void handleEvent(Event event, ...);
-
+	HiveFactory();
+	virtual ~HiveFactory();
+	void create();
 private:
-    void process();
-    bool handleShortCmd();
-    bool handleCmd();
-    bool handleCmdSystem(String &command, int32_t value);
-    bool handleCmdParams(String &command, int32_t value);
-    bool handleCmdSensor(String &command, char *cmdBuffer);
-    bool handleCmdIO(String &command, int32_t value);
-    bool handleCmdProgram(String &command, int32_t value);
-    uint8_t getIndex(String command);
-    void printMenu();
-    void printMenuParams();
-    void printMenuSensors();
-    void printMenuIO();
-    void printMenuProgram();
-
-    char cmdBuffer[CFG_SERIAL_BUFFER_SIZE + 1];
-    int ptrBuffer;
-    Program program;
+    bool findSensor(SimpleList<SensorAddress> &addressList, SensorAddress address);
+    SimpleList<Plate> createPlates(SimpleList<SensorAddress> &addressList);
+    SimpleList<TemperatureSensor> createHiveSensors(SimpleList<SensorAddress> &addressList);
+    SimpleList<ThermalZone> createThermalZones(SimpleList<TemperatureSensor> sensors, SimpleList<Plate> plates);
 };
 
-extern SerialConsole serialConsole;
-
-#endif /* SERIALCONSOLE_H_ */
+#endif /* HIVEFACTORY_H_ */

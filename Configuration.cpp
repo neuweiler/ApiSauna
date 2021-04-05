@@ -1,7 +1,7 @@
 /*
  * Configuration.cpp
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -26,6 +26,8 @@
 
 #include "Configuration.h"
 
+Configuration configuration;
+
 Configuration::Configuration()
 {
 }
@@ -35,17 +37,8 @@ Configuration::~Configuration()
 }
 
 /**
- * Return the instance of the singleton
- */
-Configuration *Configuration::getInstance()
-{
-    static Configuration instance;
-    return &instance;
-}
-
-/**
  * Load the configuration from EEPROM and verify the CRC values
- * as well as the existance of the ApiSauna token.
+ * as well as the existence of the ApiSauna token.
  *
  * If the token is not found, it is assumed that the configuration was never saved on this board and the config is re-set and saved.
  * If a CRC check fails, a error is printed to the log and HID and false is returned - causing the controller to go into error state.
@@ -61,29 +54,31 @@ bool Configuration::load()
         Logger::warn(F("no ApiSauna token found in EEPROM --> resetting configuration and statistics"));
         reset();
         save();
-        Statistics::getInstance()->reset();
-        Statistics::getInstance()->save();
+        statistics.reset();
+        statistics.save();
     }
 
     if (getParams()->crc != Crc::calculate((uint8_t *) getParams() + 4, sizeof(ConfigurationParams) - 4)) {
         Logger::error(F("invalid crc detected in parameter configuration"));
-        status.errorCode = Status::crcParam;
+        eventHandler.publish(EventListener::ERROR, F("Param config invalid CRC"));
         return false;
     }
     if (getIO()->crc != Crc::calculate((uint8_t *) getIO() + 4, sizeof(ConfigurationIO) - 4)) {
         Logger::error(F("invalid crc detected in I/O configuration"));
-        status.errorCode = Status::crcIo;
+        eventHandler.publish(EventListener::ERROR, F("IO config invalid CRC"));
         return false;
     }
     if (getSensor()->crc != Crc::calculate((uint8_t *) getSensor() + 4, sizeof(ConfigurationSensor) - 4)) {
         Logger::error(F("invalid crc detected in sensor configuration"));
-        status.errorCode = Status::crcSensor;
+        eventHandler.publish(EventListener::ERROR, F("Sensor config invalid CRC"));
         return false;
     }
 
     if (getParams()->numberOfPlates > CFG_MAX_NUMBER_PLATES) {
         getParams()->numberOfPlates = CFG_MAX_NUMBER_PLATES;
     }
+
+    Logger::setLoglevel((Logger::LogLevel)getParams()->loglevel);
 
     return true;
 }
@@ -163,8 +158,8 @@ void Configuration::reset()
     configParams->maxHeaterPower = 170;
     configParams->minFanSpeed = 10;
     configParams->hiveOverTemp = 460;
-    configParams->hiveOverTempRecover = 350;
-    configParams->plateOverTemp = 850;
+    configParams->hiveMaxTemp = 430;
+    configParams->plateOverTemp = 950;
     configParams->usePWM = 0;
     configParams->maxConcurrentHeaters = 2;
     configParams->humidifierFanDryTime = 2;

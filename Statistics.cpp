@@ -1,7 +1,7 @@
 /*
  * Statistics.cpp
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -26,6 +26,8 @@
 
 #include "Statistics.h"
 
+Statistics statistics;
+
 /**
  * Constructor
  */
@@ -41,15 +43,6 @@ Statistics::~Statistics()
 }
 
 /**
- * Return the singleton
- */
-Statistics *Statistics::getInstance()
-{
-    static Statistics instance;
-    return &instance;
-}
-
-/**
  * Load the statistic data from EEPROM and verify the CRC
  */
 bool Statistics::load()
@@ -58,8 +51,8 @@ bool Statistics::load()
     EEPROM.get(CONFIG_ADDRESS_STATISTICS, *getStatistics());
 
     if (getStatistics()->crc != Crc::calculate((uint8_t *) getStatistics() + 4, sizeof(StatisticValues) - 4)) {
-        status.errorCode = Status::crcStatistics;
         Logger::error(F("invalid crc detected in stored statistics"));
+        controller.publish(EventListener::ERROR, F("Statistics invalid CRC"));
         return false;
     }
     return true;

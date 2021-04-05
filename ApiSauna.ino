@@ -3,7 +3,7 @@
  *
  * The main application, hands over control to the Controller class.
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -35,8 +35,14 @@ void setup()
 {
     Serial.begin(CFG_SERIAL_SPEED);
     Serial.println(CFG_VERSION);
+	serialConsole.initialize();
 
-    Controller::getInstance()->initialize();
+    configuration.load();
+    statistics.load();
+
+    hive.initialize();
+	humidifier.initialize();
+	hid.initialize();
 }
 
 /**
@@ -44,7 +50,7 @@ void setup()
  */
 void loop()
 {
-    Controller::getInstance()->process();
-
+    eventHandler.publish(EventListener::PROCESS);
+    TemperatureSensor::prepareData();
     delay(CFG_LOOP_DELAY);
 }

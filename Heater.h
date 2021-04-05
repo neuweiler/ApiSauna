@@ -1,7 +1,7 @@
 /*
  * Heater.h
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -28,19 +28,18 @@
 #define HEATER_H_
 
 #include <Arduino.h>
-#include "Device.h"
 
 class Heater
 {
 public:
     Heater();
-    Heater(uint8_t index);
     virtual ~Heater();
+    void begin(uint8_t controlPin);
     void setPower(uint8_t power);
     uint8_t getPower();
 
 private:
-    uint8_t index;
+    uint8_t controlPin;
     uint8_t power;
 };
 #endif /* HEATER_H_ */

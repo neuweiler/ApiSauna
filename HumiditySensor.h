@@ -1,7 +1,7 @@
 /*
  * HumiditySensor.h
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -38,7 +38,7 @@ class HumiditySensor
 public:
     HumiditySensor();
     virtual ~HumiditySensor();
-    void init();
+    void initialize();
     uint8_t getRelativeHumidity();
     int16_t getTemperature();
 

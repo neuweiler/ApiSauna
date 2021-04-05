@@ -1,7 +1,7 @@
 /*
- * Device.h
+ * Hive.h
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -24,19 +24,29 @@
 
  */
 
-#ifndef DEVICE_H_
-#define DEVICE_H_
+#ifndef HIVE_H_
+#define HIVE_H_
 
-#include "Configuration.h"
-#include "Status.h"
+#include <PID_v1.h>
 
-class Device
+#include "EventHandler.h"
+#include "HiveFactory.h"
+
+class Hive: public EventListener
 {
 public:
-    Device();
-    virtual ~Device();
-    virtual void initialize();
-    virtual void process();
+    Hive();
+    virtual ~Hive();
+    void initialize();
+    void handleEvent(Event event, ...);
+
+private:
+    void process();
+    void handleProgramChange(Program runningProgram);
+
+    uint8_t tickCounter;
 };
 
-#endif /* DEVICE_H_ */
+extern Hive hive;
+
+#endif /* HIVE_H_ */

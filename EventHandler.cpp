@@ -1,5 +1,5 @@
 /*
- * SerialConsole.h
+ * Controller.cpp
  *
  Copyright (c) 2017-2021 Michael Neuweiler
 
@@ -24,44 +24,33 @@
 
  */
 
-#ifndef SERIALCONSOLE_H_
-#define SERIALCONSOLE_H_
-
-#include <Arduino.h>
-#include "Logger.h"
-#include "ProgramList.h"
-#include "Configuration.h"
 #include "EventHandler.h"
 
-class SerialConsole: EventListener
+EventHandler eventHandler;
+
+EventHandler::EventHandler()
 {
-public:
-    SerialConsole();
-    virtual ~SerialConsole();
-    void initialize();
-    void handleEvent(Event event, ...);
+}
 
-private:
-    void process();
-    bool handleShortCmd();
-    bool handleCmd();
-    bool handleCmdSystem(String &command, int32_t value);
-    bool handleCmdParams(String &command, int32_t value);
-    bool handleCmdSensor(String &command, char *cmdBuffer);
-    bool handleCmdIO(String &command, int32_t value);
-    bool handleCmdProgram(String &command, int32_t value);
-    uint8_t getIndex(String command);
-    void printMenu();
-    void printMenuParams();
-    void printMenuSensors();
-    void printMenuIO();
-    void printMenuProgram();
+EventHandler::~EventHandler()
+{
+}
 
-    char cmdBuffer[CFG_SERIAL_BUFFER_SIZE + 1];
-    int ptrBuffer;
-    Program program;
-};
+/**
+ * Attach an listener
+ */
+void EventHandler::subscribe(EventListener *listener) {
+    listeners.push_back(listener);
+}
 
-extern SerialConsole serialConsole;
-
-#endif /* SERIALCONSOLE_H_ */
+/**
+ * Send an event to all attached/subscribed listeners
+ */
+void EventHandler::publish(EventListener::Event event, ...) {
+    va_list args;
+    va_start(args, event);
+    for (SimpleList<EventListener *>::iterator entry = listeners.begin(); entry != listeners.end(); ++entry) {
+    	((EventListener *)*entry)->handleEvent(event, args);
+    }
+    va_end(args);
+}

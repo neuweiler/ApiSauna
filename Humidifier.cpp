@@ -4,7 +4,7 @@
  * Measures the humidity of the hive and controls the vaporizer and
  * its fan.
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -29,54 +29,57 @@
 
 #include "Humidifier.h"
 
-Humidifier::Humidifier() :
-        Device()
+Humidifier humidifier;
+
+Humidifier::Humidifier()
 {
     maximumHumidity = 0;
     minimumHumidity = 0;
-    humidity = 0;
     fanSpeed = 0;
-    temperature = 0;
+    fanTimestamp = 0;
+    running = false;
+    paused = false;
+    alert = false;
+
+    status.fanSpeed = 0;
+    status.humidity = 0;
+    status.temperature = 0;
+    status.vaporizer = false;
 }
 
-void Humidifier::setMaxHumidity(uint8_t maxHumidity)
-{
-    this->maximumHumidity = maxHumidity;
+Humidifier::~Humidifier() {
+
 }
 
-uint8_t Humidifier::getMaxHumidity()
+void Humidifier::handleEvent(Event event, ...)
 {
-    return maximumHumidity;
-}
-
-void Humidifier::setMinHumidity(uint8_t minHumidity)
-{
-    this->minimumHumidity = minHumidity;
-}
-
-uint8_t Humidifier::getMinHumidity()
-{
-    return minimumHumidity;
-}
-
-void Humidifier::setFanSpeed(uint8_t speed)
-{
-    fanSpeed = speed;
-}
-
-uint8_t Humidifier::getFanSpeed()
-{
-    return fan.getSpeed();
-}
-
-uint8_t Humidifier::getHumidity()
-{
-    return humidity;
-}
-
-int16_t Humidifier::getTemperature()
-{
-    return temperature;
+    switch (event) {
+    case PROCESS:
+        process();
+        break;
+    case PROGRAM_START:
+    case PROGRAM_UPDATE:
+        va_list args;
+        va_start(args, event);
+        programChange(va_arg(args, Program));
+        va_end(args);
+        break;
+    case PROGRAM_STOP:
+        running = false;
+        paused = false;
+        break;
+    case PROGRAM_PAUSE:
+        paused = true;
+        break;
+    case PROGRAM_RESUME:
+        paused = false;
+        break;
+    case TEMPERATURE_ALERT:
+        alert = true;
+        break;
+    case TEMPERATURE_NORMAL:
+        alert = false;
+    }
 }
 
 /**
@@ -84,10 +87,16 @@ int16_t Humidifier::getTemperature()
  */
 void Humidifier::initialize()
 {
-    Device::initialize();
-    sensor.init();
-    fan.setControlPin(Configuration::getIO()->humidifierFan);
-    pinMode(Configuration::getIO()->vaporizer, OUTPUT);
+    sensor.initialize();
+    fan.initialize(configuration.getIO()->humidifierFan, 0);
+
+    pinMode(configuration.getIO()->vaporizer, OUTPUT);
+    enableVaporizer(false);
+
+    paused = false;
+    running = false;
+
+    eventHandler.subscribe(this);
 }
 
 /**
@@ -95,39 +104,50 @@ void Humidifier::initialize()
  */
 void Humidifier::process()
 {
-    Device::process();
-    humidity = sensor.getRelativeHumidity();
-    temperature = sensor.getTemperature();
+	uint8_t humidity = sensor.getRelativeHumidity();
 
-    if (humidity != 0 && humidity < minimumHumidity) {
-        fan.setSpeed(fanSpeed);
-        enableVaporizer(true);
-        status.fanSpeedHumidifier = fanSpeed;
-        status.fanTimeHumidifier = 0;
-    }
+	if (humidity != 0 && humidity < minimumHumidity) {
+//TODO if fanSpeed < 240, give it a kick of 240 to break free
+		fan.setSpeed(fanSpeed);
+		enableVaporizer(true);
+		fanTimestamp = 0;
+	}
 
-    if (humidity >= maximumHumidity) {
-        enableVaporizer(false);
-
-        if (status.fanTimeHumidifier == 0) {
-            status.fanTimeHumidifier = millis();
-        }
-    }
+	if (humidity >= maximumHumidity || paused || !running) {
+		enableVaporizer(false);
+		if (fanTimestamp == 0) {
+			fanTimestamp = millis();
+		}
+	}
 
     // let the fan run longer than the vaporizer to let it dry
-    if (status.fanTimeHumidifier != 0 && (millis() - status.fanTimeHumidifier) > 60000 * Configuration::getParams()->humidifierFanDryTime) {
+    if (fanTimestamp != 0 && (millis() - fanTimestamp) > 60000 * configuration.getParams()->humidifierFanDryTime) {
         fan.setSpeed(0);
-        status.fanSpeedHumidifier = 0;
+        fanTimestamp = 0;
     }
 
-    status.humidity = humidity;
-    status.temperatureHumidifier = temperature;
+	status.humidity = humidity;
+	status.temperature = sensor.getTemperature();
+	eventHandler.publish(EventListener::STATUS_HUMIDITY, status);
+}
+
+void Humidifier::programChange(const Program& program)
+{
+    maximumHumidity = program.humidityMaximum;
+    minimumHumidity = program.humidityMinimum;
+    fanSpeed = program.fanSpeedHumidifier;
+    running = program.running;
 }
 
 void Humidifier::enableVaporizer(bool enable)
 {
-    if (Configuration::getIO()->vaporizer != 0) {
-        digitalWrite(Configuration::getIO()->vaporizer, enable);
+    if (configuration.getIO()->vaporizer != 0) {
+        digitalWrite(configuration.getIO()->vaporizer, enable);
     }
-    status.vaporizerEnabled = enable;
+    status.vaporizer = enable;
+}
+
+void Humidifier::setFanSpeed(uint8_t speed) {
+	fan.setSpeed(speed);
+	status.fanSpeed = speed;
 }

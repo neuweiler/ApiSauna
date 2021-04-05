@@ -1,7 +1,7 @@
 /*
  * Humidifier.h
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -27,34 +27,37 @@
 #ifndef HUMIDIFIER_H_
 #define HUMIDIFIER_H_
 
-#include "Device.h"
+#include "EventHandler.h"
 #include "HumiditySensor.h"
 #include "Fan.h"
+#include "Program.h"
 
-class Humidifier: Device
+class Humidifier: EventListener
 {
 public:
     Humidifier();
+    virtual ~Humidifier();
     void initialize();
-    void process();
-    void setMaxHumidity(uint8_t maxHumidity);
-    uint8_t getMaxHumidity();
-    void setMinHumidity(uint8_t minHumidity);
-    uint8_t getMinHumidity();
-    void setFanSpeed(uint8_t speed);
-    uint8_t getFanSpeed();
-    uint8_t getHumidity();
-    int16_t getTemperature();
+    void handleEvent(Event event, ...);
 
 private:
+    void process();
     void enableVaporizer(bool on);
+    void programChange(const Program& program);
+    void setFanSpeed(uint8_t speed);
+
     HumiditySensor sensor;
     Fan fan;
     uint8_t maximumHumidity;
     uint8_t minimumHumidity;
-    uint8_t humidity;
-    int16_t temperature;
-    uint8_t fanSpeed;
+    uint8_t fanSpeed; // the program's desired fan speed for the humidifier
+    uint32_t fanTimestamp;
+    bool running; // indicates if the program is running
+    bool paused; // indicates if the program execution is paused
+    bool alert; // indicates if we're in a temperature alert condition
+    StatusHumidity status;
 };
+
+extern Humidifier humidifier;
 
 #endif /* HUMIDIFIER_H_ */

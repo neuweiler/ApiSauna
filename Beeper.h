@@ -1,7 +1,7 @@
 /*
  * Beeper.h
  *
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -27,18 +27,22 @@
 #ifndef BEEPER_H_
 #define BEEPER_H_
 
-#include "Device.h"
+#include <Arduino.h>
+#include "Configuration.h"
+#include "EventHandler.h"
 
-class Beeper : Device
+class Beeper : EventListener
 {
 public:
     Beeper();
-    void initialize();
-    void process();
+    virtual ~Beeper();
+    void handleEvent(Event event, ...);
     void beep(int8_t numberOfBeeps);
     void click();
 
 private:
+    void initialize();
+    void process();
     int8_t numberOfBeeps;
     bool soundOn;
 };

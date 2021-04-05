@@ -6,7 +6,7 @@
  * Note: Make sure with all pin defintions of your hardware that each pin number is
  *       only defined once.
 
- Copyright (c) 2017 Michael Neuweiler
+ Copyright (c) 2017-2021 Michael Neuweiler
 
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -26,6 +26,7 @@
  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
  */
 
 #ifndef CONFIG_H_
@@ -33,7 +34,7 @@
 
 #include <Arduino.h>
 
-#define CFG_VERSION                 "ApiSauna v1.2"
+#define CFG_VERSION                 F("ApiSauna v2.0")
 #define CFG_DEFAULT_LOGLEVEL        Logger::Info
 
 #define CFG_SERIAL_SPEED 115200
@@ -43,5 +44,7 @@
 #define CFG_SERIAL_BUFFER_SIZE      80 // size of the serial input buffer
 
 #define CFG_MAX_NUMBER_PLATES       15 // defines the maximum number of heater plates (limited by 2*x*8 bytes + checksum < 256 bytes)
+
+//#define FAKE_TEMPERATURE_SENSORS
 
 #endif /* CONFIG_H_ */
