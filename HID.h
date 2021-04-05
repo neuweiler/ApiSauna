@@ -49,6 +49,16 @@ private:
         SELECT  = 1 << 1
     };
 
+    enum State {
+    	UNKNOWN		= 0,
+    	READY		= 1,
+		PREHEAT		= 2,
+		RUNNING		= 3,
+		FINISHED	= 4,
+		OVERTEMP	= 5,
+		FAULT		= 6
+    };
+
     void process();
     void displayProgramInfo();
     void logData();
@@ -69,6 +79,7 @@ private:
     void displayFinishedMenu();
     uint32_t calculateTimeRunning();
     uint32_t calculateTimeRemaining();
+    String stateToStr(State state);
 
     Beeper beeper;
     LiquidCrystal lcd = LiquidCrystal(0, 0, 0, 0, 0, 0); // will be properly initialized later
@@ -78,6 +89,10 @@ private:
     uint8_t lastButtons;
     uint32_t resetStamp;
     uint32_t startTime; // timestamp when the program started (in millis)
+    State state;
+    StatusHumidity statusHumidity;
+    StatusZone statusZone[CFG_MAX_NUMBER_PLATES];
+    StatusPlate statusPlate[CFG_MAX_NUMBER_PLATES];
 
     char lcdBuffer[21];
     bool statusLed;

@@ -30,8 +30,6 @@ uint8_t ThermalZone::zoneCounter = 0;
 
 ThermalZone::ThermalZone()
 {
-	id = zoneCounter++;
-
     pid = NULL;
     actualTemperature = -999;
     targetTemperature = 0;
@@ -40,14 +38,9 @@ ThermalZone::ThermalZone()
     plateTargetTemperature = 0;
     temperatureHigh = false;
 
-    status.hiveTarget = 0;
-    for (int i = 0; i < CFG_MAX_NUMBER_PLATES; i++) {
-        status.hiveActual[i] = 0;
-        status.plateActual[i] = 0;
-        status.plateTarget[i] = 0;
-        status.platePower[i] = 0;
-        status.plateFanSpeed[i] = 0;
-    }
+    status.id = zoneCounter++;
+    status.temperatureTarget = 0;
+    status.temperatureActual = 0;
 }
 
 ThermalZone::~ThermalZone()
@@ -60,16 +53,15 @@ ThermalZone::~ThermalZone()
 
 void ThermalZone::handleEvent(Event event, ...)
 {
+    va_list args;
+    va_start(args, event);
     switch (event) {
     case PROCESS:
         process();
         break;
     case PROGRAM_START:
     case PROGRAM_UPDATE:
-        va_list args;
-        va_start(args, event);
         programChange(va_arg(args, Program));
-        va_end(args);
         break;
     case PROGRAM_STOP:
     case TEMPERATURE_ALERT:
@@ -90,11 +82,11 @@ void ThermalZone::initialize()
 void ThermalZone::process()
 {
     actualTemperature = retrieveTemperature();
-    status.hiveActual[id] = actualTemperature;
+    status.temperatureActual = actualTemperature;
 
 	int16_t plateTemp = calculatePlateTargetTemperature();
-	for (SimpleList<Plate>::iterator itr = plates.begin(); itr != plates.end(); ++itr) {
-		itr->setTargetTemperature(plateTemp);
+	for (SimpleList<Plate>::iterator plate = plates.begin(); plate != plates.end(); ++plate) {
+		plate->setTargetTemperature(plateTemp);
 	}
 
 	if (actualTemperature > configuration.getParams()->hiveMaxTemp && !temperatureHigh) {
@@ -108,6 +100,8 @@ void ThermalZone::process()
        	eventHandler.publish(TEMPERATURE_NORMAL);
        	temperatureHigh = false;
     }
+
+    eventHandler.publish(EventListener::STATUS_ZONE, status);
 }
 
 void ThermalZone::programChange(const Program &program)
@@ -121,7 +115,7 @@ void ThermalZone::programChange(const Program &program)
     plateMaxTemperatureProgram = program.temperaturePlate;
 
     targetTemperature = (program.preHeat ? program.temperaturePreHeat : program.temperatureHive);
-    status.hiveTarget = targetTemperature;
+    status.temperatureTarget = targetTemperature;
 }
 
 
@@ -146,8 +140,6 @@ int16_t ThermalZone::retrieveTemperature()
 
     for (SimpleList<TemperatureSensor>::iterator sensor = temperatureSensors.begin(); sensor != temperatureSensors.end(); ++sensor) {
         sensor->retrieveData();
-        if (sensor->getId() < CFG_MAX_NUMBER_PLATES)
-            status.hiveActual[sensor->getId()] = sensor->getTemperatureCelsius();
         max = max(max, sensor->getTemperatureCelsius());
     }
     return max;
@@ -171,7 +163,6 @@ int16_t ThermalZone::calculatePlateTargetTemperature()
         plateTargetTemperature--;
 
     plateTargetTemperature = constrain(plateTargetTemperature, 0, plateMaxTemperatureProgram);
-    status.plateTarget[id] = plateTargetTemperature;
 
     return plateTargetTemperature;
 }

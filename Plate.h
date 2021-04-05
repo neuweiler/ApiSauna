@@ -49,10 +49,11 @@ public:
 private:
     void process();
     uint8_t calculateHeaterPower();
+    void setFanSpeed(uint8_t speed);
     void programChange(const Program& program);
 
     static uint8_t activeHeaters; // a static counter to establish how many heaters are active in non-PWM mode
-    uint8_t number;
+    uint8_t id;
     TemperatureSensor sensor;
     Heater heater;
     Fan fan;
@@ -60,6 +61,7 @@ private:
     PID *pid; // pointer to PID controller
     bool paused; // flag indicating if the plate is in paused mode
     bool running; // is a program running?
+    StatusPlate status;
 };
 
 #endif /* PLATE_H_ */

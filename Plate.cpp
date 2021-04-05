@@ -33,18 +33,24 @@ uint8_t Plate::activeHeaters = 0;
 
 Plate::Plate()
 {
-    number = 0;
+    id = 0;
     currentTemperature = 0.0;
     targetTemperature = 0.0;
     power = 0.0;
     pid = NULL;
     paused = false;
     running = false;
+
+    status.temperatureTarget = 0;
+    status.temperatureActual = 0;
+    status.power = 0;
+    status.fanSpeed = 0;
 }
 
-Plate::Plate(uint8_t number) : Plate()
+Plate::Plate(uint8_t id) : Plate()
 {
-    this->number = number;
+    this->id = id;
+    status.id = id;
 }
 
 Plate::~Plate()
@@ -57,16 +63,15 @@ Plate::~Plate()
 
 void Plate::handleEvent(Event event, ...)
 {
+    va_list args;
+    va_start(args, event);
     switch (event) {
     case PROCESS:
         process();
         break;
     case PROGRAM_START:
     case PROGRAM_UPDATE:
-        va_list args;
-        va_start(args, event);
         programChange(va_arg(args, Program));
-        va_end(args);
         break;
     case PROGRAM_STOP:
     case TEMPERATURE_ALERT:
@@ -82,15 +87,16 @@ void Plate::handleEvent(Event event, ...)
         paused = false;
         break;
     }
+    va_end(args);
 }
 
 void Plate::initialize()
 {
     ConfigurationIO *configIo = configuration.getIO();
 
-    sensor.setAddress(configuration.getSensor()->addressPlate[number]);
-    fan.initialize(configIo->fan[number], configuration.getParams()->minFanSpeed);
-    heater.begin(configIo->heater[number]);
+    sensor.setAddress(configuration.getSensor()->addressPlate[id]);
+    fan.initialize(configIo->fan[id], configuration.getParams()->minFanSpeed);
+    heater.begin(configIo->heater[id]);
 
     if (pid != NULL) {
         delete pid;
@@ -115,22 +121,26 @@ void Plate::process()
 {
     sensor.retrieveData();
     currentTemperature = sensor.getTemperatureCelsius();
+    status.temperatureActual = currentTemperature;
 
     if (paused || !running) {
         heater.setPower(0);
         if (!running) {
-            fan.setSpeed(0);
+            setFanSpeed(0);
         }
     } else {
-        heater.setPower(calculateHeaterPower());
+    	uint8_t heaterPower = calculateHeaterPower();
+        heater.setPower(heaterPower);
+        status.power = heaterPower;
     }
+    eventHandler.publish(EventListener::STATUS_PLATE, status);
 }
 
 void Plate::programChange(const Program& program)
 {
     pid->SetOutputLimits(0, configuration.getParams()->maxHeaterPower);
     pid->SetTunings(program.plateKp, program.plateKi, program.plateKd);
-    fan.setSpeed(program.preHeat ? program.fanSpeedPreHeat : program.fanSpeed);
+    setFanSpeed(program.preHeat ? program.fanSpeedPreHeat : program.fanSpeed);
     running = program.running;
 }
 
@@ -140,6 +150,12 @@ void Plate::programChange(const Program& program)
 void Plate::setTargetTemperature(int16_t temperature)
 {
     targetTemperature = temperature;
+    status.temperatureTarget = temperature;
+}
+
+void Plate::setFanSpeed(uint8_t speed) {
+	fan.setSpeed(speed);
+	status.fanSpeed = speed;
 }
 
 /**
@@ -154,11 +170,11 @@ uint8_t Plate::calculateHeaterPower()
     pid->Compute(); // updates power
 
     if (Logger::isDebug()) {
-        Logger::debug(F("calculated power for plate %d: %d"), number, power);
+        Logger::debug(F("calculated power for plate %d: %d"), id, power);
     }
 
     if (currentTemperature > params->plateOverTemp) {
-        Logger::error(F("ALERT !!! Plate %d is over-heating !!!"), number);
+        Logger::error(F("ALERT !!! Plate %d is over-heating !!!"), id);
         eventHandler.publish(TEMPERATURE_ALERT);
         return 0;
     }

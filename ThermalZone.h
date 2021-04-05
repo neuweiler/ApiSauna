@@ -54,7 +54,6 @@ private:
     int16_t calculatePlateTargetTemperature();
 
     static uint8_t zoneCounter;
-    uint8_t id;
     SimpleList<TemperatureSensor> temperatureSensors;
     SimpleList<Plate> plates;
     PID *pid; // pointer to PID controller
@@ -62,7 +61,7 @@ private:
     int16_t plateTargetTemperature;
     int16_t plateMaxTemperatureProgram;
     bool temperatureHigh;
-    StatusTemperature status;
+    StatusZone status;
 };
 
 #endif /* THERMALZONE_H_ */

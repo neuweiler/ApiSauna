@@ -41,15 +41,17 @@ public:
 	};
 
 	struct StatusZone {
+		uint8_t id;
 	    int16_t temperatureTarget;
-	    int16_t temperatureActual[CFG_MAX_NUMBER_PLATES];
+	    int16_t temperatureActual;
 	};
 
 	struct StatusPlate {
+		uint8_t id;
 	    int16_t temperatureTarget;
-	    int16_t temperatureActual[CFG_MAX_NUMBER_PLATES];
-	    uint8_t power[CFG_MAX_NUMBER_PLATES];
-	    uint8_t fanSpeed[CFG_MAX_NUMBER_PLATES];
+	    int16_t temperatureActual;
+	    uint8_t power;
+	    uint8_t fanSpeed;
 	};
 
     enum Event

@@ -39,6 +39,12 @@ HID::HID()
     statusLed = false;
     selectedProgram = NULL;
     startTime = 0;
+    state = UNKNOWN;
+
+    for (int i = 0; i < CFG_MAX_NUMBER_PLATES; i++) {
+    	statusZone[i].id = 255;
+    	statusPlate[i].id = 255;
+    }
 }
 
 HID::~HID() {
@@ -55,10 +61,12 @@ void HID::handleEvent(Event event, ...)
     case PROGRAM_UPDATE:
     case PROGRAM_START:
         runningProgram = va_arg(args, Program);
+        state = (runningProgram.preHeat ? PREHEAT : RUNNING);
         startTime = millis();
         break;
     case PROGRAM_STOP:
         Logger::info(F("stopping program"));
+        state = FINISHED;
         startTime = 0;
         //TODO use own state
         displayFinishedMenu();
@@ -79,10 +87,24 @@ void HID::handleEvent(Event event, ...)
     case TEMPERATURE_NORMAL:
     	break;
     case STATUS_HUMIDITY:
+        statusHumidity = va_arg(args, StatusHumidity);
     	break;
-    case STATUS_TEMPERATURE:
+    case STATUS_ZONE: {
+        StatusZone tempZone = va_arg(args, StatusZone);
+        if (tempZone.id < CFG_MAX_NUMBER_PLATES) {
+        	statusZone[tempZone.id] = tempZone;
+        }
+    }
+    	break;
+    case STATUS_PLATE: {
+		StatusPlate tempPlate = va_arg(args, StatusPlate);
+		if (tempPlate.id < CFG_MAX_NUMBER_PLATES) {
+			statusPlate[tempPlate.id] = tempPlate;
+		}
+    }
     	break;
     case ERROR:
+    	state = FAULT;
         lcd.print("ERROR:");
         lcd.setCursor(0, 1);
         lcd.print(va_arg(args, String));
@@ -114,27 +136,23 @@ void HID::process()
 {
     checkReset();
 
-    Status::SystemState state = status.getSystemState();
-
     switch (state) {
-    case Status::init:
-        break;
-    case Status::ready:
+    case READY:
         handleProgramMenu();
         break;
-    case Status::preHeat:
-    case Status::running:
+    case PREHEAT:
+    case RUNNING:
         displayProgramInfo();
         handleProgramInput();
         break;
-    case Status::overtemp:
+    case OVERTEMP:
         displayHiveTemperatures(1, true);
         break;
-    case Status::shutdown:
+    case FINISHED:
         displayHiveTemperatures(1, true);
         handleFinishedInput();
         break;
-    case Status::error:
+    case FAULT:
         displayHiveTemperatures(3, true);
         break;
     }
@@ -222,15 +240,14 @@ void HID::handleProgramInput()
     }
     lastButtons = buttons;
 
-    Status::SystemState state = status.getSystemState();
     if (buttons & NEXT) {
         beeper.click();
-        if (state == Status::preHeat) {
+        if (state == PREHEAT) {
             if (modal(F("Skip pre-heating?"), F("no"), F("yes"))) {
                 switchToRunning();
             }
         }
-        if (state == Status::running) {
+        if (state == RUNNING) {
             if (modal(F("Abort program?"), F("no"), F("yes"))) {
                 eventHandler.publish(PROGRAM_STOP);
             }
@@ -256,7 +273,7 @@ void HID::handleFinishedInput()
     }
     if (buttons & SELECT) {
         beeper.click();
-        status.setSystemState(Status::ready);
+        state = READY;
     }
 }
 
@@ -292,7 +309,8 @@ void HID::displayHiveTemperatures(uint8_t row, bool displayAll)
     lcd.setCursor(0, row);
     for (int i = 0; i < (displayAll ? CFG_MAX_NUMBER_PLATES : 4); i++) {
         if (configuration.getSensor()->addressHive[i].value != 0) {
-            snprintf(lcdBuffer, 4, (char *)F("%02d\xdf"), (status.temperatureHive[i] + 5) / 10);
+        	//TODO this might not match.. if we have less zones than hive sensors
+            snprintf(lcdBuffer, 4, (char *)F("%02d\xdf"), (statusZone[i].temperatureActual + 5) / 10);
             lcd.print(lcdBuffer);
         }
     }
@@ -308,7 +326,7 @@ void HID::displayProgramInfo()
 
     // program name and time running
     lcd.setCursor(0, 0);
-    snprintf(lcdBuffer, 14, (char *)F("%-13s"), (status.getSystemState() == Status::preHeat ? F("pre-heating") : selectedProgram->name));
+    snprintf(lcdBuffer, 14, (char *)F("%-13s"), (state == PREHEAT ? (char *) F("pre-heating") : selectedProgram->name));
     lcd.print(lcdBuffer);
     String timeRunning = convertTime(calculateTimeRunning());
     lcd.setCursor(timeRunning.length() == 7 ? 13 : 12, 0);
@@ -325,17 +343,17 @@ void HID::displayProgramInfo()
     // actual and target plate temperatures
     lcd.setCursor(0, 2);
     for (int i = 0; (i < configuration.getParams()->numberOfPlates) && (i < 4); i++) {
-        snprintf(lcdBuffer, 4, (char *)F("%02d%c"), (status.temperaturePlate[i] + 5) / 10, (status.powerPlate[i] > 0 ? 0xeb : 0xdf));
+        snprintf(lcdBuffer, 4, (char *)F("%02d%c"), (statusPlate[i].temperatureActual + 5) / 10, (statusPlate[i].power > 0 ? 0xeb : 0xdf));
         lcd.print(lcdBuffer);
     }
     lcd.setCursor(12, 2);
-    snprintf(lcdBuffer, 9, (char *)F("\x7e%02d\xdf %02d\xdf"), (status.temperatureTargetPlate + 5) / 10, (status.temperatureHumidifier + 5) / 10);
+    snprintf(lcdBuffer, 9, (char *)F("\x7e%02d\xdf %02d\xdf"), (statusPlate[0].temperatureTarget + 5) / 10, (statusHumidity.temperature + 5) / 10);
     lcd.print(lcdBuffer);
 
     // fan speed, time remaining
     lcd.setCursor(0, 3);
     for (int i = 0; i < configuration.getParams()->numberOfPlates && i < 4; i++) {
-        snprintf(lcdBuffer, 4, (char *)F("%02ld "), map(status.fanSpeedPlate[i], configuration.getParams()->minFanSpeed, 255, 0, 99));
+        snprintf(lcdBuffer, 4, (char *)F("%02ld "), map(statusPlate[i].fanSpeed, configuration.getParams()->minFanSpeed, 255, 0, 99));
         lcd.print(lcdBuffer);
     }
     String timeRemaining = convertTime(calculateTimeRemaining());
@@ -354,17 +372,17 @@ void HID::logData()
         return;
 
     Logger::info(F("time: %s, remaining: %s, status: %s"), convertTime(calculateTimeRunning()).c_str(),
-            convertTime(calculateTimeRemaining()).c_str(), status.systemStateToStr(status.getSystemState()).c_str());
+            convertTime(calculateTimeRemaining()).c_str(), stateToStr(state).c_str());
 
     for (int i = 0; (configuration.getSensor()->addressHive[i].value != 0) && (i < CFG_MAX_NUMBER_PLATES); i++) {
-        Logger::debug(F("sensor %d: %s C"), i + 1, toDecimal(status.temperatureHive[i], 10).c_str());
+        Logger::debug(F("sensor %d: %s C"), i + 1, toDecimal(statusZone[i].temperatureActual, 10).c_str());
     }
-    Logger::info(F("hive target: %sC"), toDecimal(status.temperatureTargetHive, 10).c_str());
+    Logger::info(F("hive target: %sC"), toDecimal(statusZone[0].temperatureTarget, 10).c_str());
 
     for (int i = 0; i < configuration.getParams()->numberOfPlates; i++) {
-        Logger::info(F("plate %d: %sC -> %sC, power=%d/%d, fan=%d"), i + 1, toDecimal(status.temperaturePlate[i], 10).c_str(),
-                toDecimal(status.temperatureTargetPlate, 10).c_str(), status.powerPlate[i], configuration.getParams()->maxHeaterPower,
-                status.fanSpeedPlate[i]);
+        Logger::info(F("plate %d: %sC -> %sC, power=%d/%d, fan=%d"), i + 1, toDecimal(statusPlate[i].temperatureActual, 10).c_str(),
+                toDecimal(statusPlate[i].temperatureTarget, 10).c_str(), statusPlate[i].power, configuration.getParams()->maxHeaterPower,
+                statusPlate[i].fanSpeed);
     }
 
 //    Logger::info(F("humidity: relHumidity=%d (%d-%d), vapor=%d, fan=%d, temp=%s C"), status.humidity,
@@ -404,7 +422,7 @@ uint32_t HID::calculateTimeRemaining()
 {
     if (startTime != 0) {
         uint32_t timeRunning = calculateTimeRunning();
-        uint32_t duration = (status.getSystemState() == Status::preHeat ? selectedProgram->durationPreHeat : selectedProgram->duration) * 60;
+        uint32_t duration = (state == PREHEAT ? selectedProgram->durationPreHeat : selectedProgram->duration) * 60;
         if (timeRunning < duration) { // prevent under-flow
             return duration - timeRunning;
         }
@@ -452,22 +470,22 @@ void HID::switchToRunning()
 /*
  * Convert the state into a string.
  */
-String HID::systemStateToStr(SystemState state)
+String HID::stateToStr(State state)
 {
     switch (state) {
-    case init:
-        return F("initializing");
-    case ready:
+    case UNKNOWN:
+        return F("unknown");
+    case READY:
         return F("ready");
-    case preHeat:
+    case PREHEAT:
         return F("pre-heating");
-    case running:
+    case RUNNING:
         return F("running");
-    case overtemp:
+    case OVERTEMP:
         return F("over-temperature");
-    case shutdown:
+    case FINISHED:
         return F("shut-down");
-    case error:
+    case FAULT:
         return F("error");
     }
     return F("invalid");
