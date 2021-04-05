@@ -100,7 +100,7 @@ void ThermalZone::process() {
 }
 
 void ThermalZone::programChange(const Program &program) {
-	Logger::info(F("Updating thermal zone with new program settings"));
+	logger.info(F("Updating thermal zone with new program settings"));
 
 	// adjust the PID which defines the target temperature of the plates based on the hive temp
 	pid->SetOutputLimits((program.preHeat ? program.temperaturePreHeat : program.temperatureHive), program.temperaturePlate);

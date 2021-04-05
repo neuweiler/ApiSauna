@@ -37,23 +37,25 @@ public:
 	enum LogLevel {
 		Debug = 0, Info = 1, Warn = 2, Error = 3, Off = 4
 	};
-	static void debug(String, ...);
-	static void info(String, ...);
-	static void warn(String, ...);
-	static void error(String, ...);
-	static void console(String, ...);
-	static void setLoglevel(LogLevel);
-	static LogLevel getLogLevel();
-	static uint32_t getLastLogTime();
-	static boolean isDebug();
+	Logger();
+	void debug(String, ...);
+	void info(String, ...);
+	void warn(String, ...);
+	void error(String, ...);
+	void console(String, ...);
+	void setLoglevel(LogLevel);
+	LogLevel getLogLevel();
+	uint32_t getLastLogTime();
+	boolean isDebug();
 private:
-	static LogLevel logLevel;
-	static uint32_t lastLogTime;
-	static bool debugging;
-	static LogLevel *deviceLoglevel;
-	static char *msgBuffer;
+	LogLevel logLevel;
+	uint32_t lastLogTime;
+	bool debugging;
+	char *msgBuffer;
 
-	static void log(LogLevel, String format, va_list);
+	void log(LogLevel, String format, va_list);
 };
+
+extern Logger logger;
 
 #endif /* LOGGER_H_ */

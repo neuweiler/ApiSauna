@@ -63,20 +63,20 @@ void HID::handleEvent(Event event, ...) {
 		startTime = millis();
 		break;
 	case PROGRAM_STOP:
-		Logger::info(F("stopping program"));
+		logger.info(F("stopping program"));
 		state = FINISHED;
 		startTime = 0;
 		//TODO use own state
 		displayFinishedMenu();
 		break;
 	case PROGRAM_PAUSE:
-		Logger::info(F("pausing program"));
+		logger.info(F("pausing program"));
 		break;
 	case PROGRAM_RESUME:
-		Logger::info(F("resuming program"));
+		logger.info(F("resuming program"));
 		break;
 	case TEMPERATURE_HIGH:
-		Logger::info(F("High hive temperature!! Pausing heater."));
+		logger.info(F("High hive temperature!! Pausing heater."));
 		break;
 	case TEMPERATURE_ALERT:
 		lcd.print(F("OVER-TEMPERATURE !!!"));
@@ -113,7 +113,7 @@ void HID::handleEvent(Event event, ...) {
 }
 
 void HID::initialize() {
-	Logger::info(F("initializing HID"));
+	logger.info(F("initializing HID"));
 	ConfigurationIO *io = configuration.getIO();
 	lcd.init(1, io->lcdRs, 255, io->lcdEnable, io->lcdD4, io->lcdD5, io->lcdD6, io->lcdD7, 0, 0, 0, 0);
 	lcd.begin(20, 4);
@@ -359,22 +359,22 @@ void HID::logData() {
 	if (tickCounter != 3)
 		return;
 
-	Logger::info(F("time: %s, remaining: %s, status: %s"), convertTime(calculateTimeRunning()).c_str(),
+	logger.info(F("time: %s, remaining: %s, status: %s"), convertTime(calculateTimeRunning()).c_str(),
 			convertTime(calculateTimeRemaining()).c_str(), stateToStr(state).c_str());
 
 	for (int i = 0; (configuration.getSensor()->addressHive[i].value != 0) && (i < CFG_MAX_NUMBER_PLATES); i++) {
-		Logger::debug(F("sensor %d: %s C"), i + 1, toDecimal(statusZone[i].temperatureActual, 10).c_str());
+		logger.debug(F("sensor %d: %s C"), i + 1, toDecimal(statusZone[i].temperatureActual, 10).c_str());
 	}
-	Logger::info(F("hive target: %sC"), toDecimal(statusZone[0].temperatureTarget, 10).c_str());
+	logger.info(F("hive target: %sC"), toDecimal(statusZone[0].temperatureTarget, 10).c_str());
 
 	for (int i = 0; i < configuration.getParams()->numberOfPlates; i++) {
-		Logger::info(F("plate %d: %sC -> %sC, power=%d/%d, fan=%d"), i + 1,
+		logger.info(F("plate %d: %sC -> %sC, power=%d/%d, fan=%d"), i + 1,
 				toDecimal(statusPlate[i].temperatureActual, 10).c_str(),
 				toDecimal(statusPlate[i].temperatureTarget, 10).c_str(), statusPlate[i].power,
 				configuration.getParams()->maxHeaterPower, statusPlate[i].fanSpeed);
 	}
 
-//    Logger::info(F("humidity: relHumidity=%d (%d-%d), vapor=%d, fan=%d, temp=%s C"), status.humidity,
+//    logger.info(F("humidity: relHumidity=%d (%d-%d), vapor=%d, fan=%d, temp=%s C"), status.humidity,
 //            programHandler->getRunningProgram()->humidityMinimum, programHandler->getRunningProgram()->humidityMaximum, status.vaporizerEnabled,
 //            status.fanSpeedHumidifier, toDecimal(status.temperatureHumidifier, 10).c_str());
 }

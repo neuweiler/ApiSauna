@@ -39,7 +39,7 @@ ProgramList::~ProgramList() {
  * Initialize all programs
  */
 void ProgramList::initPrograms() {
-	Logger::info(F("loading program data"));
+	logger.info(F("loading program data"));
 
 	Program programVarroaSummer;
 	programVarroaSummer.running = false;

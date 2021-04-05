@@ -28,14 +28,18 @@
 
 #include "Logger.h"
 
-Logger::LogLevel Logger::logLevel = CFG_DEFAULT_LOGLEVEL;
-uint32_t Logger::lastLogTime = 0;
-bool Logger::debugging = (Logger::logLevel == Debug);
-char *Logger::msgBuffer = new char[CFG_LOG_BUFFER_SIZE];
+Logger logger;
+
+Logger::Logger() {
+	logLevel = CFG_DEFAULT_LOGLEVEL;
+	debugging = (logLevel == Debug);
+	msgBuffer = new char[CFG_LOG_BUFFER_SIZE];
+	lastLogTime = 0;
+}
 
 /*
  * Output a debug message with a variable amount of parameters.
- * printf() style, see Logger::log()
+ * printf() style, see log()
  *
  */
 void Logger::debug(String message, ...) {
@@ -45,13 +49,13 @@ void Logger::debug(String message, ...) {
 
 	va_list args;
 	va_start(args, message);
-	Logger::log(Debug, message, args);
+	log(Debug, message, args);
 	va_end(args);
 }
 
 /*
  * Output a info message with a variable amount of parameters
- * printf() style, see Logger::log()
+ * printf() style, see log()
  */
 void Logger::info(String message, ...) {
 	if (logLevel > Info) {
@@ -60,13 +64,13 @@ void Logger::info(String message, ...) {
 
 	va_list args;
 	va_start(args, message);
-	Logger::log(Info, message, args);
+	log(Info, message, args);
 	va_end(args);
 }
 
 /*
  * Output a warning message with a variable amount of parameters
- * printf() style, see Logger::log()
+ * printf() style, see log()
  */
 void Logger::warn(String message, ...) {
 	if (logLevel > Warn) {
@@ -75,13 +79,13 @@ void Logger::warn(String message, ...) {
 
 	va_list args;
 	va_start(args, message);
-	Logger::log(Warn, message, args);
+	log(Warn, message, args);
 	va_end(args);
 }
 
 /*
  * Output a error message with a variable amount of parameters
- * printf() style, see Logger::log()
+ * printf() style, see log()
  */
 void Logger::error(String message, ...) {
 	if (logLevel > Error) {
@@ -90,13 +94,13 @@ void Logger::error(String message, ...) {
 
 	va_list args;
 	va_start(args, message);
-	Logger::log(Error, message, args);
+	log(Error, message, args);
 	va_end(args);
 }
 
 /*
  * Output a comnsole message with a variable amount of parameters
- * printf() style, see Logger::logMessage()
+ * printf() style, see logMessage()
  */
 void Logger::console(String message, ...) {
 	va_list args;
@@ -135,8 +139,8 @@ uint32_t Logger::getLastLogTime() {
  * be logged in the end).
  *
  * Example:
- * if (Logger::isDebug()) {
- *    Logger::debug("current time: %d", millis());
+ * if (logger.isDebug()) {
+ *    logger.debug("current time: %d", millis());
  * }
  */
 boolean Logger::isDebug() {
@@ -161,6 +165,8 @@ void Logger::log(LogLevel level, String format, va_list args) {
 		break;
 	case Error:
 		logLevel = F("ERROR");
+		break;
+	case Off:
 		break;
 	}
 	vsnprintf(msgBuffer, CFG_LOG_BUFFER_SIZE, format.c_str(), args);

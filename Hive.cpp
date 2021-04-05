@@ -58,7 +58,7 @@ void Hive::handleEvent(Event event, ...) {
 }
 
 void Hive::initialize() {
-	Logger::info(F("initializing hive"));
+	logger.info(F("initializing hive"));
 
 	uint8_t heaterRelay = configuration.getIO()->heaterRelay;
 	pinMode(heaterRelay, OUTPUT);
@@ -81,17 +81,17 @@ void Hive::process() {
 	 uint32_t timeRemaining = programHandler->calculateTimeRemaining();
 
 	 if (actualTemperature > configuration.getParams()->hiveOverTemp) {
-	 Logger::error(F("ALERT - OVER-TEMPERATURE IN HIVE ! Trying to recover, please open the cover to help cool down the hive!"));
+	 logger.error(F("ALERT - OVER-TEMPERATURE IN HIVE ! Trying to recover, please open the cover to help cool down the hive!"));
 	 status.setSystemState(Status::overtemp);
 	 status.errorCode = Status::overtempHive;
 	 }
 	 if (status.getSystemState() == Status::overtemp && actualTemperature < configuration.getParams()->hiveMaxTemp) {
-	 Logger::info(F("recovered from over-temperature, shutting down."));
+	 logger.info(F("recovered from over-temperature, shutting down."));
 	 programHandler->stop();
 	 }
 
 	 if (status.getSystemState() == Status::running && timeRemaining < 2) {
-	 Logger::info(F("program finished."));
+	 logger.info(F("program finished."));
 	 programHandler->stop();
 	 }
 
@@ -123,7 +123,7 @@ void Hive::process() {
  clone->temperaturePlate = runningProgram->temperaturePlate;
  runningProgram = clone;
 
- Logger::info(F("extending program %s by %dmin"), runningProgram->name, duration);
+ logger.info(F("extending program %s by %dmin"), runningProgram->name, duration);
  startTime = millis();
  status.setSystemState(Status::ready);
  status.setSystemState(Status::running);

@@ -161,12 +161,12 @@ uint8_t Plate::calculateHeaterPower() {
 
 	pid->Compute(); // updates power
 
-	if (Logger::isDebug()) {
-		Logger::debug(F("calculated power for plate %d: %d"), id, power);
+	if (logger.isDebug()) {
+		logger.debug(F("calculated power for plate %d: %d"), id, power);
 	}
 
 	if (currentTemperature > params->plateOverTemp) {
-		Logger::error(F("ALERT !!! Plate %d is over-heating !!!"), id);
+		logger.error(F("ALERT !!! Plate %d is over-heating !!!"), id);
 		eventHandler.publish(TEMPERATURE_ALERT);
 		return 0;
 	}

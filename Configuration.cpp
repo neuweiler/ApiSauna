@@ -42,29 +42,29 @@ Configuration::~Configuration() {
  * If a CRC check fails, a error is printed to the log and HID and false is returned - causing the controller to go into error state.
  */
 bool Configuration::load() {
-	Logger::info(F("loading configuration"));
+	logger.info(F("loading configuration"));
 	EEPROM.get(CONFIG_ADDRESS_IO, *getIO());
 	EEPROM.get(CONFIG_ADDRESS_PARAMS, *getParams());
 	EEPROM.get(CONFIG_ADDRESS_SENSOR, *getSensor());
 
 	if (getParams()->token != CFG_EEPROM_CONFIG_TOKEN) {
-		Logger::warn(F("no ApiSauna token found in EEPROM --> resetting configuration and statistics"));
+		logger.warn(F("no ApiSauna token found in EEPROM --> resetting configuration and statistics"));
 		reset();
 		save();
 	}
 
 	if (getParams()->crc != Crc::calculate((uint8_t*) getParams() + 4, sizeof(ConfigurationParams) - 4)) {
-		Logger::error(F("invalid crc detected in parameter configuration"));
+		logger.error(F("invalid crc detected in parameter configuration"));
 		eventHandler.publish(EventListener::ERROR, F("Param config invalid CRC"));
 		return false;
 	}
 	if (getIO()->crc != Crc::calculate((uint8_t*) getIO() + 4, sizeof(ConfigurationIO) - 4)) {
-		Logger::error(F("invalid crc detected in I/O configuration"));
+		logger.error(F("invalid crc detected in I/O configuration"));
 		eventHandler.publish(EventListener::ERROR, F("IO config invalid CRC"));
 		return false;
 	}
 	if (getSensor()->crc != Crc::calculate((uint8_t*) getSensor() + 4, sizeof(ConfigurationSensor) - 4)) {
-		Logger::error(F("invalid crc detected in sensor configuration"));
+		logger.error(F("invalid crc detected in sensor configuration"));
 		eventHandler.publish(EventListener::ERROR, F("Sensor config invalid CRC"));
 		return false;
 	}
@@ -73,7 +73,7 @@ bool Configuration::load() {
 		getParams()->numberOfPlates = CFG_MAX_NUMBER_PLATES;
 	}
 
-	Logger::setLoglevel((Logger::LogLevel) getParams()->loglevel);
+	logger.setLoglevel((Logger::LogLevel) getParams()->loglevel);
 
 	return true;
 }
@@ -91,21 +91,21 @@ void Configuration::updateCrc() {
  * Re-calc the CRC values and store all configuration blocks to EEPROM.
  */
 void Configuration::save() {
-	Logger::info(F("saving configuration to EEPROM"));
+	logger.info(F("saving configuration to EEPROM"));
 
 	updateCrc();
 	EEPROM.put(CONFIG_ADDRESS_IO, *getIO());
 	EEPROM.put(CONFIG_ADDRESS_PARAMS, *getParams());
 	EEPROM.put(CONFIG_ADDRESS_SENSOR, *getSensor());
 
-	Logger::info(F("done"));
+	logger.info(F("done"));
 }
 
 /**
  * Reset the configuration to default values and update the CRCs.
  */
 void Configuration::reset() {
-	Logger::info(F("resetting configuration to default values"));
+	logger.info(F("resetting configuration to default values"));
 
 	ConfigurationIO *configIO = getIO();
 	ConfigurationParams *configParams = getParams();
@@ -155,7 +155,7 @@ void Configuration::reset() {
 	configParams->usePWM = 0;
 	configParams->maxConcurrentHeaters = 2;
 	configParams->humidifierFanDryTime = 2;
-	configParams->loglevel = Logger::Info;
+	configParams->loglevel = logger.Info;
 
 	configSensor->addressPlate[0].value = 0x0;
 	configSensor->addressPlate[1].value = 0x0;

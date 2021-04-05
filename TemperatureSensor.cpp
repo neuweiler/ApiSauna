@@ -164,7 +164,7 @@ void TemperatureSensor::retrieveData() {
 				temperature = temperature & ~1; // 11 bit res, 375 ms
 		}
 	} else {
-		Logger::warn(F("ignored corrupt sensor data: %X%X%X%X%X%X%X%X%X crc:%X"), data[0], data[1], data[2], data[3],
+		logger.warn(F("ignored corrupt sensor data: %X%X%X%X%X%X%X%X%X crc:%X"), data[0], data[1], data[2], data[3],
 				data[4], data[5], data[6], data[7], data[8], OneWire::crc8(data, 8));
 	}
 }
@@ -192,8 +192,8 @@ uint8_t TemperatureSensor::getId() {
  */
 SimpleList<SensorAddress> TemperatureSensor::detectTemperatureSensors() {
 	SimpleList<SensorAddress> addressList;
-	Logger::setLoglevel(Logger::Debug);
-	Logger::info(F("detecting temperature sensors"));
+	logger.setLoglevel(logger.Debug);
+	logger.info(F("detecting temperature sensors"));
 
 	if (ds == NULL) {
 		ds = new OneWire(configuration.getIO()->temperatureSensor);
@@ -204,7 +204,7 @@ SimpleList<SensorAddress> TemperatureSensor::detectTemperatureSensors() {
 		SensorAddress address = findNextSensor();
 		if (address.value == 0)
 			break;
-		Logger::debug(F("  found sensor: %#08lx%08lx"), address.high, address.low);
+		logger.debug(F("  found sensor: %#08lx%08lx"), address.high, address.low);
 		addressList.push_back(address);
 	}
 	prepareData();
@@ -214,7 +214,7 @@ SimpleList<SensorAddress> TemperatureSensor::detectTemperatureSensors() {
         for (int i = 1; i < 5; i++) {
             SensorAddress address;
             address.value = j * 100 + i;
-            Logger::debug(F("  found sensor: %#08lx%08lx"), address.high, address.low);
+            logger.debug(F("  found sensor: %#08lx%08lx"), address.high, address.low);
             addressList.push_back(address);
         }
     }
@@ -233,7 +233,7 @@ SensorAddress TemperatureSensor::findNextSensor() {
 	addr.value = 0;
 	if (ds->search(addr.byte)) {
 		if (OneWire::crc8(addr.byte, 7) != addr.byte[7]) {
-			Logger::error(F("temperature sensor: invalid CRC!\n"));
+			logger.error(F("temperature sensor: invalid CRC!\n"));
 			addr.value = 0;
 		}
 	} else {
