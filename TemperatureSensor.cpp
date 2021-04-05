@@ -140,6 +140,10 @@ void TemperatureSensor::prepareData() {
 void TemperatureSensor::retrieveData() {
 	byte data[9];
 
+	if (logger.isDebug()) {
+		logger.debug(F("retrieving temperature from sensor %#08lx%08lx"), address.high, address.low);
+	}
+
 	ds->reset();
 	ds->select(address.byte);
 	ds->write(0xBE); // read scratchpad

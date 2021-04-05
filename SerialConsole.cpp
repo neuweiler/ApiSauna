@@ -53,7 +53,7 @@ void SerialConsole::handleEvent(Event event, ...) {
 }
 
 void SerialConsole::initialize() {
-	logger.debug("initializing serial console");
+	logger.info(F("initializing serial console"));
 	eventHandler.subscribe(this);
 }
 

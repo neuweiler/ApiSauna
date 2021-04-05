@@ -84,6 +84,8 @@ void Humidifier::handleEvent(Event event, ...) {
  * Initialize the humidifier and its devices
  */
 void Humidifier::initialize() {
+	logger.info(F("initializing humidifier"));
+
 	sensor.initialize();
 	fan.initialize(configuration.getIO()->humidifierFan, 0);
 
@@ -104,7 +106,7 @@ void Humidifier::process() {
 
 	if (humidity != 0 && humidity < minimumHumidity) {
 //TODO if fanSpeed < 240, give it a kick of 240 to break free
-		fan.setSpeed(fanSpeed);
+		setFanSpeed(fanSpeed);
 		enableVaporizer(true);
 		fanTimestamp = 0;
 	}
@@ -118,7 +120,7 @@ void Humidifier::process() {
 
 	// let the fan run longer than the vaporizer to let it dry
 	if (fanTimestamp != 0 && (millis() - fanTimestamp) > 60000 * configuration.getParams()->humidifierFanDryTime) {
-		fan.setSpeed(0);
+		setFanSpeed(0);
 		fanTimestamp = 0;
 	}
 
@@ -128,6 +130,7 @@ void Humidifier::process() {
 }
 
 void Humidifier::programChange(const Program &program) {
+	logger.debug(F("humidifier noticed program change"));
 	maximumHumidity = program.humidityMaximum;
 	minimumHumidity = program.humidityMinimum;
 	fanSpeed = program.fanSpeedHumidifier;
@@ -135,6 +138,7 @@ void Humidifier::programChange(const Program &program) {
 }
 
 void Humidifier::enableVaporizer(bool enable) {
+	logger.debug(F("vaporizer %s"), enable ? F("on") : F("off"));
 	if (configuration.getIO()->vaporizer != 0) {
 		digitalWrite(configuration.getIO()->vaporizer, enable);
 	}
@@ -142,6 +146,7 @@ void Humidifier::enableVaporizer(bool enable) {
 }
 
 void Humidifier::setFanSpeed(uint8_t speed) {
+	logger.debug(F("setting humidifier fan speed to %d"), speed);
 	fan.setSpeed(speed);
 	status.fanSpeed = speed;
 }

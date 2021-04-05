@@ -132,9 +132,12 @@ void Hive::process() {
  */
 
 void Hive::handleProgramChange(Program program) {
+	logger.debug(F("hive noticed program change"));
 	if (program.running) {
+		logger.debug(F("closing heater relay"));
 		digitalWrite(configuration.getIO()->heaterRelay, HIGH);
 	} else {
+		logger.debug(F("scheduling release of heater relay"));
 		//TODO set flag to open relay in a later cycle to first allow all heaters to go to 0 power
 	}
 }

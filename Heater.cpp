@@ -42,7 +42,9 @@ Heater::~Heater() {
 /**
  * specify PWM pin to control the power of the heater.
  */
-void Heater::begin(uint8_t controlPin) {
+void Heater::initialize(uint8_t controlPin) {
+	logger.info(F("initializing heater on pin %d"), controlPin);
+
 	this->controlPin = controlPin;
 	pinMode(controlPin, OUTPUT);
 	setPower(0);
@@ -52,6 +54,7 @@ void Heater::begin(uint8_t controlPin) {
  * Set the power of the heater (value 0-255).
  */
 void Heater::setPower(uint8_t power) {
+	logger.debug(F("setting power of heater on pin %d to %d"), controlPin, power);
 	if (controlPin > 0) {
 		this->power = power;
 		analogWrite(controlPin, this->power);

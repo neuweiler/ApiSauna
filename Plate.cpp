@@ -88,11 +88,12 @@ void Plate::handleEvent(Event event, ...) {
 }
 
 void Plate::initialize() {
+	logger.info(F("initializing plate %d"), id);
 	ConfigurationIO *configIo = configuration.getIO();
 
 	sensor.setAddress(configuration.getSensor()->addressPlate[id]);
 	fan.initialize(configIo->fan[id], configuration.getParams()->minFanSpeed);
-	heater.begin(configIo->heater[id]);
+	heater.initialize(configIo->heater[id]);
 
 	if (pid != NULL) {
 		delete pid;
@@ -132,6 +133,7 @@ void Plate::process() {
 }
 
 void Plate::programChange(const Program &program) {
+	logger.debug(F("plate %d noticed program change"), id);
 	pid->SetOutputLimits(0, configuration.getParams()->maxHeaterPower);
 	pid->SetTunings(program.plateKp, program.plateKi, program.plateKd);
 	setFanSpeed(program.preHeat ? program.fanSpeedPreHeat : program.fanSpeed);
@@ -142,11 +144,13 @@ void Plate::programChange(const Program &program) {
  * Set the desired temperature of the plate (in 0.1 deg C)
  */
 void Plate::setTargetTemperature(int16_t temperature) {
+	logger.debug(F("setting target temperature of heater %d to %d"), id, temperature);
 	targetTemperature = temperature;
 	status.temperatureTarget = temperature;
 }
 
 void Plate::setFanSpeed(uint8_t speed) {
+	logger.debug(F("setting fan speed of heater %d to %d"), id, speed);
 	fan.setSpeed(speed);
 	status.fanSpeed = speed;
 }

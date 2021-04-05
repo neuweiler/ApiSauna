@@ -43,6 +43,8 @@ Fan::~Fan() {
 }
 
 void Fan::initialize(uint8_t controlPin, uint8_t minimumSpeed) {
+	logger.info(F("initializing fan on pin %d"), controlPin);
+
 	initializePWM();
 
 	this->minimumSpeed = minimumSpeed;
@@ -66,6 +68,7 @@ void Fan::initialize(uint8_t controlPin, uint8_t minimumSpeed) {
  */
 void Fan::initializePWM() {
 	if (!pwmInitialized) {
+		logger.info(F("initializing PWM timers"));
 		// set timer 4 to 31kHz for controlling PWM fans
 		TCCR4B &= ~7;
 		TCCR4B |= 1;
@@ -81,6 +84,7 @@ void Fan::initializePWM() {
  * Set the speed of the fan (value 0-255)
  */
 void Fan::setSpeed(uint8_t speed) {
+	logger.debug(F("setting speed of fan on pin %d to %d"), controlPin, speed);
 	if (controlPin > 0) {
 		this->speed = constrain(speed, minimumSpeed, 255);
 		analogWrite(controlPin, this->speed);

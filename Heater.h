@@ -28,12 +28,13 @@
 #define HEATER_H_
 
 #include <Arduino.h>
+#include "Logger.h"
 
 class Heater {
 public:
 	Heater();
 	virtual ~Heater();
-	void begin(uint8_t controlPin);
+	void initialize(uint8_t controlPin);
 	void setPower(uint8_t power);
 	uint8_t getPower();
 

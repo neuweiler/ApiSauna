@@ -28,6 +28,7 @@
 #define FAN_H_
 
 #include <Arduino.h>
+#include "Logger.h"
 
 class Fan {
 public:

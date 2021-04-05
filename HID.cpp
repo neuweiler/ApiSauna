@@ -49,6 +49,8 @@ HID::HID() {
 HID::~HID() {
 }
 
+
+//TODO clean-up this method
 void HID::handleEvent(Event event, ...) {
 	va_list args;
 	va_start(args, event);
@@ -58,6 +60,7 @@ void HID::handleEvent(Event event, ...) {
 		break;
 	case PROGRAM_UPDATE:
 	case PROGRAM_START:
+		logger.debug(F("HID noticed program change"));
 		runningProgram = va_arg(args, Program);
 		state = (runningProgram.preHeat ? PREHEAT : RUNNING);
 		startTime = millis();
@@ -114,6 +117,7 @@ void HID::handleEvent(Event event, ...) {
 
 void HID::initialize() {
 	logger.info(F("initializing HID"));
+
 	ConfigurationIO *io = configuration.getIO();
 	lcd.init(1, io->lcdRs, 255, io->lcdEnable, io->lcdD4, io->lcdD5, io->lcdD6, io->lcdD7, 0, 0, 0, 0);
 	lcd.begin(20, 4);

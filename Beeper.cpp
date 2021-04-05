@@ -47,6 +47,8 @@ void Beeper::handleEvent(Event event, ...) {
 }
 
 void Beeper::initialize() {
+	logger.info(F("initializing piezo beeper"));
+
 	numberOfBeeps = 0;
 	soundOn = false;
 

@@ -71,6 +71,8 @@ void ThermalZone::handleEvent(Event event, ...) {
 }
 
 void ThermalZone::initialize() {
+	logger.info(F("initializing thermal zone %d"), status.id);
+
 	initPid();
 	eventHandler.subscribe(this);
 }
@@ -100,7 +102,7 @@ void ThermalZone::process() {
 }
 
 void ThermalZone::programChange(const Program &program) {
-	logger.info(F("Updating thermal zone with new program settings"));
+	logger.info(F("thermal zone noticed program change"));
 
 	// adjust the PID which defines the target temperature of the plates based on the hive temp
 	pid->SetOutputLimits((program.preHeat ? program.temperaturePreHeat : program.temperatureHive), program.temperaturePlate);
@@ -154,6 +156,10 @@ int16_t ThermalZone::calculatePlateTargetTemperature() {
 		plateTargetTemperature--;
 
 	plateTargetTemperature = constrain(plateTargetTemperature, 0, plateMaxTemperatureProgram);
+
+	if (logger.isDebug()) {
+		logger.debug(F("zone actual temperature: %d, plate target temperature: %d"), actualTemperature, plateTargetTemperature);
+	}
 
 	return plateTargetTemperature;
 }
