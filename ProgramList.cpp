@@ -47,7 +47,7 @@ void ProgramList::initPrograms()
     Program programVarroaSummer;
     programVarroaSummer.running = false;
     programVarroaSummer.preHeat = false;
-    snprintf(programVarroaSummer.name, 16, (char *)F("Varroa Killer"));
+    programVarroaSummer.name = F("Varroa Killer");
     programVarroaSummer.temperaturePreHeat = 400; // 40 deg C
     programVarroaSummer.fanSpeedPreHeat = 250;
     programVarroaSummer.durationPreHeat = 60; // 60min
@@ -67,7 +67,7 @@ void ProgramList::initPrograms()
     programs.push_back(programVarroaSummer);
 
     Program programVarroaWinter;
-    snprintf(programVarroaWinter.name, 16, (char *)F("Winter Treat"));
+    programVarroaWinter.name = F("Winter Treat");
     programVarroaWinter.running = false;
     programVarroaWinter.preHeat = false;
     programVarroaWinter.temperaturePreHeat = 400; // 40 deg C
@@ -91,7 +91,7 @@ void ProgramList::initPrograms()
     Program programCleaning;
     programCleaning.running = false;
     programCleaning.preHeat = false;
-    snprintf(programCleaning.name, 16, (char *)F("Cleaning"));
+    programCleaning.name = F("Cleaning");
     programCleaning.temperaturePreHeat = 380; // 38 deg C
     programCleaning.fanSpeedPreHeat = 10;
     programCleaning.durationPreHeat = 0;
@@ -113,7 +113,7 @@ void ProgramList::initPrograms()
     Program programMeltHoney;
     programMeltHoney.running = false;
     programMeltHoney.preHeat = false;
-    snprintf(programMeltHoney.name, 16, (char *)F("Melt Honey"));
+    programMeltHoney.name, F("Melt Honey");
     programMeltHoney.temperaturePreHeat = 300;
     programMeltHoney.fanSpeedPreHeat = 10;
     programMeltHoney.durationPreHeat = 0;
