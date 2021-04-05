@@ -57,7 +57,7 @@ void HiveFactory::create() {
 SimpleList<Plate> HiveFactory::createPlates(SimpleList<SensorAddress> &addressList) {
 	ConfigurationIO *configIO = configuration.getIO();
 	ConfigurationSensor *configSensor = configuration.getSensor();
-	SimpleList<Plate> plates;
+	static SimpleList<Plate> plates;
 
 	logger.info(F("creating plates and assigning sensor, fan and heater to each"));
 
@@ -85,7 +85,7 @@ SimpleList<Plate> HiveFactory::createPlates(SimpleList<SensorAddress> &addressLi
  */
 SimpleList<TemperatureSensor> HiveFactory::createHiveSensors(SimpleList<SensorAddress> &addressList) {
 	ConfigurationSensor *configSensor = configuration.getSensor();
-	SimpleList<TemperatureSensor> hiveSensors;
+	static SimpleList<TemperatureSensor> hiveSensors;
 
 	logger.info(F("assigning hive sensors"));
 
@@ -115,7 +115,7 @@ SimpleList<ThermalZone> HiveFactory::createThermalZones(SimpleList<TemperatureSe
 		SimpleList<Plate> plates) {
 	uint8_t sizeSensors = sensors.size();
 	uint8_t sizePlates = plates.size();
-	SimpleList<ThermalZone> zones;
+	static SimpleList<ThermalZone> zones;
 
 	logger.info(F("creating thermal zones with %d hive sensors and %d plates"), sizeSensors, sizePlates);
 
