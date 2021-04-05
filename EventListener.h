@@ -30,48 +30,46 @@
 #include <Arduino.h>
 #include "config.h"
 
-class EventListener
-{
+class EventListener {
 public:
 	struct StatusHumidity {
-	    uint8_t humidity;
-	    int16_t temperature;
-	    bool vaporizer;
-	    uint8_t fanSpeed;
+		uint8_t humidity;
+		int16_t temperature;
+		bool vaporizer;
+		uint8_t fanSpeed;
 	};
 
 	struct StatusZone {
 		uint8_t id;
-	    int16_t temperatureTarget;
-	    int16_t temperatureActual;
+		int16_t temperatureTarget;
+		int16_t temperatureActual;
 	};
 
 	struct StatusPlate {
 		uint8_t id;
-	    int16_t temperatureTarget;
-	    int16_t temperatureActual;
-	    uint8_t power;
-	    uint8_t fanSpeed;
+		int16_t temperatureTarget;
+		int16_t temperatureActual;
+		uint8_t power;
+		uint8_t fanSpeed;
 	};
 
-    enum Event
-    {
-        PROGRAM_START = 1 << 0, // param: Program
-        PROGRAM_STOP = 1 << 1,
-        PROGRAM_PAUSE = 1 << 2,
-        PROGRAM_RESUME = 1 << 3,
-        PROGRAM_UPDATE = 1 << 4, // param: Program
-        TEMPERATURE_NORMAL = 1 << 5,
-        TEMPERATURE_HIGH = 1 << 6,
-        TEMPERATURE_ALERT = 1 << 7,
-        STATUS_HUMIDITY = 1 << 8, // param: StatusHumidity
+	enum Event {
+		PROGRAM_START = 1 << 0, // param: Program
+		PROGRAM_STOP = 1 << 1,
+		PROGRAM_PAUSE = 1 << 2,
+		PROGRAM_RESUME = 1 << 3,
+		PROGRAM_UPDATE = 1 << 4, // param: Program
+		TEMPERATURE_NORMAL = 1 << 5,
+		TEMPERATURE_HIGH = 1 << 6,
+		TEMPERATURE_ALERT = 1 << 7,
+		STATUS_HUMIDITY = 1 << 8, // param: StatusHumidity
 		STATUS_ZONE = 1 << 9, // param: StatusZone
 		STATUS_PLATE = 1 << 10, // param: StatusPlate
 		PROCESS = 1 << 14,
-        ERROR = 1 << 15,
-    };
+		ERROR = 1 << 15,
+	};
 
-    virtual void handleEvent(Event event, ...);
+	virtual void handleEvent(Event event, ...);
 };
 
 #endif /* EVENTLISTENER_H_ */

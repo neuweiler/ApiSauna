@@ -27,24 +27,23 @@
 #ifndef PROGRAM_H_
 #define PROGRAM_H_
 
-class Program
-{
+class Program {
 public:
-    bool running; // flag indicating if the program is currently running
-    bool preHeat; // flag indicating if we're in the pre-heating phase (only if running is also true)
-    const __FlashStringHelper *name; // name to be displayed in menu
-    int16_t temperaturePreHeat; // the target hive temperature during pre-heat (in 0.1 deg C)
-    int16_t temperatureHive; // the target hive temperature (in 0.1 deg C)
-    double hiveKp, hiveKi, hiveKd; // hive temperature PID configuration
-    int16_t temperaturePlate; // the target temperature of the heater plates (in 0.1 deg C)
-    double plateKp, plateKi, plateKd; // plate temperature PID configuration
-    uint8_t fanSpeedPreHeat; // the fan speed during pre-heat (0-255)
-    uint8_t fanSpeed; // the fan speed (0-255)
-    uint16_t durationPreHeat; // the duration of the pre-heating cycle (in min)
-    uint16_t duration; // the duration of the program (in min)
-    uint8_t fanSpeedHumidifier; // the fan speed of the humidifier fan (when active (0-255)
-    uint8_t humidityMinimum; // the minimum relative humidity in %
-    uint8_t humidityMaximum; // the maximum relative humidity in %
+	bool running; // flag indicating if the program is currently running
+	bool preHeat; // flag indicating if we're in the pre-heating phase (only if running is also true)
+	const __FlashStringHelper *name; // name to be displayed in menu
+	int16_t temperaturePreHeat; // the target hive temperature during pre-heat (in 0.1 deg C)
+	int16_t temperatureHive; // the target hive temperature (in 0.1 deg C)
+	double hiveKp, hiveKi, hiveKd; // hive temperature PID configuration
+	int16_t temperaturePlate; // the target temperature of the heater plates (in 0.1 deg C)
+	double plateKp, plateKi, plateKd; // plate temperature PID configuration
+	uint8_t fanSpeedPreHeat; // the fan speed during pre-heat (0-255)
+	uint8_t fanSpeed; // the fan speed (0-255)
+	uint16_t durationPreHeat; // the duration of the pre-heating cycle (in min)
+	uint16_t duration; // the duration of the program (in min)
+	uint8_t fanSpeedHumidifier; // the fan speed of the humidifier fan (when active (0-255)
+	uint8_t humidityMinimum; // the minimum relative humidity in %
+	uint8_t humidityMaximum; // the maximum relative humidity in %
 };
 
 #endif /* PROGRAM_H_ */

@@ -28,67 +28,61 @@
 
 #include "Beeper.h"
 
-Beeper::Beeper()
-{
-    numberOfBeeps = 0;
-    soundOn = false;
+Beeper::Beeper() {
+	numberOfBeeps = 0;
+	soundOn = false;
 
-    eventHandler.subscribe(this); // register ourself
+	eventHandler.subscribe(this); // register ourself
 }
 
-Beeper::~Beeper()
-{
+Beeper::~Beeper() {
 }
 
-void Beeper::handleEvent(Event event, ...)
-{
-    switch(event) {
-    case PROCESS:
-        process();
-        break;
-    }
+void Beeper::handleEvent(Event event, ...) {
+	switch (event) {
+	case PROCESS:
+		process();
+		break;
+	}
 }
 
 void Beeper::initialize() {
-    numberOfBeeps = 0;
-    soundOn = false;
+	numberOfBeeps = 0;
+	soundOn = false;
 
-    uint8_t pin = configuration.getIO()->beeper;
-    pinMode(pin, OUTPUT);
-    digitalWrite(pin, LOW);
+	uint8_t pin = configuration.getIO()->beeper;
+	pinMode(pin, OUTPUT);
+	digitalWrite(pin, LOW);
 }
 
 /**
  * Process the pending beep requests and turn on/off piezo device
  */
-void Beeper::process()
-{
-    if (soundOn) {
-        soundOn = false;
-        if (numberOfBeeps != -1) {
-            numberOfBeeps--;
-        }
-    } else if (numberOfBeeps != 0) {
-        soundOn = true;
-    }
+void Beeper::process() {
+	if (soundOn) {
+		soundOn = false;
+		if (numberOfBeeps != -1) {
+			numberOfBeeps--;
+		}
+	} else if (numberOfBeeps != 0) {
+		soundOn = true;
+	}
 
-    analogWrite(configuration.getIO()->beeper, (soundOn ? 20 : 0));
+	analogWrite(configuration.getIO()->beeper, (soundOn ? 20 : 0));
 }
 
 /**
  * Request a specified amount of beeps
  */
-void Beeper::beep(int8_t numberOfBeeps)
-{
-    this->numberOfBeeps = numberOfBeeps;
+void Beeper::beep(int8_t numberOfBeeps) {
+	this->numberOfBeeps = numberOfBeeps;
 }
 
 /**
  * Produce a short click, e.g. for feedback to interactive input
  */
-void Beeper::click()
-{
-    analogWrite(configuration.getIO()->beeper, 30);
-    delay(20);
-    analogWrite(configuration.getIO()->beeper, 0);
+void Beeper::click() {
+	analogWrite(configuration.getIO()->beeper, 30);
+	delay(20);
+	analogWrite(configuration.getIO()->beeper, 0);
 }

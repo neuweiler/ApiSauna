@@ -32,19 +32,18 @@
 #include "EventHandler.h"
 #include "HiveFactory.h"
 
-class Hive: public EventListener
-{
+class Hive: public EventListener {
 public:
-    Hive();
-    virtual ~Hive();
-    void initialize();
-    void handleEvent(Event event, ...);
+	Hive();
+	virtual ~Hive();
+	void initialize();
+	void handleEvent(Event event, ...);
 
 private:
-    void process();
-    void handleProgramChange(Program runningProgram);
+	void process();
+	void handleProgramChange(Program runningProgram);
 
-    uint8_t tickCounter;
+	uint8_t tickCounter;
 };
 
 extern Hive hive;

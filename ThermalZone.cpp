@@ -28,61 +28,56 @@
 
 uint8_t ThermalZone::zoneCounter = 0;
 
-ThermalZone::ThermalZone()
-{
-    pid = NULL;
-    actualTemperature = -999;
-    targetTemperature = 0;
-    plateTemperature = 0;
-    plateMaxTemperatureProgram = 0;
-    plateTargetTemperature = 0;
-    temperatureHigh = false;
+ThermalZone::ThermalZone() {
+	pid = NULL;
+	actualTemperature = -999;
+	targetTemperature = 0;
+	plateTemperature = 0;
+	plateMaxTemperatureProgram = 0;
+	plateTargetTemperature = 0;
+	temperatureHigh = false;
 
-    status.id = zoneCounter++;
-    status.temperatureTarget = 0;
-    status.temperatureActual = 0;
+	status.id = zoneCounter++;
+	status.temperatureTarget = 0;
+	status.temperatureActual = 0;
 }
 
-ThermalZone::~ThermalZone()
-{
-    if (pid) {
-        delete pid;
-        pid = NULL;
-    }
+ThermalZone::~ThermalZone() {
+	if (pid) {
+		delete pid;
+		pid = NULL;
+	}
 }
 
-void ThermalZone::handleEvent(Event event, ...)
-{
-    va_list args;
-    va_start(args, event);
-    switch (event) {
-    case PROCESS:
-        process();
-        break;
-    case PROGRAM_START:
-    case PROGRAM_UPDATE:
-        programChange(va_arg(args, Program));
-        break;
-    case PROGRAM_STOP:
-    case TEMPERATURE_ALERT:
-        break;
-    case PROGRAM_PAUSE:
-        break;
-    case PROGRAM_RESUME:
-        break;
-    }
+void ThermalZone::handleEvent(Event event, ...) {
+	va_list args;
+	va_start(args, event);
+	switch (event) {
+	case PROCESS:
+		process();
+		break;
+	case PROGRAM_START:
+	case PROGRAM_UPDATE:
+		programChange(va_arg(args, Program));
+		break;
+	case PROGRAM_STOP:
+	case TEMPERATURE_ALERT:
+		break;
+	case PROGRAM_PAUSE:
+		break;
+	case PROGRAM_RESUME:
+		break;
+	}
 }
 
-void ThermalZone::initialize()
-{
-    initPid();
-    eventHandler.subscribe(this);
+void ThermalZone::initialize() {
+	initPid();
+	eventHandler.subscribe(this);
 }
 
-void ThermalZone::process()
-{
-    actualTemperature = retrieveTemperature();
-    status.temperatureActual = actualTemperature;
+void ThermalZone::process() {
+	actualTemperature = retrieveTemperature();
+	status.temperatureActual = actualTemperature;
 
 	int16_t plateTemp = calculatePlateTargetTemperature();
 	for (SimpleList<Plate>::iterator plate = plates.begin(); plate != plates.end(); ++plate) {
@@ -90,89 +85,84 @@ void ThermalZone::process()
 	}
 
 	if (actualTemperature > configuration.getParams()->hiveMaxTemp && !temperatureHigh) {
-    	eventHandler.publish(TEMPERATURE_HIGH); // pause all heaters, activate fresh air vent
-    	temperatureHigh = true;
-    }
-    if (actualTemperature > configuration.getParams()->hiveOverTemp) {
-    	eventHandler.publish(TEMPERATURE_ALERT); // abort program?, alert !!
-    }
-    if (actualTemperature < configuration.getParams()->hiveMaxTemp && temperatureHigh) {
-       	eventHandler.publish(TEMPERATURE_NORMAL);
-       	temperatureHigh = false;
-    }
+		eventHandler.publish(TEMPERATURE_HIGH); // pause all heaters, activate fresh air vent
+		temperatureHigh = true;
+	}
+	if (actualTemperature > configuration.getParams()->hiveOverTemp) {
+		eventHandler.publish(TEMPERATURE_ALERT); // abort program?, alert !!
+	}
+	if (actualTemperature < configuration.getParams()->hiveMaxTemp && temperatureHigh) {
+		eventHandler.publish(TEMPERATURE_NORMAL);
+		temperatureHigh = false;
+	}
 
-    eventHandler.publish(EventListener::STATUS_ZONE, status);
+	eventHandler.publish(EventListener::STATUS_ZONE, status);
 }
 
-void ThermalZone::programChange(const Program &program)
-{
-    Logger::info(F("Updating thermal zone with new program settings"));
+void ThermalZone::programChange(const Program &program) {
+	Logger::info(F("Updating thermal zone with new program settings"));
 
-    // adjust the PID which defines the target temperature of the plates based on the hive temp
-    pid->SetOutputLimits((program.preHeat ? program.temperaturePreHeat : program.temperatureHive), program.temperaturePlate);
-    pid->SetTunings(program.hiveKp, program.hiveKi, program.hiveKd);
-    plateTargetTemperature = program.temperaturePlate;
-    plateMaxTemperatureProgram = program.temperaturePlate;
+	// adjust the PID which defines the target temperature of the plates based on the hive temp
+	pid->SetOutputLimits((program.preHeat ? program.temperaturePreHeat : program.temperatureHive),
+			program.temperaturePlate);
+	pid->SetTunings(program.hiveKp, program.hiveKi, program.hiveKd);
+	plateTargetTemperature = program.temperaturePlate;
+	plateMaxTemperatureProgram = program.temperaturePlate;
 
-    targetTemperature = (program.preHeat ? program.temperaturePreHeat : program.temperatureHive);
-    status.temperatureTarget = targetTemperature;
+	targetTemperature = (program.preHeat ? program.temperaturePreHeat : program.temperatureHive);
+	status.temperatureTarget = targetTemperature;
 }
-
 
 /**
  * Initialize the PID to define the plateTemperature based on the targetTemperature and the
  * actual temperature of the zone.
  */
-void ThermalZone::initPid()
-{
-    pid = new PID(&actualTemperature, &plateTemperature, &targetTemperature, 0, 0, 0, DIRECT);
-    pid->SetOutputLimits(0, configuration.getParams()->plateOverTemp);
-    pid->SetSampleTime(CFG_LOOP_DELAY);
-    pid->SetMode(AUTOMATIC);
+void ThermalZone::initPid() {
+	pid = new PID(&actualTemperature, &plateTemperature, &targetTemperature, 0, 0, 0, DIRECT);
+	pid->SetOutputLimits(0, configuration.getParams()->plateOverTemp);
+	pid->SetSampleTime(CFG_LOOP_DELAY);
+	pid->SetMode(AUTOMATIC);
 }
 
 /**
  * Retrieve temperature data from all assigned sensors and return highest value (in 0.1 deg C)
  */
-int16_t ThermalZone::retrieveTemperature()
-{
-    int16_t max = -999;
+int16_t ThermalZone::retrieveTemperature() {
+	int16_t max = -999;
 
-    for (SimpleList<TemperatureSensor>::iterator sensor = temperatureSensors.begin(); sensor != temperatureSensors.end(); ++sensor) {
-        sensor->retrieveData();
-        max = max(max, sensor->getTemperatureCelsius());
-    }
-    return max;
+	for (SimpleList<TemperatureSensor>::iterator sensor = temperatureSensors.begin();
+			sensor != temperatureSensors.end(); ++sensor) {
+		sensor->retrieveData();
+		max = max(max, sensor->getTemperatureCelsius());
+	}
+	return max;
 }
 
 /**
  * Calculate the desired plate temperature based on the hive temperature and the current state. (in 0.1 deg C)
  */
-int16_t ThermalZone::calculatePlateTargetTemperature()
-{
-    if (actualTemperature == -999) {
-        return 0;
-    }
+int16_t ThermalZone::calculatePlateTargetTemperature() {
+	if (actualTemperature == -999) {
+		return 0;
+	}
 
-    pid->Compute();
+	pid->Compute();
 
-    // don't set directly as plateTemperature tends to jump. Dampen with 0.1 deg per second
-    if (plateTemperature > plateTargetTemperature)
-        plateTargetTemperature++;
-    else if (plateTemperature < plateTargetTemperature)
-        plateTargetTemperature--;
+	// don't set directly as plateTemperature tends to jump. Dampen with 0.1 deg per second
+	if (plateTemperature > plateTargetTemperature)
+		plateTargetTemperature++;
+	else if (plateTemperature < plateTargetTemperature)
+		plateTargetTemperature--;
 
-    plateTargetTemperature = constrain(plateTargetTemperature, 0, plateMaxTemperatureProgram);
+	plateTargetTemperature = constrain(plateTargetTemperature, 0, plateMaxTemperatureProgram);
 
-    return plateTargetTemperature;
+	return plateTargetTemperature;
 }
 
-void ThermalZone::addSensor(TemperatureSensor sensor)
-{
+void ThermalZone::addSensor(TemperatureSensor sensor) {
 	temperatureSensors.push_back(sensor);
 }
 
-void ThermalZone::addPlate(Plate plate)
-{
+void ThermalZone::addPlate(Plate plate) {
 	plates.push_back(plate);
 }

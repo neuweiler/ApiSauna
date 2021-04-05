@@ -36,32 +36,31 @@
 #include "EventHandler.h"
 #include "Program.h"
 
-class Plate: EventListener
-{
+class Plate: EventListener {
 public:
-    Plate();
-    Plate(uint8_t number);
-    virtual ~Plate();
-    void initialize();
-    void handleEvent(Event event, ...);
-    void setTargetTemperature(int16_t temperature);
+	Plate();
+	Plate(uint8_t number);
+	virtual ~Plate();
+	void initialize();
+	void handleEvent(Event event, ...);
+	void setTargetTemperature(int16_t temperature);
 
 private:
-    void process();
-    uint8_t calculateHeaterPower();
-    void setFanSpeed(uint8_t speed);
-    void programChange(const Program& program);
+	void process();
+	uint8_t calculateHeaterPower();
+	void setFanSpeed(uint8_t speed);
+	void programChange(const Program &program);
 
-    static uint8_t activeHeaters; // a static counter to establish how many heaters are active in non-PWM mode
-    uint8_t id;
-    TemperatureSensor sensor;
-    Heater heater;
-    Fan fan;
-    double targetTemperature, currentTemperature, power;
-    PID *pid; // pointer to PID controller
-    bool paused; // flag indicating if the plate is in paused mode
-    bool running; // is a program running?
-    StatusPlate status;
+	static uint8_t activeHeaters; // a static counter to establish how many heaters are active in non-PWM mode
+	uint8_t id;
+	TemperatureSensor sensor;
+	Heater heater;
+	Fan fan;
+	double targetTemperature, currentTemperature, power;
+	PID *pid; // pointer to PID controller
+	bool paused; // flag indicating if the plate is in paused mode
+	bool running; // is a program running?
+	StatusPlate status;
 };
 
 #endif /* PLATE_H_ */

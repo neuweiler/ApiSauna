@@ -36,32 +36,31 @@
 #include "EventHandler.h"
 #include "Program.h"
 
-class ThermalZone: public EventListener
-{
+class ThermalZone: public EventListener {
 public:
-    ThermalZone();
-    virtual ~ThermalZone();
-    void initialize();
-    void handleEvent(Event event, ...);
-    void addSensor(TemperatureSensor sensor);
-    void addPlate(Plate plate);
+	ThermalZone();
+	virtual ~ThermalZone();
+	void initialize();
+	void handleEvent(Event event, ...);
+	void addSensor(TemperatureSensor sensor);
+	void addPlate(Plate plate);
 
 private:
-    void process();
-    void programChange(const Program &program);
-    void initPid();
-    int16_t retrieveTemperature();
-    int16_t calculatePlateTargetTemperature();
+	void process();
+	void programChange(const Program &program);
+	void initPid();
+	int16_t retrieveTemperature();
+	int16_t calculatePlateTargetTemperature();
 
-    static uint8_t zoneCounter;
-    SimpleList<TemperatureSensor> temperatureSensors;
-    SimpleList<Plate> plates;
-    PID *pid; // pointer to PID controller
-    double actualTemperature, targetTemperature, plateTemperature; // values for/set by the PID controller
-    int16_t plateTargetTemperature;
-    int16_t plateMaxTemperatureProgram;
-    bool temperatureHigh;
-    StatusZone status;
+	static uint8_t zoneCounter;
+	SimpleList<TemperatureSensor> temperatureSensors;
+	SimpleList<Plate> plates;
+	PID *pid; // pointer to PID controller
+	double actualTemperature, targetTemperature, plateTemperature; // values for/set by the PID controller
+	int16_t plateTargetTemperature;
+	int16_t plateMaxTemperatureProgram;
+	bool temperatureHigh;
+	StatusZone status;
 };
 
 #endif /* THERMALZONE_H_ */

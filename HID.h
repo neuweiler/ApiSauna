@@ -34,68 +34,59 @@
 #include "Beeper.h"
 #include "EventHandler.h"
 
-class HID: EventListener
-{
+class HID: EventListener {
 public:
-    HID();
-    virtual ~HID();
-    void initialize();
-    void handleEvent(Event event, ...);
+	HID();
+	virtual ~HID();
+	void initialize();
+	void handleEvent(Event event, ...);
 
 private:
-    enum Button
-    {
-        NEXT    = 1 << 0,
-        SELECT  = 1 << 1
-    };
+	enum Button {
+		NEXT = 1 << 0, SELECT = 1 << 1
+	};
 
-    enum State {
-    	UNKNOWN		= 0,
-    	READY		= 1,
-		PREHEAT		= 2,
-		RUNNING		= 3,
-		FINISHED	= 4,
-		OVERTEMP	= 5,
-		FAULT		= 6
-    };
+	enum State {
+		UNKNOWN = 0, READY = 1, PREHEAT = 2, RUNNING = 3, FINISHED = 4, OVERTEMP = 5, FAULT = 6
+	};
 
-    void process();
-    void displayProgramInfo();
-    void logData();
-    String convertTime(uint32_t millis);
-    String toDecimal(int16_t number, uint8_t divisor);
-    uint8_t readButtons();
-    void handleProgramMenu();
-    void displayProgramMenu();
-    void handleProgramInput();
-    void handleFinishedInput();
-    void checkReset();
-    void start(uint8_t programNumber);
-    void addTime(uint16_t seconds);
-    void switchToRunning();
-    void displayHiveTemperatures(uint8_t row, bool displayAll);
-    bool modal(String request, String negative, String positive, uint8_t timeout);
-    void softReset();
-    void displayFinishedMenu();
-    uint32_t calculateTimeRunning();
-    uint32_t calculateTimeRemaining();
-    String stateToStr(State state);
+	void process();
+	void displayProgramInfo();
+	void logData();
+	String convertTime(uint32_t millis);
+	String toDecimal(int16_t number, uint8_t divisor);
+	uint8_t readButtons();
+	void handleProgramMenu();
+	void displayProgramMenu();
+	void handleProgramInput();
+	void handleFinishedInput();
+	void checkReset();
+	void start(uint8_t programNumber);
+	void addTime(uint16_t seconds);
+	void switchToRunning();
+	void displayHiveTemperatures(uint8_t row, bool displayAll);
+	bool modal(String request, String negative, String positive, uint8_t timeout);
+	void softReset();
+	void displayFinishedMenu();
+	uint32_t calculateTimeRunning();
+	uint32_t calculateTimeRemaining();
+	String stateToStr(State state);
 
-    Beeper beeper;
-    LiquidCrystal lcd = LiquidCrystal(0, 0, 0, 0, 0, 0); // will be properly initialized later
-    SimpleList<Program>::iterator selectedProgram;
-    Program runningProgram;
-    uint8_t tickCounter;
-    uint8_t lastButtons;
-    uint32_t resetStamp;
-    uint32_t startTime; // timestamp when the program started (in millis)
-    State state;
-    StatusHumidity statusHumidity;
-    StatusZone statusZone[CFG_MAX_NUMBER_PLATES];
-    StatusPlate statusPlate[CFG_MAX_NUMBER_PLATES];
+	Beeper beeper;
+	LiquidCrystal lcd = LiquidCrystal(0, 0, 0, 0, 0, 0); // will be properly initialized later
+	SimpleList<Program>::iterator selectedProgram;
+	Program runningProgram;
+	uint8_t tickCounter;
+	uint8_t lastButtons;
+	uint32_t resetStamp;
+	uint32_t startTime; // timestamp when the program started (in millis)
+	State state;
+	StatusHumidity statusHumidity;
+	StatusZone statusZone[CFG_MAX_NUMBER_PLATES];
+	StatusPlate statusPlate[CFG_MAX_NUMBER_PLATES];
 
-    char lcdBuffer[21];
-    bool statusLed;
+	char lcdBuffer[21];
+	bool statusLed;
 };
 
 extern HID hid;

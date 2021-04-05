@@ -29,82 +29,77 @@
 
 Hive hive;
 
-Hive::Hive()
-{
-    tickCounter = 0;
+Hive::Hive() {
+	tickCounter = 0;
 }
 
-Hive::~Hive()
-{
+Hive::~Hive() {
 }
 
-void Hive::handleEvent(Event event, ...)
-{
-    switch (event) {
-    case PROCESS:
-        process();
-        break;
-    case PROGRAM_START:
-    case PROGRAM_UPDATE:
-        va_list args;
-        va_start(args, event);
-        handleProgramChange(va_arg(args, Program));
-        //    startTime = millis();
-        //    status.setSystemState(Status::running);
-        //    eventHandler->sendEvent(updateProgram);
+void Hive::handleEvent(Event event, ...) {
+	switch (event) {
+	case PROCESS:
+		process();
+		break;
+	case PROGRAM_START:
+	case PROGRAM_UPDATE:
+		va_list args;
+		va_start(args, event);
+		handleProgramChange(va_arg(args, Program));
+		//    startTime = millis();
+		//    status.setSystemState(Status::running);
+		//    eventHandler->sendEvent(updateProgram);
 
-        va_end(args);
-        break;
-    case PROGRAM_STOP:
-        break;
-    }
+		va_end(args);
+		break;
+	case PROGRAM_STOP:
+		break;
+	}
 }
 
-void Hive::initialize()
-{
-    Logger::info(F("initializing hive"));
+void Hive::initialize() {
+	Logger::info(F("initializing hive"));
 
-    uint8_t heaterRelay = configuration.getIO()->heaterRelay;
-    pinMode(heaterRelay, OUTPUT);
-    digitalWrite(heaterRelay, LOW);
+	uint8_t heaterRelay = configuration.getIO()->heaterRelay;
+	pinMode(heaterRelay, OUTPUT);
+	digitalWrite(heaterRelay, LOW);
 
-    HiveFactory factory;
-    factory.create();
+	HiveFactory factory;
+	factory.create();
 
-    eventHandler.subscribe(this);
+	eventHandler.subscribe(this);
 }
 
-void Hive::process()
-{
-    if (tickCounter++ < 10) {
-        return;
-    }
-    tickCounter = 0;
+void Hive::process() {
+	if (tickCounter++ < 10) {
+		return;
+	}
+	tickCounter = 0;
 
-/*
-    Program *runningProgram = programHandler->getRunningProgram();
-    uint32_t timeRemaining = programHandler->calculateTimeRemaining();
+	/*
+	 Program *runningProgram = programHandler->getRunningProgram();
+	 uint32_t timeRemaining = programHandler->calculateTimeRemaining();
 
-    if (actualTemperature > configuration.getParams()->hiveOverTemp) {
-        Logger::error(F("ALERT - OVER-TEMPERATURE IN HIVE ! Trying to recover, please open the cover to help cool down the hive!"));
-        status.setSystemState(Status::overtemp);
-        status.errorCode = Status::overtempHive;
-    }
-    if (status.getSystemState() == Status::overtemp && actualTemperature < configuration.getParams()->hiveMaxTemp) {
-        Logger::info(F("recovered from over-temperature, shutting down."));
-        programHandler->stop();
-    }
+	 if (actualTemperature > configuration.getParams()->hiveOverTemp) {
+	 Logger::error(F("ALERT - OVER-TEMPERATURE IN HIVE ! Trying to recover, please open the cover to help cool down the hive!"));
+	 status.setSystemState(Status::overtemp);
+	 status.errorCode = Status::overtempHive;
+	 }
+	 if (status.getSystemState() == Status::overtemp && actualTemperature < configuration.getParams()->hiveMaxTemp) {
+	 Logger::info(F("recovered from over-temperature, shutting down."));
+	 programHandler->stop();
+	 }
 
-    if (status.getSystemState() == Status::running && timeRemaining < 2) {
-        Logger::info(F("program finished."));
-        programHandler->stop();
-    }
+	 if (status.getSystemState() == Status::running && timeRemaining < 2) {
+	 Logger::info(F("program finished."));
+	 programHandler->stop();
+	 }
 
-    if (status.getSystemState() == Status::preHeat && runningProgram
-            && (timeRemaining == 0
-                    || (actualTemperature >= runningProgram->temperaturePreHeat && timeRemaining < programHandler->calculateTimeRunning()))) {
-        programHandler->switchToRunning();
-    }*/
+	 if (status.getSystemState() == Status::preHeat && runningProgram
+	 && (timeRemaining == 0
+	 || (actualTemperature >= runningProgram->temperaturePreHeat && timeRemaining < programHandler->calculateTimeRunning()))) {
+	 programHandler->switchToRunning();
+	 }*/
 
 }
 
@@ -136,10 +131,9 @@ void Hive::process()
  }
  */
 
-void Hive::handleProgramChange(Program program)
-{
-	if(program.running) {
-        digitalWrite(configuration.getIO()->heaterRelay, HIGH);
+void Hive::handleProgramChange(Program program) {
+	if (program.running) {
+		digitalWrite(configuration.getIO()->heaterRelay, HIGH);
 	} else {
 		//TODO set flag to open relay in a later cycle to first allow all heaters to go to 0 power
 	}

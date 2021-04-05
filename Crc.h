@@ -7,10 +7,9 @@
 
 #include <Arduino.h>
 
-class Crc
-{
+class Crc {
 public:
-    static uint32_t calculate(uint8_t *location, uint32_t size);
+	static uint32_t calculate(uint8_t *location, uint32_t size);
 };
 
 #endif /* CRC_H_ */

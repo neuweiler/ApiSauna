@@ -32,30 +32,29 @@
 #include "Fan.h"
 #include "Program.h"
 
-class Humidifier: EventListener
-{
+class Humidifier: EventListener {
 public:
-    Humidifier();
-    virtual ~Humidifier();
-    void initialize();
-    void handleEvent(Event event, ...);
+	Humidifier();
+	virtual ~Humidifier();
+	void initialize();
+	void handleEvent(Event event, ...);
 
 private:
-    void process();
-    void enableVaporizer(bool on);
-    void programChange(const Program& program);
-    void setFanSpeed(uint8_t speed);
+	void process();
+	void enableVaporizer(bool on);
+	void programChange(const Program &program);
+	void setFanSpeed(uint8_t speed);
 
-    HumiditySensor sensor;
-    Fan fan;
-    uint8_t maximumHumidity;
-    uint8_t minimumHumidity;
-    uint8_t fanSpeed; // the program's desired fan speed for the humidifier
-    uint32_t fanTimestamp;
-    bool running; // indicates if the program is running
-    bool paused; // indicates if the program execution is paused
-    bool alert; // indicates if we're in a temperature alert condition
-    StatusHumidity status;
+	HumiditySensor sensor;
+	Fan fan;
+	uint8_t maximumHumidity;
+	uint8_t minimumHumidity;
+	uint8_t fanSpeed; // the program's desired fan speed for the humidifier
+	uint32_t fanTimestamp;
+	bool running; // indicates if the program is running
+	bool paused; // indicates if the program execution is paused
+	bool alert; // indicates if we're in a temperature alert condition
+	StatusHumidity status;
 };
 
 extern Humidifier humidifier;

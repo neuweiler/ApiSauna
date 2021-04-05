@@ -33,25 +33,22 @@ bool Fan::pwmInitialized = false;
 /**
  * Constructor.
  */
-Fan::Fan()
-{
-    controlPin = 0;
-    minimumSpeed = 0;
-    speed = 0;
+Fan::Fan() {
+	controlPin = 0;
+	minimumSpeed = 0;
+	speed = 0;
 }
 
-Fan::~Fan()
-{
+Fan::~Fan() {
 }
 
-void Fan::initialize(uint8_t controlPin, uint8_t minimumSpeed)
-{
-    initializePWM();
+void Fan::initialize(uint8_t controlPin, uint8_t minimumSpeed) {
+	initializePWM();
 
-    this->minimumSpeed = minimumSpeed;
-    this->controlPin = controlPin;
-    pinMode(controlPin, OUTPUT);
-    setSpeed(0);
+	this->minimumSpeed = minimumSpeed;
+	this->controlPin = controlPin;
+	pinMode(controlPin, OUTPUT);
+	setSpeed(0);
 }
 
 /**
@@ -67,35 +64,32 @@ void Fan::initialize(uint8_t controlPin, uint8_t minimumSpeed)
  *  #4 16bit (pin 6, 7, 8)    : humidifier fan, fans #1 - #2
  *  #5 16bit (pin 44, 45, 46) : fans #3 - #4, reserve
  */
-void Fan::initializePWM()
-{
-    if (!pwmInitialized) {
-        // set timer 4 to 31kHz for controlling PWM fans
-        TCCR4B &= ~7;
-        TCCR4B |= 1;
-        // set timer 5 to 31kHz for controlling PWM fans
-        TCCR5B &= ~7;
-        TCCR5B |= 1;
+void Fan::initializePWM() {
+	if (!pwmInitialized) {
+		// set timer 4 to 31kHz for controlling PWM fans
+		TCCR4B &= ~7;
+		TCCR4B |= 1;
+		// set timer 5 to 31kHz for controlling PWM fans
+		TCCR5B &= ~7;
+		TCCR5B |= 1;
 
-        pwmInitialized = true;
-    }
+		pwmInitialized = true;
+	}
 }
 
 /**
  * Set the speed of the fan (value 0-255)
  */
-void Fan::setSpeed(uint8_t speed)
-{
-    if (controlPin > 0) {
-        this->speed = constrain(speed, minimumSpeed, 255);
-        analogWrite(controlPin, this->speed);
-    }
+void Fan::setSpeed(uint8_t speed) {
+	if (controlPin > 0) {
+		this->speed = constrain(speed, minimumSpeed, 255);
+		analogWrite(controlPin, this->speed);
+	}
 }
 
 /**
  * Get the current speed (0-255)
  */
-uint8_t Fan::getSpeed()
-{
-    return speed;
+uint8_t Fan::getSpeed() {
+	return speed;
 }

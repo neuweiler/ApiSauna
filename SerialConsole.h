@@ -33,33 +33,32 @@
 #include "Configuration.h"
 #include "EventHandler.h"
 
-class SerialConsole: EventListener
-{
+class SerialConsole: EventListener {
 public:
-    SerialConsole();
-    virtual ~SerialConsole();
-    void initialize();
-    void handleEvent(Event event, ...);
+	SerialConsole();
+	virtual ~SerialConsole();
+	void initialize();
+	void handleEvent(Event event, ...);
 
 private:
-    void process();
-    bool handleShortCmd();
-    bool handleCmd();
-    bool handleCmdSystem(String &command, int32_t value);
-    bool handleCmdParams(String &command, int32_t value);
-    bool handleCmdSensor(String &command, char *cmdBuffer);
-    bool handleCmdIO(String &command, int32_t value);
-    bool handleCmdProgram(String &command, int32_t value);
-    uint8_t getIndex(String command);
-    void printMenu();
-    void printMenuParams();
-    void printMenuSensors();
-    void printMenuIO();
-    void printMenuProgram();
+	void process();
+	bool handleShortCmd();
+	bool handleCmd();
+	bool handleCmdSystem(String &command, int32_t value);
+	bool handleCmdParams(String &command, int32_t value);
+	bool handleCmdSensor(String &command, char *cmdBuffer);
+	bool handleCmdIO(String &command, int32_t value);
+	bool handleCmdProgram(String &command, int32_t value);
+	uint8_t getIndex(String command);
+	void printMenu();
+	void printMenuParams();
+	void printMenuSensors();
+	void printMenuIO();
+	void printMenuProgram();
 
-    char cmdBuffer[CFG_SERIAL_BUFFER_SIZE + 1];
-    int ptrBuffer;
-    Program program;
+	char cmdBuffer[CFG_SERIAL_BUFFER_SIZE + 1];
+	int ptrBuffer;
+	Program program;
 };
 
 extern SerialConsole serialConsole;

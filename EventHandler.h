@@ -32,18 +32,17 @@
 #include "EventListener.h"
 #include "Logger.h"
 
-class EventHandler
-{
+class EventHandler {
 public:
-    EventHandler();
-    virtual ~EventHandler();
-    void subscribe(EventListener *listener);
-    void publish(EventListener::Event event, ...);
+	EventHandler();
+	virtual ~EventHandler();
+	void subscribe(EventListener *listener);
+	void publish(EventListener::Event event, ...);
 private:
-    EventHandler(EventHandler const&); // copy disabled
-    void operator=(EventHandler const&); // assignment disabled
+	EventHandler(EventHandler const&); // copy disabled
+	void operator=(EventHandler const&); // assignment disabled
 
-    SimpleList<EventListener *> listeners;
+	SimpleList<EventListener*> listeners;
 };
 
 extern EventHandler eventHandler;

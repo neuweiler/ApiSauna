@@ -14,263 +14,242 @@
 #endif
 
 template<typename T>
-class SimpleList
-{
+class SimpleList {
 public:
-    typedef T* iterator;
+	typedef T *iterator;
 
-    SimpleList()
-    {
-        _internalArray = NULL;
-        _endPosition = 0;
-        _allocBlocks = 0;
-        _preAllocBlocks = 0;
-    }
+	SimpleList() {
+		_internalArray = NULL;
+		_endPosition = 0;
+		_allocBlocks = 0;
+		_preAllocBlocks = 0;
+	}
 
-    ~SimpleList()
-    {
-        delete[] _internalArray;
-        _internalArray = NULL;
-        _endPosition = 0;
-        _allocBlocks = 0;
-        _preAllocBlocks = 0;
-    }
+	~SimpleList() {
+		delete[] _internalArray;
+		_internalArray = NULL;
+		_endPosition = 0;
+		_allocBlocks = 0;
+		_preAllocBlocks = 0;
+	}
 
-    SimpleList(const SimpleList& from)
-    {
-        _endPosition = from._endPosition;
-        _allocBlocks = from._allocBlocks;
-        _preAllocBlocks = from._preAllocBlocks;
+	SimpleList(const SimpleList &from) {
+		_endPosition = from._endPosition;
+		_allocBlocks = from._allocBlocks;
+		_preAllocBlocks = from._preAllocBlocks;
 
-        _internalArray = new T[_allocBlocks];
+		_internalArray = new T[_allocBlocks];
 
-        for (int i = 0; i < _endPosition; ++i)
-            _internalArray[i] = from._internalArray[i];
-    }
+		for (int i = 0; i < _endPosition; ++i)
+			_internalArray[i] = from._internalArray[i];
+	}
 
-    SimpleList& operator=(const SimpleList& from)
-    {
-        if (this != &from) {
-            _endPosition = from._endPosition;
-            _allocBlocks = from._allocBlocks;
-            _preAllocBlocks = from._preAllocBlocks;
+	SimpleList& operator=(const SimpleList &from) {
+		if (this != &from) {
+			_endPosition = from._endPosition;
+			_allocBlocks = from._allocBlocks;
+			_preAllocBlocks = from._preAllocBlocks;
 
-            delete[] _internalArray;
-            _internalArray = NULL;
+			delete[] _internalArray;
+			_internalArray = NULL;
 
-            if (_allocBlocks) {
-                _internalArray = new T[_allocBlocks];
+			if (_allocBlocks) {
+				_internalArray = new T[_allocBlocks];
 
-                for (int i = 0; i < _endPosition; ++i)
-                    _internalArray[i] = from._internalArray[i];
-            }
-        }
+				for (int i = 0; i < _endPosition; ++i)
+					_internalArray[i] = from._internalArray[i];
+			}
+		}
 
-        return *this;
-    }
+		return *this;
+	}
 
-    void push_back(T item)
-    {
-        if (_endPosition == _allocBlocks)
-            AllocOneBlock(false);
+	void push_back(T item) {
+		if (_endPosition == _allocBlocks)
+			AllocOneBlock(false);
 
-        _internalArray[_endPosition] = item;
-        ++_endPosition;
-    }
+		_internalArray[_endPosition] = item;
+		++_endPosition;
+	}
 
-    void push_front(T item)
-    {
-        if (_endPosition == _allocBlocks)
-            AllocOneBlock(true);
-        else {
-            for (int i = _endPosition; i > 0; --i)
-                _internalArray[i] = _internalArray[i - 1];
-        }
+	void push_front(T item) {
+		if (_endPosition == _allocBlocks)
+			AllocOneBlock(true);
+		else {
+			for (int i = _endPosition; i > 0; --i)
+				_internalArray[i] = _internalArray[i - 1];
+		}
 
-        _internalArray[0] = item;
-        ++_endPosition;
-    }
+		_internalArray[0] = item;
+		++_endPosition;
+	}
 
-    void pop_back()
-    {
-        if (_endPosition == 0)
-            return;
+	void pop_back() {
+		if (_endPosition == 0)
+			return;
 
-        --_endPosition;
+		--_endPosition;
 
-        if (_allocBlocks > _preAllocBlocks)
-            DeAllocOneBlock(false);
-    }
+		if (_allocBlocks > _preAllocBlocks)
+			DeAllocOneBlock(false);
+	}
 
-    void pop_front()
-    {
-        if (_endPosition == 0)
-            return;
+	void pop_front() {
+		if (_endPosition == 0)
+			return;
 
-        --_endPosition;
+		--_endPosition;
 
-        if (_allocBlocks > _preAllocBlocks)
-            DeAllocOneBlock(true);
-        else {
-            for (int i = 0; i < _endPosition; ++i)
-                _internalArray[i] = _internalArray[i + 1];
-        }
-    }
+		if (_allocBlocks > _preAllocBlocks)
+			DeAllocOneBlock(true);
+		else {
+			for (int i = 0; i < _endPosition; ++i)
+				_internalArray[i] = _internalArray[i + 1];
+		}
+	}
 
-    iterator erase(iterator position)
-    {
-        int offSet = int(position - _internalArray);
+	iterator erase(iterator position) {
+		int offSet = int(position - _internalArray);
 
-        if (offSet == _endPosition - 1) // Last item.
-                {
-            pop_back();
-            return end();
-        }
+		if (offSet == _endPosition - 1) // Last item.
+				{
+			pop_back();
+			return end();
+		}
 
-        --_endPosition;
+		--_endPosition;
 
-        if (_allocBlocks > _preAllocBlocks) {
-            --_allocBlocks;
-            T* newArray = new T[_allocBlocks];
+		if (_allocBlocks > _preAllocBlocks) {
+			--_allocBlocks;
+			T *newArray = new T[_allocBlocks];
 
-            for (int i = 0; i < _endPosition; ++i) {
-                if (i >= offSet)
-                    newArray[i] = _internalArray[i + 1];
-                else
-                    newArray[i] = _internalArray[i];
-            }
+			for (int i = 0; i < _endPosition; ++i) {
+				if (i >= offSet)
+					newArray[i] = _internalArray[i + 1];
+				else
+					newArray[i] = _internalArray[i];
+			}
 
-            delete[] _internalArray;
-            _internalArray = newArray;
-        } else {
-            for (int i = offSet; i < _endPosition; ++i)
-                _internalArray[i] = _internalArray[i + 1];
-        }
+			delete[] _internalArray;
+			_internalArray = newArray;
+		} else {
+			for (int i = offSet; i < _endPosition; ++i)
+				_internalArray[i] = _internalArray[i + 1];
+		}
 
-        return _internalArray + offSet;
-    }
+		return _internalArray + offSet;
+	}
 
-    void reserve(int size)
-    {
-        if (size == 0 || size < _allocBlocks)
-            return;
+	void reserve(int size) {
+		if (size == 0 || size < _allocBlocks)
+			return;
 
-        _allocBlocks = size;
-        _preAllocBlocks = size;
+		_allocBlocks = size;
+		_preAllocBlocks = size;
 
-        T* newArray = new T[_allocBlocks];
+		T *newArray = new T[_allocBlocks];
 
-        for (int i = 0; i < _endPosition; ++i)
-            newArray[i] = _internalArray[i];
+		for (int i = 0; i < _endPosition; ++i)
+			newArray[i] = _internalArray[i];
 
-        delete[] _internalArray;
-        _internalArray = newArray;
-    }
+		delete[] _internalArray;
+		_internalArray = newArray;
+	}
 
-    void clear()
-    {
-        if (_allocBlocks > _preAllocBlocks) {
-            _allocBlocks = _preAllocBlocks;
+	void clear() {
+		if (_allocBlocks > _preAllocBlocks) {
+			_allocBlocks = _preAllocBlocks;
 
-            T* newArray = NULL;
+			T *newArray = NULL;
 
-            if (_allocBlocks > 0)
-                newArray = new T[_allocBlocks];
+			if (_allocBlocks > 0)
+				newArray = new T[_allocBlocks];
 
-            delete[] _internalArray;
-            _internalArray = newArray;
-        }
+			delete[] _internalArray;
+			_internalArray = newArray;
+		}
 
-        _endPosition = 0;
-    }
+		_endPosition = 0;
+	}
 
-    void shrink_to_fit()
-    {
-        _preAllocBlocks = _endPosition;
-        _allocBlocks = _endPosition;
+	void shrink_to_fit() {
+		_preAllocBlocks = _endPosition;
+		_allocBlocks = _endPosition;
 
-        T* newArray = NULL;
+		T *newArray = NULL;
 
-        if (_allocBlocks > 0)
-            newArray = new T[_allocBlocks];
+		if (_allocBlocks > 0)
+			newArray = new T[_allocBlocks];
 
-        for (int i = 0; i < _endPosition; ++i)
-            newArray[i] = _internalArray[i];
+		for (int i = 0; i < _endPosition; ++i)
+			newArray[i] = _internalArray[i];
 
-        delete[] _internalArray;
-        _internalArray = newArray;
-    }
+		delete[] _internalArray;
+		_internalArray = newArray;
+	}
 
-    boolean contains(T *item)
-    {
-        for (int i = 0; i < _endPosition; ++i) {
-            if (&_internalArray[i] == item)
-                return true;
-        }
-        return false;
-    }
+	boolean contains(T *item) {
+		for (int i = 0; i < _endPosition; ++i) {
+			if (&_internalArray[i] == item)
+				return true;
+		}
+		return false;
+	}
 
-    inline iterator begin()
-    {
-        return _internalArray;
-    }
-    inline iterator end()
-    {
-        return _internalArray + _endPosition;
-    }
+	inline iterator begin() {
+		return _internalArray;
+	}
+	inline iterator end() {
+		return _internalArray + _endPosition;
+	}
 
-    inline bool empty()
-    {
-        return (_endPosition == 0);
-    }
-    inline unsigned int size()
-    {
-        return _endPosition;
-    }
-    inline unsigned int capacity()
-    {
-        return _allocBlocks;
-    }
+	inline bool empty() {
+		return (_endPosition == 0);
+	}
+	inline unsigned int size() {
+		return _endPosition;
+	}
+	inline unsigned int capacity() {
+		return _allocBlocks;
+	}
 
 private:
 
-    void AllocOneBlock(bool shiftItems)
-    {
-        ++_allocBlocks;
-        T* newArray = new T[_allocBlocks];
+	void AllocOneBlock(bool shiftItems) {
+		++_allocBlocks;
+		T *newArray = new T[_allocBlocks];
 
-        for (int i = 0; i < _endPosition; ++i)
-            newArray[shiftItems ? (i + 1) : i] = _internalArray[i];
+		for (int i = 0; i < _endPosition; ++i)
+			newArray[shiftItems ? (i + 1) : i] = _internalArray[i];
 
-        delete[] _internalArray;
-        _internalArray = newArray;
-    }
+		delete[] _internalArray;
+		_internalArray = newArray;
+	}
 
-    void DeAllocOneBlock(bool shiftItems)
-    {
-        --_allocBlocks;
+	void DeAllocOneBlock(bool shiftItems) {
+		--_allocBlocks;
 
-        if (_allocBlocks == 0) {
-            delete[] _internalArray;
-            _internalArray = NULL;
-            return;
-        }
+		if (_allocBlocks == 0) {
+			delete[] _internalArray;
+			_internalArray = NULL;
+			return;
+		}
 
-        T* newArray = new T[_allocBlocks];
+		T *newArray = new T[_allocBlocks];
 
-        for (int i = 0; i < _endPosition; ++i)
-            newArray[i] = _internalArray[shiftItems ? (i + 1) : i];
+		for (int i = 0; i < _endPosition; ++i)
+			newArray[i] = _internalArray[shiftItems ? (i + 1) : i];
 
-        delete[] _internalArray;
-        _internalArray = newArray;
-    }
+		delete[] _internalArray;
+		_internalArray = newArray;
+	}
 
 private:
 
-    T* _internalArray;
-    int _endPosition;
-    int _allocBlocks;
-    int _preAllocBlocks;
+	T *_internalArray;
+	int _endPosition;
+	int _allocBlocks;
+	int _preAllocBlocks;
 };
 
 #endif

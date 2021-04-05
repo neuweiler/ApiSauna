@@ -31,20 +31,19 @@
 #include "Configuration.h"
 #include "EventHandler.h"
 
-class Beeper : EventListener
-{
+class Beeper: EventListener {
 public:
-    Beeper();
-    virtual ~Beeper();
-    void handleEvent(Event event, ...);
-    void beep(int8_t numberOfBeeps);
-    void click();
+	Beeper();
+	virtual ~Beeper();
+	void handleEvent(Event event, ...);
+	void beep(int8_t numberOfBeeps);
+	void click();
 
 private:
-    void initialize();
-    void process();
-    int8_t numberOfBeeps;
-    bool soundOn;
+	void initialize();
+	void process();
+	int8_t numberOfBeeps;
+	bool soundOn;
 };
 
 #endif /* BEEPER_H_ */

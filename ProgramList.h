@@ -32,19 +32,18 @@
 #include "SimpleList.h"
 #include "Program.h"
 
-class ProgramList
-{
+class ProgramList {
 public:
-    ProgramList();
-    virtual ~ProgramList();
-    SimpleList<Program> *getPrograms();
+	ProgramList();
+	virtual ~ProgramList();
+	SimpleList<Program>* getPrograms();
 
 private:
-    ProgramList(ProgramList const&); // copy disabled
-    void operator=(ProgramList const&); // assigment disabled    SimpleList<Program> programs;
-    void initPrograms();
+	ProgramList(ProgramList const&); // copy disabled
+	void operator=(ProgramList const&); // assigment disabled    SimpleList<Program> programs;
+	void initPrograms();
 
-    SimpleList<Program> programs;
+	SimpleList<Program> programs;
 };
 
 extern ProgramList programList;

@@ -32,34 +32,28 @@
 
 class Device;
 
-class Logger
-{
+class Logger {
 public:
-    enum LogLevel
-    {
-        Debug = 0,
-        Info = 1,
-        Warn = 2,
-        Error = 3,
-        Off = 4
-    };
-    static void debug(String, ...);
-    static void info(String, ...);
-    static void warn(String, ...);
-    static void error(String, ...);
-    static void console(String, ...);
-    static void setLoglevel(LogLevel);
-    static LogLevel getLogLevel();
-    static uint32_t getLastLogTime();
-    static boolean isDebug();
+	enum LogLevel {
+		Debug = 0, Info = 1, Warn = 2, Error = 3, Off = 4
+	};
+	static void debug(String, ...);
+	static void info(String, ...);
+	static void warn(String, ...);
+	static void error(String, ...);
+	static void console(String, ...);
+	static void setLoglevel(LogLevel);
+	static LogLevel getLogLevel();
+	static uint32_t getLastLogTime();
+	static boolean isDebug();
 private:
-    static LogLevel logLevel;
-    static uint32_t lastLogTime;
-    static bool debugging;
-    static LogLevel *deviceLoglevel;
-    static char *msgBuffer;
+	static LogLevel logLevel;
+	static uint32_t lastLogTime;
+	static bool debugging;
+	static LogLevel *deviceLoglevel;
+	static char *msgBuffer;
 
-    static void log(LogLevel, String format, va_list);
+	static void log(LogLevel, String format, va_list);
 };
 
 #endif /* LOGGER_H_ */

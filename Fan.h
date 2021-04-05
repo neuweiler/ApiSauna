@@ -29,21 +29,20 @@
 
 #include <Arduino.h>
 
-class Fan
-{
+class Fan {
 public:
-    Fan();
-    virtual ~Fan();
-    void initialize(uint8_t controlPin, uint8_t minimumSpeed);
-    void setSpeed(uint8_t speed);
-    uint8_t getSpeed();
+	Fan();
+	virtual ~Fan();
+	void initialize(uint8_t controlPin, uint8_t minimumSpeed);
+	void setSpeed(uint8_t speed);
+	uint8_t getSpeed();
 
 private:
-    void initializePWM();
+	void initializePWM();
 
-    static bool pwmInitialized;
-    uint8_t controlPin;
-    uint8_t minimumSpeed;
-    uint8_t speed;
+	static bool pwmInitialized;
+	uint8_t controlPin;
+	uint8_t minimumSpeed;
+	uint8_t speed;
 };
 #endif /* FAN_H_ */

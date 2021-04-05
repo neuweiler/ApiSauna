@@ -38,103 +38,95 @@ char *Logger::msgBuffer = new char[CFG_LOG_BUFFER_SIZE];
  * printf() style, see Logger::log()
  *
  */
-void Logger::debug(String message, ...)
-{
-    if (logLevel > Debug) {
-        return;
-    }
+void Logger::debug(String message, ...) {
+	if (logLevel > Debug) {
+		return;
+	}
 
-    va_list args;
-    va_start(args, message);
-    Logger::log(Debug, message, args);
-    va_end(args);
+	va_list args;
+	va_start(args, message);
+	Logger::log(Debug, message, args);
+	va_end(args);
 }
 
 /*
  * Output a info message with a variable amount of parameters
  * printf() style, see Logger::log()
  */
-void Logger::info(String message, ...)
-{
-    if (logLevel > Info) {
-        return;
-    }
+void Logger::info(String message, ...) {
+	if (logLevel > Info) {
+		return;
+	}
 
-    va_list args;
-    va_start(args, message);
-    Logger::log(Info, message, args);
-    va_end(args);
+	va_list args;
+	va_start(args, message);
+	Logger::log(Info, message, args);
+	va_end(args);
 }
 
 /*
  * Output a warning message with a variable amount of parameters
  * printf() style, see Logger::log()
  */
-void Logger::warn(String message, ...)
-{
-    if (logLevel > Warn) {
-        return;
-    }
+void Logger::warn(String message, ...) {
+	if (logLevel > Warn) {
+		return;
+	}
 
-    va_list args;
-    va_start(args, message);
-    Logger::log(Warn, message, args);
-    va_end(args);
+	va_list args;
+	va_start(args, message);
+	Logger::log(Warn, message, args);
+	va_end(args);
 }
 
 /*
  * Output a error message with a variable amount of parameters
  * printf() style, see Logger::log()
  */
-void Logger::error(String message, ...)
-{
-    if (logLevel > Error) {
-        return;
-    }
+void Logger::error(String message, ...) {
+	if (logLevel > Error) {
+		return;
+	}
 
-    va_list args;
-    va_start(args, message);
-    Logger::log(Error, message, args);
-    va_end(args);
+	va_list args;
+	va_start(args, message);
+	Logger::log(Error, message, args);
+	va_end(args);
 }
 
 /*
  * Output a comnsole message with a variable amount of parameters
  * printf() style, see Logger::logMessage()
  */
-void Logger::console(String message, ...)
-{
-    va_list args;
-    va_start(args, message);
-    vsnprintf(msgBuffer, CFG_LOG_BUFFER_SIZE, message.c_str(), args);
-    Serial.println(msgBuffer);
-    va_end(args);
+void Logger::console(String message, ...) {
+	va_list args;
+	va_start(args, message);
+	vsnprintf(msgBuffer, CFG_LOG_BUFFER_SIZE, message.c_str(), args);
+	Serial.println(msgBuffer);
+	va_end(args);
 }
 
 /*
  * Set the log level. Any output below the specified log level will be omitted.
  * Also set the debugging flag for faster evaluation in isDebug().
  */
-void Logger::setLoglevel(LogLevel level)
-{
-    logLevel = level;
-    debugging = (level == Debug);
+void Logger::setLoglevel(LogLevel level) {
+	logLevel = level;
+	debugging = (level == Debug);
 }
 
 /*
  * Retrieve the current log level.
  */
-Logger::LogLevel Logger::getLogLevel()
-{
-    return logLevel;
+Logger::LogLevel Logger::getLogLevel() {
+	return logLevel;
 }
 
 /*
  * Return a timestamp when the last log entry was made.
  */
-uint32_t Logger::getLastLogTime()
-{
-    return lastLogTime;
+uint32_t Logger::getLastLogTime() {
+	return lastLogTime;
 }
 
 /*
@@ -147,9 +139,8 @@ uint32_t Logger::getLastLogTime()
  *    Logger::debug("current time: %d", millis());
  * }
  */
-boolean Logger::isDebug()
-{
-    return debugging;
+boolean Logger::isDebug() {
+	return debugging;
 }
 
 /*
@@ -157,28 +148,27 @@ boolean Logger::isDebug()
  *
  * Supports printf() syntax
  */
-void Logger::log(LogLevel level, String format, va_list args)
-{
-    String logLevel = F("DEBUG");
-    lastLogTime = millis();
+void Logger::log(LogLevel level, String format, va_list args) {
+	String logLevel = F("DEBUG");
+	lastLogTime = millis();
 
-    switch (level) {
-    case Info:
-        logLevel = F("INFO");
-        break;
-    case Warn:
-        logLevel = F("WARNING");
-        break;
-    case Error:
-        logLevel = F("ERROR");
-        break;
-    }
-    vsnprintf(msgBuffer, CFG_LOG_BUFFER_SIZE, format.c_str(), args);
+	switch (level) {
+	case Info:
+		logLevel = F("INFO");
+		break;
+	case Warn:
+		logLevel = F("WARNING");
+		break;
+	case Error:
+		logLevel = F("ERROR");
+		break;
+	}
+	vsnprintf(msgBuffer, CFG_LOG_BUFFER_SIZE, format.c_str(), args);
 
-    // print to serial USB
-    Serial.print(lastLogTime);
-    Serial.print(F(" - "));
-    Serial.print(logLevel);
-    Serial.print(F(": "));
-    Serial.println(msgBuffer);
+	// print to serial USB
+	Serial.print(lastLogTime);
+	Serial.print(F(" - "));
+	Serial.print(logLevel);
+	Serial.print(F(": "));
+	Serial.println(msgBuffer);
 }

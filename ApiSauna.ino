@@ -31,16 +31,15 @@
 /**
  * The initial setup function called after device reset/power-up
  */
-void setup()
-{
-    Serial.begin(CFG_SERIAL_SPEED);
-    Serial.println(CFG_VERSION);
+void setup() {
+	Serial.begin(CFG_SERIAL_SPEED);
+	Serial.println(CFG_VERSION);
 
 	serialConsole.initialize();
 
-    configuration.load();
+	configuration.load();
 
-    hive.initialize();
+	hive.initialize();
 	humidifier.initialize();
 	hid.initialize();
 }
@@ -48,9 +47,8 @@ void setup()
 /**
  * The main program loop
  */
-void loop()
-{
-    eventHandler.publish(EventListener::PROCESS);
-    TemperatureSensor::prepareData();
-    delay(CFG_LOOP_DELAY);
+void loop() {
+	eventHandler.publish(EventListener::PROCESS);
+	TemperatureSensor::prepareData();
+	delay(CFG_LOOP_DELAY);
 }

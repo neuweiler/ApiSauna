@@ -31,38 +31,33 @@
 /**
  * Constructor
  */
-Heater::Heater()
-{
-    controlPin = 0;
-    power = 0;
+Heater::Heater() {
+	controlPin = 0;
+	power = 0;
 }
 
-Heater::~Heater()
-{
+Heater::~Heater() {
 }
 
 /**
  * specify PWM pin to control the power of the heater.
  */
-void Heater::begin(uint8_t controlPin)
-{
-    this->controlPin = controlPin;
-    pinMode(controlPin, OUTPUT);
-    setPower(0);
+void Heater::begin(uint8_t controlPin) {
+	this->controlPin = controlPin;
+	pinMode(controlPin, OUTPUT);
+	setPower(0);
 }
 
 /**
  * Set the power of the heater (value 0-255).
  */
-void Heater::setPower(uint8_t power)
-{
-    if (controlPin > 0) {
-        this->power = power;
-        analogWrite(controlPin, this->power);
-    }
+void Heater::setPower(uint8_t power) {
+	if (controlPin > 0) {
+		this->power = power;
+		analogWrite(controlPin, this->power);
+	}
 }
 
-uint8_t Heater::getPower()
-{
-    return power;
+uint8_t Heater::getPower() {
+	return power;
 }

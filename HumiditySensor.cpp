@@ -28,46 +28,41 @@
 
 #include "HumiditySensor.h"
 
-HumiditySensor::HumiditySensor()
-{
-    dht = NULL;
+HumiditySensor::HumiditySensor() {
+	dht = NULL;
 }
 
-HumiditySensor::~HumiditySensor()
-{
-    if (dht != NULL) {
-        delete dht;
-        dht = NULL;
-    }
+HumiditySensor::~HumiditySensor() {
+	if (dht != NULL) {
+		delete dht;
+		dht = NULL;
+	}
 }
 
-void HumiditySensor::initialize()
-{
-    if (dht != NULL) {
-        delete dht;
-    }
-    dht = new DHT(configuration.getIO()->humiditySensor, configuration.getIO()->humiditySensorType);
-    dht->begin();
+void HumiditySensor::initialize() {
+	if (dht != NULL) {
+		delete dht;
+	}
+	dht = new DHT(configuration.getIO()->humiditySensor, configuration.getIO()->humiditySensorType);
+	dht->begin();
 }
 
 /**
  * Get relative humidity in %
  */
-uint8_t HumiditySensor::getRelativeHumidity()
-{
-    if (dht == NULL || millis() < 10000) {
-        return 99;
-    }
-    return (int) dht->readHumidity();
+uint8_t HumiditySensor::getRelativeHumidity() {
+	if (dht == NULL || millis() < 10000) {
+		return 99;
+	}
+	return (int) dht->readHumidity();
 }
 
 /**
  * Get temperature in 0.1 deg C
  */
-int16_t HumiditySensor::getTemperature()
-{
-    if (dht == NULL) {
-        return 0;
-    }
-    return dht->readTemperature() * 10;
+int16_t HumiditySensor::getTemperature() {
+	if (dht == NULL) {
+		return 0;
+	}
+	return dht->readTemperature() * 10;
 }

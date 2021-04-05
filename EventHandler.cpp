@@ -28,29 +28,27 @@
 
 EventHandler eventHandler;
 
-EventHandler::EventHandler()
-{
+EventHandler::EventHandler() {
 }
 
-EventHandler::~EventHandler()
-{
+EventHandler::~EventHandler() {
 }
 
 /**
  * Attach an listener
  */
 void EventHandler::subscribe(EventListener *listener) {
-    listeners.push_back(listener);
+	listeners.push_back(listener);
 }
 
 /**
  * Send an event to all attached/subscribed listeners
  */
 void EventHandler::publish(EventListener::Event event, ...) {
-    va_list args;
-    va_start(args, event);
-    for (SimpleList<EventListener *>::iterator entry = listeners.begin(); entry != listeners.end(); ++entry) {
-    	((EventListener *)*entry)->handleEvent(event, args);
-    }
-    va_end(args);
+	va_list args;
+	va_start(args, event);
+	for (SimpleList<EventListener*>::iterator entry = listeners.begin(); entry != listeners.end(); ++entry) {
+		((EventListener*) *entry)->handleEvent(event, args);
+	}
+	va_end(args);
 }

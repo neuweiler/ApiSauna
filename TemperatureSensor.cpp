@@ -33,110 +33,102 @@ OneWire *TemperatureSensor::ds = NULL;
 /**
  * Constructor
  */
-TemperatureSensor::TemperatureSensor()
-{
+TemperatureSensor::TemperatureSensor() {
 	id = 0;
-    temperature = 0;
-    type = UNKNOWN;
+	temperature = 0;
+	type = UNKNOWN;
 }
 
 /**
  * Constructor
  */
 TemperatureSensor::TemperatureSensor(SensorAddress address, uint8_t id) :
-        TemperatureSensor()
-{
-    setAddress(address);
-    this->id = id;
+		TemperatureSensor() {
+	setAddress(address);
+	this->id = id;
 }
 
 /**
  * Get the type of the device
  */
-TemperatureSensor::DeviceType TemperatureSensor::getType()
-{
-    return type;
+TemperatureSensor::DeviceType TemperatureSensor::getType() {
+	return type;
 }
 
 /**
  * Get the type of the device as string
  */
-String TemperatureSensor::getTypeStr()
-{
-    switch (type) {
-    case TemperatureSensor::DS18S20:
-        return F("DS18S20");
-        break;
-    case TemperatureSensor::DS18B20:
-        return F("DS18B20");
-        break;
-    case TemperatureSensor::DS1822:
-        return F("DS1822");
-        break;
-    default:
-        return F("unknown");
-        break;
-    }
+String TemperatureSensor::getTypeStr() {
+	switch (type) {
+	case TemperatureSensor::DS18S20:
+		return F("DS18S20");
+		break;
+	case TemperatureSensor::DS18B20:
+		return F("DS18B20");
+		break;
+	case TemperatureSensor::DS1822:
+		return F("DS1822");
+		break;
+	default:
+		return F("unknown");
+		break;
+	}
 }
 
 /**
  * Get the address of the device
  */
-SensorAddress TemperatureSensor::getAddress()
-{
-    return address;
+SensorAddress TemperatureSensor::getAddress() {
+	return address;
 }
 
-void TemperatureSensor::setAddress(SensorAddress address)
-{
-    this->address.value = address.value;
+void TemperatureSensor::setAddress(SensorAddress address) {
+	this->address.value = address.value;
 
-    if (address.byte[0] == 0x10) {
-        type = DS18S20;
-    } else if (address.byte[0] == 0x28) {
-        type = DS18B20;
-    } else if (address.byte[0] == 0x22) {
-        type = DS1822;
-    } else {
-        type = UNKNOWN;
-    }
+	if (address.byte[0] == 0x10) {
+		type = DS18S20;
+	} else if (address.byte[0] == 0x28) {
+		type = DS18B20;
+	} else if (address.byte[0] == 0x22) {
+		type = DS1822;
+	} else {
+		type = UNKNOWN;
+	}
 }
 
 /**
  * Set the resolution of the DS18B20 between 9 or 12 bits.
  */
-void TemperatureSensor::setResolution(byte resolution)
-{
-    if (resolution > 12 || resolution < 9)
-        return;
-    if (type != DS18B20)
-        return;
+void TemperatureSensor::setResolution(byte resolution) {
+	if (resolution > 12 || resolution < 9)
+		return;
+	if (type != DS18B20)
+		return;
 
-    // Get byte for desired resolution
-    byte resolutionByte = 0x1F; // 9 bit
-    if (resolution == 12) {
-        resolutionByte = 0x7F;
-    } else if (resolution == 11) {
-        resolutionByte = 0x5F;
-    } else if (resolution == 10) {
-        resolutionByte = 0x3F;
-    }
+	// Get byte for desired resolution
+	byte resolutionByte = 0x1F; // 9 bit
+	if (resolution == 12) {
+		resolutionByte = 0x7F;
+	} else if (resolution == 11) {
+		resolutionByte = 0x5F;
+	} else if (resolution == 10) {
+		resolutionByte = 0x3F;
+	}
 
-    // set configuration
-    ds->reset();
-    ds->select(address.byte);
-    ds->write(0x4E);			// write scratchpad
-    ds->write(0);				// TL
-    ds->write(0);				// TH
-    ds->write(resolutionByte);	// configuration register
-    ds->write(0x48);			// copy scratchpad
+	// set configuration
+	ds->reset();
+	ds->select(address.byte);
+	ds->write(0x4E);			// write scratchpad
+	ds->write(0);				// TL
+	ds->write(0);				// TH
+	ds->write(resolutionByte);	// configuration register
+	ds->write(0x48);			// copy scratchpad
 }
 
 /**
  * Order all temperature sensors to prepare data.
  */
-void TemperatureSensor::prepareData()
-{
+void TemperatureSensor::prepareData() {
 	ds->reset();
 	ds->skip(); // skip ROM - send to all devices
 	ds->write(0x44); // start conversion
@@ -145,81 +137,77 @@ void TemperatureSensor::prepareData()
 /**
  * Retrieve prepared data from temperature sensors
  */
-void TemperatureSensor::retrieveData()
-{
-    byte data[9];
+void TemperatureSensor::retrieveData() {
+	byte data[9];
 
-    ds->reset();
-    ds->select(address.byte);
-    ds->write(0xBE); // read scratchpad
-    ds->read_bytes(data, 9); // 9 bytes are required
+	ds->reset();
+	ds->select(address.byte);
+	ds->write(0xBE); // read scratchpad
+	ds->read_bytes(data, 9); // 9 bytes are required
 
-    if (OneWire::crc8(data, 8) == data[8]) {
-        temperature = (data[1] << 8) | data[0];
+	if (OneWire::crc8(data, 8) == data[8]) {
+		temperature = (data[1] << 8) | data[0];
 
-        if (type == DS18S20) {
-            temperature = temperature << 3; // 9 bit resolution default
-            if (data[7] == 0x10) { // "count remain" gives full 12 bit resolution
-                temperature = (temperature & 0xFFF0) + 12 - data[6];
-            }
-        } else {
-            byte cfg = (data[4] & 0x60);
-            // at lower res, the low bits are undefined, so let's zero them
-            if (cfg == 0x00)
-                temperature = temperature & ~7; // 9 bit resolution, 93.75 ms
-            else if (cfg == 0x20)
-                temperature = temperature & ~3; // 10 bit res, 187.5 ms
-            else if (cfg == 0x40)
-                temperature = temperature & ~1; // 11 bit res, 375 ms
-        }
-    } else {
-        Logger::warn(F("ignored corrupt sensor data: %X%X%X%X%X%X%X%X%X crc:%X"), data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], OneWire::crc8(data, 8));
-    }
+		if (type == DS18S20) {
+			temperature = temperature << 3; // 9 bit resolution default
+			if (data[7] == 0x10) { // "count remain" gives full 12 bit resolution
+				temperature = (temperature & 0xFFF0) + 12 - data[6];
+			}
+		} else {
+			byte cfg = (data[4] & 0x60);
+			// at lower res, the low bits are undefined, so let's zero them
+			if (cfg == 0x00)
+				temperature = temperature & ~7; // 9 bit resolution, 93.75 ms
+			else if (cfg == 0x20)
+				temperature = temperature & ~3; // 10 bit res, 187.5 ms
+			else if (cfg == 0x40)
+				temperature = temperature & ~1; // 11 bit res, 375 ms
+		}
+	} else {
+		Logger::warn(F("ignored corrupt sensor data: %X%X%X%X%X%X%X%X%X crc:%X"), data[0], data[1], data[2], data[3],
+				data[4], data[5], data[6], data[7], data[8], OneWire::crc8(data, 8));
+	}
 }
 
 /**
  * Return the measured temperature in 0.1 degree celsius
  */
-int16_t TemperatureSensor::getTemperatureCelsius()
-{
-    return temperature * 5 / 8;
+int16_t TemperatureSensor::getTemperatureCelsius() {
+	return temperature * 5 / 8;
 }
 
 /**
  * Return the measured temperature in 0.1 degree fahrenheit
  */
-int16_t TemperatureSensor::getTemperatureFahrenheit()
-{
-    return temperature * 9 / 8 + 320;
+int16_t TemperatureSensor::getTemperatureFahrenheit() {
+	return temperature * 9 / 8 + 320;
 }
 
-uint8_t TemperatureSensor::getId()
-{
+uint8_t TemperatureSensor::getId() {
 	return id;
 }
 
 /**
  *  Find all temperature sensor addresses and return a list of addresses
  */
-SimpleList<SensorAddress> TemperatureSensor::detectTemperatureSensors()
-{
-    SimpleList<SensorAddress> addressList;
-Logger::setLoglevel(Logger::Debug);
-    Logger::info(F("detecting temperature sensors"));
+SimpleList<SensorAddress> TemperatureSensor::detectTemperatureSensors() {
+	SimpleList<SensorAddress> addressList;
+	Logger::setLoglevel(Logger::Debug);
+	Logger::info(F("detecting temperature sensors"));
 
-    if (ds == NULL) {
-        ds = new OneWire(configuration.getIO()->temperatureSensor);
-    }
-    ds->reset_search();
+	if (ds == NULL) {
+		ds = new OneWire(configuration.getIO()->temperatureSensor);
+	}
+	ds->reset_search();
 
-    while (true) {
-        SensorAddress address = findNextSensor();
-        if (address.value == 0)
-            break;
-        Logger::debug(F("  found sensor: %#08lx%08lx"), address.high, address.low);
-        addressList.push_back(address);
-    }
-    prepareData();
+	while (true) {
+		SensorAddress address = findNextSensor();
+		if (address.value == 0)
+			break;
+		Logger::debug(F("  found sensor: %#08lx%08lx"), address.high, address.low);
+		addressList.push_back(address);
+	}
+	prepareData();
 
 #ifdef FAKE_TEMPERATURE_SENSORS
     for (int j = 1; j < 3; j++) {
@@ -232,25 +220,24 @@ Logger::setLoglevel(Logger::Debug);
     }
 #endif
 
-    return addressList;
+	return addressList;
 }
 
 /**
  * Find next sensor.
  * If none is found, the address' value is 0.
  */
-SensorAddress TemperatureSensor::findNextSensor()
-{
-    SensorAddress addr;
+SensorAddress TemperatureSensor::findNextSensor() {
+	SensorAddress addr;
 
-    addr.value = 0;
-    if (ds->search(addr.byte)) {
-        if (OneWire::crc8(addr.byte, 7) != addr.byte[7]) {
-            Logger::error(F("temperature sensor: invalid CRC!\n"));
-            addr.value = 0;
-        }
-    } else {
-    	addr.value = 0;
-    }
-    return addr;
+	addr.value = 0;
+	if (ds->search(addr.byte)) {
+		if (OneWire::crc8(addr.byte, 7) != addr.byte[7]) {
+			Logger::error(F("temperature sensor: invalid CRC!\n"));
+			addr.value = 0;
+		}
+	} else {
+		addr.value = 0;
+	}
+	return addr;
 }

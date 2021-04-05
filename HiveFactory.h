@@ -37,10 +37,10 @@ public:
 	virtual ~HiveFactory();
 	void create();
 private:
-    bool findSensor(SimpleList<SensorAddress> &addressList, SensorAddress address);
-    SimpleList<Plate> createPlates(SimpleList<SensorAddress> &addressList);
-    SimpleList<TemperatureSensor> createHiveSensors(SimpleList<SensorAddress> &addressList);
-    SimpleList<ThermalZone> createThermalZones(SimpleList<TemperatureSensor> sensors, SimpleList<Plate> plates);
+	bool findSensor(SimpleList<SensorAddress> &addressList, SensorAddress address);
+	SimpleList<Plate> createPlates(SimpleList<SensorAddress> &addressList);
+	SimpleList<TemperatureSensor> createHiveSensors(SimpleList<SensorAddress> &addressList);
+	SimpleList<ThermalZone> createThermalZones(SimpleList<TemperatureSensor> sensors, SimpleList<Plate> plates);
 };
 
 #endif /* HIVEFACTORY_H_ */

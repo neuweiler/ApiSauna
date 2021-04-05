@@ -33,40 +33,35 @@
 #include "Logger.h"
 #include "SimpleList.h"
 
-class TemperatureSensor
-{
+class TemperatureSensor {
 public:
-    enum DeviceType
-    {
-        UNKNOWN,
-        DS18S20,
-        DS18B20,
-        DS1822
-    };
+	enum DeviceType {
+		UNKNOWN, DS18S20, DS18B20, DS1822
+	};
 
-    TemperatureSensor();
-    TemperatureSensor(SensorAddress address, uint8_t id);
-    static SimpleList<SensorAddress> detectTemperatureSensors();
-    static void prepareData();
-    void retrieveData();
-    DeviceType getType();
-    String getTypeStr();
-    SensorAddress getAddress();
-    void setAddress(SensorAddress address);
-    void setResolution(byte resolution);
-    int16_t getTemperatureCelsius();
-    int16_t getTemperatureFahrenheit();
-    uint8_t getId();
+	TemperatureSensor();
+	TemperatureSensor(SensorAddress address, uint8_t id);
+	static SimpleList<SensorAddress> detectTemperatureSensors();
+	static void prepareData();
+	void retrieveData();
+	DeviceType getType();
+	String getTypeStr();
+	SensorAddress getAddress();
+	void setAddress(SensorAddress address);
+	void setResolution(byte resolution);
+	int16_t getTemperatureCelsius();
+	int16_t getTemperatureFahrenheit();
+	uint8_t getId();
 protected:
 
 private:
-    static SensorAddress findNextSensor();
+	static SensorAddress findNextSensor();
 
-    static OneWire *ds;
-    SensorAddress address;
-    uint8_t id;
-    DeviceType type;
-    int16_t temperature; // integer representation of temperature
+	static OneWire *ds;
+	SensorAddress address;
+	uint8_t id;
+	DeviceType type;
+	int16_t temperature; // integer representation of temperature
 };
 
 #endif /* TEMPERATURESENSOR_H_ */

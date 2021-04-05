@@ -33,17 +33,16 @@
 #include <Adafruit_Sensor.h>
 #include "Configuration.h"
 
-class HumiditySensor
-{
+class HumiditySensor {
 public:
-    HumiditySensor();
-    virtual ~HumiditySensor();
-    void initialize();
-    uint8_t getRelativeHumidity();
-    int16_t getTemperature();
+	HumiditySensor();
+	virtual ~HumiditySensor();
+	void initialize();
+	uint8_t getRelativeHumidity();
+	int16_t getTemperature();
 
 private:
-    DHT *dht;
+	DHT *dht;
 };
 
 #endif /* HUMIDITYSENSOR_H_ */

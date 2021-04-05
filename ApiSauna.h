@@ -36,8 +36,7 @@
 #include "HID.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 void loop();
 void setup();
