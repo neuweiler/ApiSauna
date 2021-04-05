@@ -32,6 +32,7 @@ Configuration::Configuration() {
 }
 
 Configuration::~Configuration() {
+	logger.debug(F("Configuration destroyed"));
 }
 
 /**

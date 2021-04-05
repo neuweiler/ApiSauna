@@ -47,7 +47,7 @@ Humidifier::Humidifier() {
 }
 
 Humidifier::~Humidifier() {
-
+	logger.debug(F("Humidifier destroyed"));
 }
 
 void Humidifier::handleEvent(Event event, ...) {

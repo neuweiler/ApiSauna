@@ -36,6 +36,7 @@ SerialConsole::SerialConsole() {
 }
 
 SerialConsole::~SerialConsole() {
+	logger.debug(F("SerialConsole destroyed"));
 }
 
 void SerialConsole::handleEvent(Event event, ...) {

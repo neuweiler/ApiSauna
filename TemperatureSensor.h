@@ -41,6 +41,7 @@ public:
 
 	TemperatureSensor();
 	TemperatureSensor(SensorAddress address, uint8_t id);
+	virtual ~TemperatureSensor();
 	static SimpleList<SensorAddress> detectTemperatureSensors();
 	static void prepareData();
 	void retrieveData();

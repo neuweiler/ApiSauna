@@ -53,6 +53,7 @@ Plate::Plate(uint8_t id) :
 }
 
 Plate::~Plate() {
+	logger.debug(F("Plate %d destroyed"), id);
 	if (pid != NULL) {
 		delete pid;
 		pid = NULL;

@@ -33,6 +33,7 @@ ProgramList::ProgramList() {
 }
 
 ProgramList::~ProgramList() {
+	logger.debug(F("ProgramList destroyed"));
 }
 
 /**

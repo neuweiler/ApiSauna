@@ -36,6 +36,7 @@ Beeper::Beeper() {
 }
 
 Beeper::~Beeper() {
+	logger.debug(F("Beeper destroyed"));
 }
 
 void Beeper::handleEvent(Event event, ...) {

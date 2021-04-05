@@ -37,6 +37,7 @@ Heater::Heater() {
 }
 
 Heater::~Heater() {
+	logger.debug(F("Heater %d destroyed"), controlPin);
 }
 
 /**

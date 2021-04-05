@@ -48,6 +48,10 @@ TemperatureSensor::TemperatureSensor(SensorAddress address, uint8_t id) :
 	this->id = id;
 }
 
+TemperatureSensor::~TemperatureSensor() {
+	logger.debug(F("TemperatureSensor %#08lx%08lx destroyed"), address.high, address.low);
+}
+
 /**
  * Get the type of the device
  */

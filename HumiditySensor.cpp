@@ -33,6 +33,7 @@ HumiditySensor::HumiditySensor() {
 }
 
 HumiditySensor::~HumiditySensor() {
+	logger.debug(F("HumiditySensor destroyed"));
 	if (dht != NULL) {
 		delete dht;
 		dht = NULL;

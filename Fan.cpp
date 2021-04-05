@@ -40,6 +40,7 @@ Fan::Fan() {
 }
 
 Fan::~Fan() {
+	logger.debug(F("Fan %d destroyed"), controlPin);
 }
 
 void Fan::initialize(uint8_t controlPin, uint8_t minimumSpeed) {
