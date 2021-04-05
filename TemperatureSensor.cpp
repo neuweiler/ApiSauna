@@ -226,6 +226,7 @@ Logger::setLoglevel(Logger::Debug);
         for (int i = 1; i < 5; i++) {
             SensorAddress address;
             address.value = j * 100 + i;
+            Logger::debug(F("  found sensor: %#08lx%08lx"), address.high, address.low);
             addressList.push_back(address);
         }
     }
