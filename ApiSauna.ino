@@ -35,10 +35,10 @@ void setup()
 {
     Serial.begin(CFG_SERIAL_SPEED);
     Serial.println(CFG_VERSION);
+
 	serialConsole.initialize();
 
     configuration.load();
-    statistics.load();
 
     hive.initialize();
 	humidifier.initialize();

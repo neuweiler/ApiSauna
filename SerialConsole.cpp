@@ -244,12 +244,6 @@ bool SerialConsole::handleCmdSystem(String &command, int32_t value)
             i++;
         }
         Logger::warn(F("program #%d not found"), value);
-    } else if (command == String(F("STATS"))) {
-        if (value == 0) {
-            Logger::console(F("resetting statistics"));
-            statistics.reset();
-            statistics.save();
-        }
     } else {
         return false;
     }

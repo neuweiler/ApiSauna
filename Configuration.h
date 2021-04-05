@@ -35,8 +35,6 @@
 #include "config.h"
 #include "Logger.h"
 #include "Crc.h"
-#include "Status.h"
-#include "Statistics.h"
 #include <EEPROM.h>
 #include "EventHandler.h"
 

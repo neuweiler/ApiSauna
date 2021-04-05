@@ -54,8 +54,6 @@ bool Configuration::load()
         Logger::warn(F("no ApiSauna token found in EEPROM --> resetting configuration and statistics"));
         reset();
         save();
-        statistics.reset();
-        statistics.save();
     }
 
     if (getParams()->crc != Crc::calculate((uint8_t *) getParams() + 4, sizeof(ConfigurationParams) - 4)) {
