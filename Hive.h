@@ -37,13 +37,13 @@ public:
 	Hive();
 	virtual ~Hive();
 	void initialize();
-	void handleEvent(Event event, ...);
+	void handleEvent(Event event, va_list args);
 
 private:
 	void process();
 	void handleProgramChange(Program runningProgram);
 
-	uint8_t tickCounter;
+	bool running;
 };
 
 extern Hive hive;

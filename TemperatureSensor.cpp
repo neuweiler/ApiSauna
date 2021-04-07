@@ -200,7 +200,6 @@ uint8_t TemperatureSensor::getId() {
  */
 SimpleList<SensorAddress> TemperatureSensor::detectTemperatureSensors() {
 	SimpleList<SensorAddress> addressList;
-	logger.setLoglevel(logger.Debug);
 	logger.info(F("detecting temperature sensors"));
 
 	if (ds == NULL) {

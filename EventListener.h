@@ -54,22 +54,24 @@ public:
 	};
 
 	enum Event {
-		PROGRAM_START = 1 << 0, // param: Program
-		PROGRAM_STOP = 1 << 1,
-		PROGRAM_PAUSE = 1 << 2,
-		PROGRAM_RESUME = 1 << 3,
-		PROGRAM_UPDATE = 1 << 4, // param: Program
-		TEMPERATURE_NORMAL = 1 << 5,
-		TEMPERATURE_HIGH = 1 << 6,
-		TEMPERATURE_ALERT = 1 << 7,
-		STATUS_HUMIDITY = 1 << 8, // param: StatusHumidity
-		STATUS_ZONE = 1 << 9, // param: StatusZone
-		STATUS_PLATE = 1 << 10, // param: StatusPlate
-		PROCESS = 1 << 14,
+		PROGRAM_PREHEAT = 1 << 0, // param: Program
+		PROGRAM_RUN = 1 << 1, // param: Program
+		PROGRAM_STOP = 1 << 2,
+		PROGRAM_PAUSE = 1 << 3,
+		PROGRAM_RESUME = 1 << 4,
+		PROGRAM_UPDATE = 1 << 5, // param: Program
+		TEMPERATURE_NORMAL = 1 << 6,
+		TEMPERATURE_HIGH = 1 << 7,
+		TEMPERATURE_ALERT = 1 << 8,
+		STATUS_HUMIDITY = 1 << 9, // param: StatusHumidity
+		STATUS_ZONE = 1 << 10, // param: StatusZone
+		STATUS_PLATE = 1 << 11, // param: StatusPlate
+		PROCESS_INPUT = 1 << 13, // called every 100ms
+		PROCESS = 1 << 14, // called every 1000ms
 		ERROR = 1 << 15,
 	};
 
-	virtual void handleEvent(Event event, ...);
+	virtual void handleEvent(Event event, va_list args);
 };
 
 #endif /* EVENTLISTENER_H_ */

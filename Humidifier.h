@@ -37,7 +37,7 @@ public:
 	Humidifier();
 	virtual ~Humidifier();
 	void initialize();
-	void handleEvent(Event event, ...);
+	void handleEvent(Event event, va_list args);
 
 private:
 	void process();

@@ -39,9 +39,9 @@ Beeper::~Beeper() {
 	logger.debug(F("Beeper destroyed"));
 }
 
-void Beeper::handleEvent(Event event, ...) {
+void Beeper::handleEvent(Event event, va_list args) {
 	switch (event) {
-	case PROCESS:
+	case PROCESS_INPUT:
 		process();
 		break;
 	}

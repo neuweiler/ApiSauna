@@ -42,7 +42,7 @@ public:
 	Plate(uint8_t number);
 	virtual ~Plate();
 	void initialize();
-	void handleEvent(Event event, ...);
+	void handleEvent(Event event, va_list args);
 	void setTargetTemperature(int16_t temperature);
 
 private:
@@ -60,6 +60,7 @@ private:
 	PID *pid; // pointer to PID controller
 	bool paused; // flag indicating if the plate is in paused mode
 	bool running; // is a program running?
+	bool preHeat; // are we in the pre-heating phase?
 	StatusPlate status;
 };
 

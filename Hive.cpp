@@ -30,29 +30,29 @@
 Hive hive;
 
 Hive::Hive() {
-	tickCounter = 0;
+	running = false;
 }
 
 Hive::~Hive() {
 }
 
-void Hive::handleEvent(Event event, ...) {
+void Hive::handleEvent(Event event, va_list args) {
 	switch (event) {
 	case PROCESS:
 		process();
 		break;
-	case PROGRAM_START:
+	case PROGRAM_PREHEAT:
+	case PROGRAM_RUN:
 	case PROGRAM_UPDATE:
-		va_list args;
-		va_start(args, event);
+		running = true;
 		handleProgramChange(va_arg(args, Program));
 		//    startTime = millis();
 		//    status.setSystemState(Status::running);
 		//    eventHandler->sendEvent(updateProgram);
 
-		va_end(args);
 		break;
 	case PROGRAM_STOP:
+		running = false;
 		break;
 	}
 }
@@ -71,10 +71,6 @@ void Hive::initialize() {
 }
 
 void Hive::process() {
-	if (tickCounter++ < 10) {
-		return;
-	}
-	tickCounter = 0;
 
 	/*
 	 Program *runningProgram = programHandler->getRunningProgram();
@@ -133,7 +129,7 @@ void Hive::process() {
 
 void Hive::handleProgramChange(Program program) {
 	logger.debug(F("hive noticed program change"));
-	if (program.running) {
+	if (running) {
 		logger.debug(F("closing heater relay"));
 		digitalWrite(configuration.getIO()->heaterRelay, HIGH);
 	} else {

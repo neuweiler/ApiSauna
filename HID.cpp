@@ -32,13 +32,14 @@
 HID hid;
 
 HID::HID() {
-	tickCounter = 0;
 	lastButtons = 0;
 	resetStamp = 0;
 	statusLed = false;
 	selectedProgram = NULL;
 	startTime = 0;
 	state = UNKNOWN;
+	runningProgram = NULL;
+	page = 1;
 
 	for (int i = 0; i < CFG_MAX_NUMBER_PLATES; i++) {
 		statusZone[i].id = 255;
@@ -47,29 +48,36 @@ HID::HID() {
 }
 
 HID::~HID() {
+	logger.debug(F("HID destroyed"));
 }
 
-
 //TODO clean-up this method
-void HID::handleEvent(Event event, ...) {
-	va_list args;
-	va_start(args, event);
+void HID::handleEvent(Event event, va_list args) {
 	switch (event) {
 	case PROCESS:
 		process();
 		break;
-	case PROGRAM_UPDATE:
-	case PROGRAM_START:
-		logger.debug(F("HID noticed program change"));
-		runningProgram = va_arg(args, Program);
-		state = (runningProgram.preHeat ? PREHEAT : RUNNING);
+	case PROCESS_INPUT:
+		processInput();
+		break;
+	case PROGRAM_PREHEAT:
+		state = PREHEAT;
+		runningProgram = va_arg(args, Program*);
 		startTime = millis();
+		break;
+	case PROGRAM_RUN:
+		state = RUNNING;
+		runningProgram = va_arg(args, Program*);
+		startTime = millis();
+		break;
+	case PROGRAM_UPDATE:
+		logger.debug(F("HID noticed program change"));
+		runningProgram = va_arg(args, Program*);
 		break;
 	case PROGRAM_STOP:
 		logger.info(F("stopping program"));
 		state = FINISHED;
 		startTime = 0;
-		//TODO use own state
 		displayFinishedMenu();
 		break;
 	case PROGRAM_PAUSE:
@@ -112,7 +120,6 @@ void HID::handleEvent(Event event, ...) {
 		beeper.beep(20);
 		break;
 	}
-	va_end(args);
 }
 
 void HID::initialize() {
@@ -130,10 +137,12 @@ void HID::initialize() {
 	displayProgramMenu();
 	beeper.beep(2);
 
+	state = READY;
+
 	eventHandler.subscribe(this);
 }
 
-void HID::process() {
+void HID::processInput() {
 	checkReset();
 
 	switch (state) {
@@ -142,15 +151,25 @@ void HID::process() {
 		break;
 	case PREHEAT:
 	case RUNNING:
-		displayProgramInfo();
 		handleProgramInput();
+		break;
+	case FINISHED:
+		handleFinishedInput();
+		break;
+	}
+}
+
+void HID::process() {
+	switch (state) {
+	case PREHEAT:
+	case RUNNING:
+		displayProgramInfo();
 		break;
 	case OVERTEMP:
 		displayHiveTemperatures(1, true);
 		break;
 	case FINISHED:
 		displayHiveTemperatures(1, true);
-		handleFinishedInput();
 		break;
 	case FAULT:
 		displayHiveTemperatures(3, true);
@@ -160,9 +179,6 @@ void HID::process() {
 
 	statusLed = !statusLed;
 	digitalWrite(configuration.getIO()->heartbeat, statusLed); // some kind of heart-beat
-
-	if (tickCounter++ > 8)
-		tickCounter = 0;
 }
 
 void HID::handleProgramMenu() {
@@ -172,7 +188,7 @@ void HID::handleProgramMenu() {
 	}
 	lastButtons = buttons;
 
-	SimpleList<Program> *programs = programList.getPrograms();
+	SimpleList<Program*> *programs = programList.getPrograms();
 
 	if (buttons & NEXT) {
 		beeper.click();
@@ -186,7 +202,7 @@ void HID::handleProgramMenu() {
 	if (buttons & SELECT) {
 		beeper.click();
 		lcd.clear();
-		eventHandler.publish(PROGRAM_START, selectedProgram);
+		eventHandler.publish(PROGRAM_PREHEAT, *selectedProgram);
 	}
 }
 
@@ -197,7 +213,7 @@ void HID::displayProgramMenu() {
 	lcd.setCursor(0, 1);
 	lcd.print(F("Select Program:"));
 	lcd.setCursor(1, 2);
-	lcd.print(selectedProgram->name);
+	lcd.print(((Program*) *selectedProgram)->name);
 	lcd.setCursor(0, 3);
 	lcd.print(F("next           start"));
 }
@@ -238,15 +254,24 @@ void HID::handleProgramInput() {
 
 	if (buttons & NEXT) {
 		beeper.click();
-		if (state == PREHEAT) {
-			if (modal(F("Skip pre-heating?"), F("no"), F("yes"))) {
-				switchToRunning();
-			}
-		}
 		if (state == RUNNING) {
 			if (modal(F("Abort program?"), F("no"), F("yes"))) {
 				eventHandler.publish(PROGRAM_STOP);
 			}
+		}
+		if (state == PREHEAT) {
+			if (modal(F("Skip pre-heating?"), F("no"), F("yes"))) {
+				eventHandler.publish(EventListener::PROGRAM_RUN, runningProgram);
+			}
+		}
+	}
+	if (buttons & SELECT) {
+		beeper.click();
+		lcd.clear();
+
+		page++;
+		if (page > 2) {
+			page = 1;
 		}
 	}
 }
@@ -294,14 +319,11 @@ void HID::displayFinishedMenu() {
 }
 
 void HID::displayHiveTemperatures(uint8_t row, bool displayAll) {
-	if (tickCounter != 0)
-		return;
-
 	lcd.setCursor(0, row);
 	for (int i = 0; i < (displayAll ? CFG_MAX_NUMBER_PLATES : 4); i++) {
 		if (configuration.getSensor()->addressHive[i].value != 0) {
 			//TODO this might not match.. if we have less zones than hive sensors
-			snprintf(lcdBuffer, 4, (char*) F("%02d\xdf"), (statusZone[i].temperatureActual + 5) / 10);
+			snprintf(lcdBuffer, 4, "%02d\xdf", (statusZone[i].temperatureActual + 5) / 10);
 			lcd.print(lcdBuffer);
 		}
 	}
@@ -311,48 +333,63 @@ void HID::displayHiveTemperatures(uint8_t row, bool displayAll) {
  * Display the various program informations in different cycles on the LCD.
  */
 void HID::displayProgramInfo() {
-	if (tickCounter != 0)
-		return;
+	switch (page) {
+	case 1:
+		displayProgramInfoPage1();
+		break;
+	case 2:
+		displayProgramInfoPage2();
+		break;
+	}
+}
 
+void HID::displayProgramInfoPage1() {
 	// program name and time running
 	lcd.setCursor(0, 0);
-	snprintf(lcdBuffer, 14, (char*) F("%-13s"), (state == PREHEAT ? (char*) F("pre-heating") : selectedProgram->name));
+	String progName = String(state == PREHEAT ? F("pre-heating") : runningProgram->name);
+	snprintf(lcdBuffer, 14, "%-13s", progName.c_str());
 	lcd.print(lcdBuffer);
+
 	String timeRunning = convertTime(calculateTimeRunning());
 	lcd.setCursor(timeRunning.length() == 7 ? 13 : 12, 0);
-	snprintf(lcdBuffer, 9, (char*) F("%s"), timeRunning.c_str());
+	snprintf(lcdBuffer, 9, "%s", timeRunning.c_str());
 	lcd.print(lcdBuffer);
 
 	// actual+target hive temperature and humidity with humidifier/fan status
 	displayHiveTemperatures(1, false);
 	lcd.setCursor(12, 1);
-//    snprintf(lcdBuffer, 21, "\x7e%02d\xdf%s%02d%%  ", (status.temperatureTargetHive + 5) / 10,
-//            (status.vaporizerEnabled ? "*" : status.fanSpeedHumidifier > 0 ? "x" : " "), status.humidity);
-//    lcd.print(lcdBuffer);
+	snprintf(lcdBuffer, 21, "\x7e%02d\xdf%s%02d%%  ", (statusZone[0].temperatureTarget + 5) / 10,
+			(statusHumidity.vaporizer ? "*" : statusHumidity.fanSpeed > 0 ? "x" : " "), statusHumidity.humidity);
+	lcd.print(lcdBuffer);
 
 	// actual and target plate temperatures
 	lcd.setCursor(0, 2);
 	for (int i = 0; (i < configuration.getParams()->numberOfPlates) && (i < 4); i++) {
-		snprintf(lcdBuffer, 4, (char*) F("%02d%c"), (statusPlate[i].temperatureActual + 5) / 10,
+		snprintf(lcdBuffer, 4, "%02d%c", (statusPlate[i].temperatureActual + 5) / 10,
 				(statusPlate[i].power > 0 ? 0xeb : 0xdf));
 		lcd.print(lcdBuffer);
 	}
 	lcd.setCursor(12, 2);
-	snprintf(lcdBuffer, 9, (char*) F("\x7e%02d\xdf %02d\xdf"), (statusPlate[0].temperatureTarget + 5) / 10,
+	snprintf(lcdBuffer, 9, "\x7e%02d\xdf %02d\xdf", (statusPlate[0].temperatureTarget + 5) / 10,
 			(statusHumidity.temperature + 5) / 10);
 	lcd.print(lcdBuffer);
 
 	// fan speed, time remaining
 	lcd.setCursor(0, 3);
 	for (int i = 0; i < configuration.getParams()->numberOfPlates && i < 4; i++) {
-		snprintf(lcdBuffer, 4, (char*) F("%02ld "),
+		snprintf(lcdBuffer, 4, "%02ld ",
 				map(statusPlate[i].fanSpeed, configuration.getParams()->minFanSpeed, 255, 0, 99));
 		lcd.print(lcdBuffer);
 	}
 	String timeRemaining = convertTime(calculateTimeRemaining());
 	lcd.setCursor(timeRemaining.length() == 7 ? 12 : 11, 3);
-	snprintf(lcdBuffer, 10, (char*) F(" %s"), timeRemaining.c_str());
+	snprintf(lcdBuffer, 10, " %s", timeRemaining.c_str());
 	lcd.print(lcdBuffer);
+}
+
+void HID::displayProgramInfoPage2() {
+	//TODO
+	lcd.print(F("print detailed zone info"));
 }
 
 /**
@@ -360,15 +397,13 @@ void HID::displayProgramInfo() {
  *
  */
 void HID::logData() {
-	if (tickCounter != 3)
-		return;
-
 	logger.info(F("time: %s, remaining: %s, status: %s"), convertTime(calculateTimeRunning()).c_str(),
 			convertTime(calculateTimeRemaining()).c_str(), stateToStr(state).c_str());
 
-	for (int i = 0; (configuration.getSensor()->addressHive[i].value != 0) && (i < CFG_MAX_NUMBER_PLATES); i++) {
-		logger.debug(F("sensor %d: %s C"), i + 1, toDecimal(statusZone[i].temperatureActual, 10).c_str());
+	for (int i = 0; (i < CFG_MAX_NUMBER_PLATES) && (statusZone[i].id != 255); i++) {
+		logger.debug(F("zone %d: %s C"), i + 1, toDecimal(statusZone[0].temperatureActual, 10).c_str());
 	}
+
 	logger.info(F("hive target: %sC"), toDecimal(statusZone[0].temperatureTarget, 10).c_str());
 
 	for (int i = 0; i < configuration.getParams()->numberOfPlates; i++) {
@@ -378,9 +413,8 @@ void HID::logData() {
 				configuration.getParams()->maxHeaterPower, statusPlate[i].fanSpeed);
 	}
 
-//    logger.info(F("humidity: relHumidity=%d (%d-%d), vapor=%d, fan=%d, temp=%s C"), status.humidity,
-//            programHandler->getRunningProgram()->humidityMinimum, programHandler->getRunningProgram()->humidityMaximum, status.vaporizerEnabled,
-//            status.fanSpeedHumidifier, toDecimal(status.temperatureHumidifier, 10).c_str());
+	logger.info(F("humidity: relHumidity=%d, vapor=%d, fan=%d, temp=%s C"), statusHumidity.humidity,
+			statusHumidity.vaporizer, statusHumidity.fanSpeed, toDecimal(statusHumidity.temperature, 10).c_str());
 }
 
 /**
@@ -412,7 +446,7 @@ uint32_t HID::calculateTimeRunning() {
 uint32_t HID::calculateTimeRemaining() {
 	if (startTime != 0) {
 		uint32_t timeRunning = calculateTimeRunning();
-		uint32_t duration = (state == PREHEAT ? selectedProgram->durationPreHeat : selectedProgram->duration) * 60;
+		uint32_t duration = (state == PREHEAT ? runningProgram->durationPreHeat : runningProgram->duration) * 60;
 		if (timeRunning < duration) { // prevent under-flow
 			return duration - timeRunning;
 		}
@@ -429,7 +463,7 @@ String HID::convertTime(uint32_t seconds) {
 	char buffer[10];
 	int8_t hours = (seconds / 3600) % 24;
 	int8_t minutes = (seconds / 60) % 60;
-	sprintf(buffer, (char*) F("%d:%02d:%02d"), hours, minutes, (int) (seconds % 60));
+	sprintf(buffer, "%d:%02d:%02d", hours, minutes, (int) (seconds % 60));
 	return String(buffer);
 }
 
@@ -438,7 +472,7 @@ String HID::convertTime(uint32_t seconds) {
  */
 String HID::toDecimal(int16_t number, uint8_t divisor) {
 	char buffer[10];
-	snprintf(buffer, 9, (char*) F("%d.%d"), number / divisor, abs(number % divisor));
+	snprintf(buffer, 9, "%d.%d", number / divisor, abs(number % divisor));
 	return String(buffer);
 }
 
@@ -447,9 +481,6 @@ void HID::softReset() {
 }
 
 void HID::addTime(uint16_t seconds) {
-}
-
-void HID::switchToRunning() {
 }
 
 /*

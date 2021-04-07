@@ -41,7 +41,7 @@ public:
 	ThermalZone();
 	virtual ~ThermalZone();
 	void initialize();
-	void handleEvent(Event event, ...);
+	void handleEvent(Event event, va_list args);
 	void addSensor(TemperatureSensor *sensor);
 	void addPlate(Plate *plate);
 
@@ -61,6 +61,8 @@ private:
 	int16_t plateMaxTemperatureProgram;
 	bool temperatureHigh;
 	StatusZone status;
+	bool preHeat;
+	bool requestData;
 };
 
 #endif /* THERMALZONE_H_ */

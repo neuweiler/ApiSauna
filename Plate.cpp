@@ -39,6 +39,7 @@ Plate::Plate() {
 	pid = NULL;
 	paused = false;
 	running = false;
+	preHeat = false;
 
 	status.temperatureTarget = 0;
 	status.temperatureActual = 0;
@@ -60,14 +61,21 @@ Plate::~Plate() {
 	}
 }
 
-void Plate::handleEvent(Event event, ...) {
-	va_list args;
-	va_start(args, event);
+void Plate::handleEvent(Event event, va_list args) {
 	switch (event) {
 	case PROCESS:
 		process();
 		break;
-	case PROGRAM_START:
+	case PROGRAM_PREHEAT:
+		running = true;
+		preHeat = true;
+		programChange(va_arg(args, Program));
+		break;
+	case PROGRAM_RUN:
+		running = true;
+		preHeat = false;
+		programChange(va_arg(args, Program));
+		break;
 	case PROGRAM_UPDATE:
 		programChange(va_arg(args, Program));
 		break;
@@ -85,7 +93,6 @@ void Plate::handleEvent(Event event, ...) {
 		paused = false;
 		break;
 	}
-	va_end(args);
 }
 
 void Plate::initialize() {
@@ -137,8 +144,7 @@ void Plate::programChange(const Program &program) {
 	logger.debug(F("plate %d noticed program change"), id);
 	pid->SetOutputLimits(0, configuration.getParams()->maxHeaterPower);
 	pid->SetTunings(program.plateKp, program.plateKi, program.plateKd);
-	setFanSpeed(program.preHeat ? program.fanSpeedPreHeat : program.fanSpeed);
-	running = program.running;
+	setFanSpeed(preHeat ? program.fanSpeedPreHeat : program.fanSpeed);
 }
 
 /**

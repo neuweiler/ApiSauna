@@ -48,7 +48,14 @@ void setup() {
  * The main program loop
  */
 void loop() {
-	eventHandler.publish(EventListener::PROCESS);
-	TemperatureSensor::prepareData();
+	static uint8_t tickCounter = 0;
+
+	if (tickCounter++ > 7) {
+		eventHandler.publish(EventListener::PROCESS);
+		tickCounter = 0;
+	}
+
+	eventHandler.publish(EventListener::PROCESS_INPUT);
+
 	delay(CFG_LOOP_DELAY);
 }

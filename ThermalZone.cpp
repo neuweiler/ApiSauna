@@ -36,10 +36,12 @@ ThermalZone::ThermalZone() {
 	plateMaxTemperatureProgram = 0;
 	plateTargetTemperature = 0;
 	temperatureHigh = false;
+	requestData = true;
 
 	status.id = zoneCounter++;
 	status.temperatureTarget = 0;
 	status.temperatureActual = 0;
+	preHeat = false;
 }
 
 ThermalZone::~ThermalZone() {
@@ -50,14 +52,26 @@ ThermalZone::~ThermalZone() {
 	}
 }
 
-void ThermalZone::handleEvent(Event event, ...) {
-	va_list args;
-	va_start(args, event);
+void ThermalZone::handleEvent(Event event, va_list args) {
 	switch (event) {
+	case PROCESS_INPUT:
+		if (requestData) {
+			TemperatureSensor::prepareData();
+			requestData = false;
+		}
+		break;
 	case PROCESS:
 		process();
+		requestData = true;
 		break;
-	case PROGRAM_START:
+	case PROGRAM_PREHEAT:
+		preHeat = true;
+		programChange(va_arg(args, Program));
+		break;
+	case PROGRAM_RUN:
+		preHeat = false;
+		programChange(va_arg(args, Program));
+		break;
 	case PROGRAM_UPDATE:
 		programChange(va_arg(args, Program));
 		break;
@@ -69,7 +83,6 @@ void ThermalZone::handleEvent(Event event, ...) {
 	case PROGRAM_RESUME:
 		break;
 	}
-	va_end(args);
 }
 
 void ThermalZone::initialize() {
@@ -107,12 +120,12 @@ void ThermalZone::programChange(const Program &program) {
 	logger.info(F("thermal zone noticed program change"));
 
 	// adjust the PID which defines the target temperature of the plates based on the hive temp
-	pid->SetOutputLimits((program.preHeat ? program.temperaturePreHeat : program.temperatureHive), program.temperaturePlate);
+	pid->SetOutputLimits((preHeat ? program.temperaturePreHeat : program.temperatureHive), program.temperaturePlate);
 	pid->SetTunings(program.hiveKp, program.hiveKi, program.hiveKd);
 	plateTargetTemperature = program.temperaturePlate;
 	plateMaxTemperatureProgram = program.temperaturePlate;
 
-	targetTemperature = (program.preHeat ? program.temperaturePreHeat : program.temperatureHive);
+	targetTemperature = (preHeat ? program.temperaturePreHeat : program.temperatureHive);
 	status.temperatureTarget = targetTemperature;
 }
 

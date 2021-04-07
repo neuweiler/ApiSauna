@@ -29,9 +29,7 @@
 
 class Program {
 public:
-	bool running; // flag indicating if the program is currently running
-	bool preHeat; // flag indicating if we're in the pre-heating phase (only if running is also true)
-	const __FlashStringHelper *name; // name to be displayed in menu
+	String name; // name to be displayed in menu
 	int16_t temperaturePreHeat; // the target hive temperature during pre-heat (in 0.1 deg C)
 	int16_t temperatureHive; // the target hive temperature (in 0.1 deg C)
 	double hiveKp, hiveKi, hiveKd; // hive temperature PID configuration

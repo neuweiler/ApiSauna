@@ -39,7 +39,7 @@ public:
 	HID();
 	virtual ~HID();
 	void initialize();
-	void handleEvent(Event event, ...);
+	void handleEvent(Event event, va_list args);
 
 private:
 	enum Button {
@@ -51,7 +51,10 @@ private:
 	};
 
 	void process();
+	void processInput();
 	void displayProgramInfo();
+	void displayProgramInfoPage1();
+	void displayProgramInfoPage2();
 	void logData();
 	String convertTime(uint32_t millis);
 	String toDecimal(int16_t number, uint8_t divisor);
@@ -63,7 +66,6 @@ private:
 	void checkReset();
 	void start(uint8_t programNumber);
 	void addTime(uint16_t seconds);
-	void switchToRunning();
 	void displayHiveTemperatures(uint8_t row, bool displayAll);
 	bool modal(String request, String negative, String positive, uint8_t timeout);
 	void softReset();
@@ -74,9 +76,8 @@ private:
 
 	Beeper beeper;
 	LiquidCrystal lcd = LiquidCrystal(0, 0, 0, 0, 0, 0); // will be properly initialized later
-	SimpleList<Program>::iterator selectedProgram;
-	Program runningProgram;
-	uint8_t tickCounter;
+	SimpleList<Program *>::iterator selectedProgram;
+	Program *runningProgram;
 	uint8_t lastButtons;
 	uint32_t resetStamp;
 	uint32_t startTime; // timestamp when the program started (in millis)
@@ -87,6 +88,7 @@ private:
 
 	char lcdBuffer[21];
 	bool statusLed;
+	uint8_t page;
 };
 
 extern HID hid;

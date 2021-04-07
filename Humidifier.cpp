@@ -50,17 +50,16 @@ Humidifier::~Humidifier() {
 	logger.debug(F("Humidifier destroyed"));
 }
 
-void Humidifier::handleEvent(Event event, ...) {
+void Humidifier::handleEvent(Event event, va_list args) {
 	switch (event) {
 	case PROCESS:
 		process();
 		break;
-	case PROGRAM_START:
+	case PROGRAM_PREHEAT:
+	case PROGRAM_RUN:
 	case PROGRAM_UPDATE:
-		va_list args;
-		va_start(args, event);
+		running = true;
 		programChange(va_arg(args, Program));
-		va_end(args);
 		break;
 	case PROGRAM_STOP:
 		running = false;
@@ -134,7 +133,6 @@ void Humidifier::programChange(const Program &program) {
 	maximumHumidity = program.humidityMaximum;
 	minimumHumidity = program.humidityMinimum;
 	fanSpeed = program.fanSpeedHumidifier;
-	running = program.running;
 }
 
 void Humidifier::enableVaporizer(bool enable) {

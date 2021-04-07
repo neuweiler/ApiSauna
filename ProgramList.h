@@ -36,14 +36,14 @@ class ProgramList {
 public:
 	ProgramList();
 	virtual ~ProgramList();
-	SimpleList<Program>* getPrograms();
+	SimpleList<Program *>* getPrograms();
 
 private:
 	ProgramList(ProgramList const&); // copy disabled
 	void operator=(ProgramList const&); // assigment disabled    SimpleList<Program> programs;
 	void initPrograms();
 
-	SimpleList<Program> programs;
+	SimpleList<Program *> programs;
 };
 
 extern ProgramList programList;

@@ -48,9 +48,6 @@ void EventHandler::publish(EventListener::Event event, ...) {
 	va_list args;
 	va_start(args, event);
 	for (SimpleList<EventListener*>::iterator entry = listeners.begin(); entry != listeners.end(); ++entry) {
-		if (logger.isDebug()) {
-			logger.debug(F("publishing event %x to %x"), event, *entry);
-		}
 		((EventListener*) *entry)->handleEvent(event, args);
 	}
 	va_end(args);

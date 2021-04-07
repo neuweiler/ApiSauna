@@ -38,10 +38,10 @@ public:
 	SerialConsole();
 	virtual ~SerialConsole();
 	void initialize();
-	void handleEvent(Event event, ...);
+	void handleEvent(Event event, va_list args);
 
 private:
-	void process();
+	void processInput();
 	bool handleShortCmd();
 	bool handleCmd();
 	bool handleCmdSystem(String &command, int32_t value);
@@ -59,6 +59,7 @@ private:
 	char cmdBuffer[CFG_SERIAL_BUFFER_SIZE + 1];
 	int ptrBuffer;
 	Program program;
+	bool running;
 };
 
 extern SerialConsole serialConsole;

@@ -33,24 +33,27 @@ SerialConsole serialConsole;
 
 SerialConsole::SerialConsole() {
 	ptrBuffer = 0;
+	running = false;
 }
 
 SerialConsole::~SerialConsole() {
 	logger.debug(F("SerialConsole destroyed"));
 }
 
-void SerialConsole::handleEvent(Event event, ...) {
-	va_list args;
-	va_start(args, event);
+void SerialConsole::handleEvent(Event event, va_list args) {
 	switch (event) {
-	case PROCESS:
-		process();
+	case PROCESS_INPUT:
+		processInput();
 		break;
+	case PROGRAM_PREHEAT:
+	case PROGRAM_RUN:
 	case PROGRAM_UPDATE:
+		running = true;
 		program = va_arg(args, Program);
 		break;
+	case PROGRAM_STOP:
+		running = false;
 	}
-	va_end(args);
 }
 
 void SerialConsole::initialize() {
@@ -58,7 +61,7 @@ void SerialConsole::initialize() {
 	eventHandler.subscribe(this);
 }
 
-void SerialConsole::process() {
+void SerialConsole::processInput() {
 	while (Serial.available()) {
 		int incoming = Serial.read();
 
@@ -172,7 +175,7 @@ void SerialConsole::printMenuIO() {
 }
 
 void SerialConsole::printMenuProgram() {
-	if (program.running) {
+	if (running) {
 		logger.console(F("\nPROGRAM\n"));
 		logger.console(F("TEMP-PREHEAT=%d - pre-heat hive temperature (in 0.1 deg C, 0-600)"),
 				program.temperaturePreHeat);
@@ -234,10 +237,10 @@ bool SerialConsole::handleCmdSystem(String &command, int32_t value) {
 		logger.info(F("starting program #%d"), value);
 
 		int i = 1;
-		SimpleList<Program> *programs = programList.getPrograms();
-		for (SimpleList<Program>::iterator itr = programs->begin(); itr != programs->end(); ++itr) {
+		SimpleList<Program *> *programs = programList.getPrograms();
+		for (SimpleList<Program *>::iterator itr = programs->begin(); itr != programs->end(); ++itr) {
 			if (i == value) {
-				eventHandler.publish(PROGRAM_START, itr);
+				eventHandler.publish(PROGRAM_PREHEAT, itr);
 				return true;
 			}
 			i++;
@@ -418,7 +421,7 @@ bool SerialConsole::handleCmdIO(String &command, int32_t value) {
 }
 
 bool SerialConsole::handleCmdProgram(String &command, int32_t value) {
-	if (!program.running) {
+	if (!running) {
 		return false;
 	}
 
