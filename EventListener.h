@@ -43,6 +43,7 @@ public:
 		uint8_t id;
 		int16_t temperatureTarget;
 		int16_t temperatureActual;
+		int16_t temperatureSensor[CFG_MAX_NUM_SENSORS_PER_ZONE];
 	};
 
 	struct StatusPlate {

@@ -135,6 +135,7 @@ void HID::initialize() {
 	selectedProgram = programList.getPrograms()->begin();
 
 	displayProgramMenu();
+	beeper.initialize();
 	beeper.beep(2);
 
 	state = READY;
@@ -320,12 +321,9 @@ void HID::displayFinishedMenu() {
 
 void HID::displayHiveTemperatures(uint8_t row, bool displayAll) {
 	lcd.setCursor(0, row);
-	for (int i = 0; i < (displayAll ? CFG_MAX_NUMBER_PLATES : 4); i++) {
-		if (configuration.getSensor()->addressHive[i].value != 0) {
-			//TODO this might not match.. if we have less zones than hive sensors
-			snprintf(lcdBuffer, 4, "%02d\xdf", (statusZone[i].temperatureActual + 5) / 10);
-			lcd.print(lcdBuffer);
-		}
+	for (int i = 0; statusZone[i].id != 255 && i < CFG_MAX_NUMBER_PLATES; i++) {
+		snprintf(lcdBuffer, 4, "%02d\xdf", (statusZone[i].temperatureActual + 5) / 10);
+		lcd.print(lcdBuffer);
 	}
 }
 
@@ -388,8 +386,20 @@ void HID::displayProgramInfoPage1() {
 }
 
 void HID::displayProgramInfoPage2() {
-	//TODO
-	lcd.print(F("print detailed zone info"));
+	for (int i = 0; i < 3 && statusZone[i].id != 255; i++) {
+		lcd.setCursor(0, i);
+		snprintf(lcdBuffer, 20, "%s\xdf%s\xdf %d%c%d\xdf%d%%",
+				toDecimal(statusZone[i].temperatureSensor[0], 10).c_str(),
+				toDecimal(statusZone[i].temperatureSensor[1], 10).c_str(), (statusPlate[i].temperatureActual + 5) / 10,
+				(statusPlate[i].power > 0 ? 0xeb : 0xdf), (statusPlate[i].temperatureTarget + 5) / 10,
+				statusPlate[i].fanSpeed / 26);
+		lcd.print(lcdBuffer);
+	}
+
+	lcd.setCursor(0, 3);
+	snprintf(lcdBuffer, 21, "%02d\xdf  %s%02d%%", (statusHumidity.temperature + 5) / 10,
+			(statusHumidity.vaporizer ? "*" : statusHumidity.fanSpeed > 0 ? "x" : " "), statusHumidity.humidity);
+	lcd.print(lcdBuffer);
 }
 
 /**
@@ -401,10 +411,12 @@ void HID::logData() {
 			convertTime(calculateTimeRemaining()).c_str(), stateToStr(state).c_str());
 
 	for (int i = 0; (i < CFG_MAX_NUMBER_PLATES) && (statusZone[i].id != 255); i++) {
-		logger.debug(F("zone %d: %s C"), i + 1, toDecimal(statusZone[0].temperatureActual, 10).c_str());
+		logger.info(F("zone %d: %s C -> %s C"), i + 1, toDecimal(statusZone[i].temperatureActual, 10).c_str(),
+				toDecimal(statusZone[i].temperatureTarget, 10).c_str());
+		for (int j = 0; (j < CFG_MAX_NUM_SENSORS_PER_ZONE) && (statusZone[i].temperatureSensor[j] != -999); j++) {
+			logger.info(F("  sensor %d: %s C"), j, toDecimal(statusZone[i].temperatureSensor[j], 10).c_str());
+		}
 	}
-
-	logger.info(F("hive target: %sC"), toDecimal(statusZone[0].temperatureTarget, 10).c_str());
 
 	for (int i = 0; i < configuration.getParams()->numberOfPlates; i++) {
 		logger.info(F("plate %d: %sC -> %sC, power=%d/%d, fan=%d"), i + 1,
