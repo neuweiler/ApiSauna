@@ -133,6 +133,9 @@ void TemperatureSensor::setResolution(byte resolution) {
  * Order all temperature sensors to prepare data.
  */
 void TemperatureSensor::prepareData() {
+	if (logger.isDebug()) {
+		logger.debug(F("preparing temperature sensor data"));
+	}
 	ds->reset();
 	ds->skip(); // skip ROM - send to all devices
 	ds->write(0x44); // start conversion
@@ -211,17 +214,17 @@ SimpleList<SensorAddress> TemperatureSensor::detectTemperatureSensors() {
 		SensorAddress address = findNextSensor();
 		if (address.value == 0)
 			break;
-		logger.debug(F("  found sensor: %#08lx%08lx"), address.high, address.low);
+		logger.info(F("  found sensor: %#08lx%08lx"), address.high, address.low);
 		addressList.push_back(address);
 	}
 	prepareData();
 
-#ifdef FAKE_TEMPERATURE_SENSORS
+#ifdef CFG_FAKE_TEMPERATURE_SENSORS
     for (int j = 1; j < 3; j++) {
         for (int i = 1; i < 5; i++) {
             SensorAddress address;
             address.value = j * 100 + i;
-            logger.debug(F("  found sensor: %#08lx%08lx"), address.high, address.low);
+            logger.info(F("  found fake sensor: %#08lx%08lx"), address.high, address.low);
             addressList.push_back(address);
         }
     }

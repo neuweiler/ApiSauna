@@ -47,12 +47,14 @@ public:
 
 private:
 	void process();
-	void programChange(const Program &program);
+	void programChange(const Program *program);
 	void initPid();
 	int16_t retrieveTemperature();
 	int16_t calculatePlateTargetTemperature();
+	uint8_t calculateFanLevel();
 
 	static uint8_t zoneCounter;
+	static bool requestData;
 	SimpleList<TemperatureSensor *> temperatureSensors;
 	SimpleList<Plate *> plates;
 	PID *pid; // pointer to PID controller
@@ -62,7 +64,6 @@ private:
 	bool temperatureHigh;
 	StatusZone status;
 	bool preHeat;
-	bool requestData;
 };
 
 #endif /* THERMALZONE_H_ */

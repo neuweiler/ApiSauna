@@ -27,21 +27,23 @@
 #include "ThermalZone.h"
 
 uint8_t ThermalZone::zoneCounter = 0;
+bool ThermalZone::requestData = true;
 
 ThermalZone::ThermalZone() {
 	pid = NULL;
 	actualTemperature = -999;
-	targetTemperature = 0;
+	targetTemperature = 370;
 	plateTemperature = 0;
 	plateMaxTemperatureProgram = 0;
-	plateTargetTemperature = 0;
+	plateTargetTemperature = 370;
 	temperatureHigh = false;
-	requestData = true;
+	preHeat = false;
 
 	status.id = zoneCounter++;
 	status.temperatureTarget = 0;
-	status.temperatureActual = 0;
-	preHeat = false;
+	for (int i = 0; i < CFG_MAX_NUM_SENSORS_PER_ZONE; i++) {
+		status.temperatureSensor[i] = -999;
+	}
 }
 
 ThermalZone::~ThermalZone() {
@@ -66,14 +68,14 @@ void ThermalZone::handleEvent(Event event, va_list args) {
 		break;
 	case PROGRAM_PREHEAT:
 		preHeat = true;
-		programChange(va_arg(args, Program));
+		programChange(va_arg(args, Program *));
 		break;
 	case PROGRAM_RUN:
 		preHeat = false;
-		programChange(va_arg(args, Program));
+		programChange(va_arg(args, Program *));
 		break;
 	case PROGRAM_UPDATE:
-		programChange(va_arg(args, Program));
+		programChange(va_arg(args, Program *));
 		break;
 	case PROGRAM_STOP:
 	case TEMPERATURE_ALERT:
@@ -97,8 +99,10 @@ void ThermalZone::process() {
 	status.temperatureActual = actualTemperature;
 
 	int16_t plateTemp = calculatePlateTargetTemperature();
+	uint8_t fanLevel = calculateFanLevel();
 	for (SimpleList<Plate *>::iterator plate = plates.begin(); plate != plates.end(); ++plate) {
 		(*plate)->setTargetTemperature(plateTemp);
+		(*plate)->setFanLevel(fanLevel);
 	}
 
 	if (actualTemperature > configuration.getParams()->hiveMaxTemp && !temperatureHigh) {
@@ -116,16 +120,18 @@ void ThermalZone::process() {
 	eventHandler.publish(EventListener::STATUS_ZONE, status);
 }
 
-void ThermalZone::programChange(const Program &program) {
+void ThermalZone::programChange(const Program *program) {
 	logger.info(F("thermal zone noticed program change"));
 
 	// adjust the PID which defines the target temperature of the plates based on the hive temp
-	pid->SetOutputLimits((preHeat ? program.temperaturePreHeat : program.temperatureHive), program.temperaturePlate);
-	pid->SetTunings(program.hiveKp, program.hiveKi, program.hiveKd);
-	plateTargetTemperature = program.temperaturePlate;
-	plateMaxTemperatureProgram = program.temperaturePlate;
+	pid->SetOutputLimits((preHeat ? program->temperaturePreHeat : program->temperatureHive), program->temperaturePlate);
+	pid->SetTunings(program->hiveKp, program->hiveKi, program->hiveKd);
+	if (plateTargetTemperature < 370) {
+		plateTargetTemperature = program->temperaturePlate;
+	}
+	plateMaxTemperatureProgram = program->temperaturePlate;
 
-	targetTemperature = (preHeat ? program.temperaturePreHeat : program.temperatureHive);
+	targetTemperature = (preHeat ? program->temperaturePreHeat : program->temperatureHive);
 	status.temperatureTarget = targetTemperature;
 }
 
@@ -136,22 +142,34 @@ void ThermalZone::programChange(const Program &program) {
 void ThermalZone::initPid() {
 	pid = new PID(&actualTemperature, &plateTemperature, &targetTemperature, 0, 0, 0, DIRECT);
 	pid->SetOutputLimits(0, configuration.getParams()->plateOverTemp);
-	pid->SetSampleTime(CFG_LOOP_DELAY);
+	pid->SetSampleTime(CFG_LOOP_DELAY * 10);
 	pid->SetMode(AUTOMATIC);
 }
 
 /**
- * Retrieve temperature data from all assigned sensors and return highest value (in 0.1 deg C)
+ * Retrieve temperature data from all assigned sensors and return average value (in 0.1 deg C)
  */
 int16_t ThermalZone::retrieveTemperature() {
-	int16_t max = -999;
+	int16_t avg = 0;
 
+	uint8_t count = 0;
 	for (SimpleList<TemperatureSensor *>::iterator sensor = temperatureSensors.begin();
 			sensor != temperatureSensors.end(); ++sensor) {
 		(*sensor)->retrieveData();
-		max = max(max, (*sensor)->getTemperatureCelsius());
+		int16_t temperature = (*sensor)->getTemperatureCelsius();
+		avg += temperature;
+		if (count < CFG_MAX_NUM_SENSORS_PER_ZONE) {
+			status.temperatureSensor[count] = temperature;
+		}
+		count ++;
 	}
-	return max;
+	count = max(count, 1);
+#ifdef CFG_FAKE_TEMPERATURE_SENSORS
+	if (avg == 0) {
+		avg = 400 + status.id * 10;
+	}
+#endif
+	return avg / count;
 }
 
 /**
@@ -177,6 +195,14 @@ int16_t ThermalZone::calculatePlateTargetTemperature() {
 	}
 
 	return plateTargetTemperature;
+}
+
+/**
+ * Calculate the percentage of the maximum fan speed the fan should turn.
+ * Reduce speed when close to target temperature, stop when 1 deg C above target
+ */
+uint8_t ThermalZone::calculateFanLevel() {
+	return constrain(map(actualTemperature, targetTemperature - 10, targetTemperature + 10, 100, 0), 0, 100);
 }
 
 void ThermalZone::addSensor(TemperatureSensor *sensor) {
