@@ -44,12 +44,13 @@ public:
 	void initialize();
 	void handleEvent(Event event, va_list args);
 	void setTargetTemperature(int16_t temperature);
+	void setFanLevel(uint8_t fanSpeed);
 
 private:
 	void process();
 	uint8_t calculateHeaterPower();
 	void setFanSpeed(uint8_t speed);
-	void programChange(const Program &program);
+	void programChange(const Program *program);
 
 	static uint8_t activeHeaters; // a static counter to establish how many heaters are active in non-PWM mode
 	uint8_t id;
@@ -57,6 +58,7 @@ private:
 	Heater heater;
 	Fan fan;
 	double targetTemperature, currentTemperature, power;
+	uint8_t fanLevel, maxFanSpeed;
 	PID *pid; // pointer to PID controller
 	bool paused; // flag indicating if the plate is in paused mode
 	bool running; // is a program running?

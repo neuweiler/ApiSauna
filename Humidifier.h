@@ -42,7 +42,7 @@ public:
 private:
 	void process();
 	void enableVaporizer(bool on);
-	void programChange(const Program &program);
+	void programChange(const Program *program);
 	void setFanSpeed(uint8_t speed);
 
 	HumiditySensor sensor;

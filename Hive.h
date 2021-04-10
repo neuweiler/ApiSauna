@@ -41,7 +41,7 @@ public:
 
 private:
 	void process();
-	void handleProgramChange(Program runningProgram);
+	void handleProgramChange(Program *runningProgram);
 
 	bool running;
 };

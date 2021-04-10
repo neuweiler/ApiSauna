@@ -59,7 +59,7 @@ void Humidifier::handleEvent(Event event, va_list args) {
 	case PROGRAM_RUN:
 	case PROGRAM_UPDATE:
 		running = true;
-		programChange(va_arg(args, Program));
+		programChange(va_arg(args, Program *));
 		break;
 	case PROGRAM_STOP:
 		running = false;
@@ -104,8 +104,11 @@ void Humidifier::process() {
 	uint8_t humidity = sensor.getRelativeHumidity();
 
 	if (humidity != 0 && humidity < minimumHumidity) {
-//TODO if fanSpeed < 240, give it a kick of 240 to break free
-		setFanSpeed(fanSpeed);
+		if (fan.getSpeed() == 0 && fanSpeed < 240) {
+			setFanSpeed(255); // give it a kick to break free, in next cycle set correct speed (if <240)
+		} else {
+			setFanSpeed(fanSpeed);
+		}
 		enableVaporizer(true);
 		fanTimestamp = 0;
 	}
@@ -128,11 +131,11 @@ void Humidifier::process() {
 	eventHandler.publish(EventListener::STATUS_HUMIDITY, status);
 }
 
-void Humidifier::programChange(const Program &program) {
+void Humidifier::programChange(const Program *program) {
 	logger.debug(F("humidifier noticed program change"));
-	maximumHumidity = program.humidityMaximum;
-	minimumHumidity = program.humidityMinimum;
-	fanSpeed = program.fanSpeedHumidifier;
+	maximumHumidity = program->humidityMaximum;
+	minimumHumidity = program->humidityMinimum;
+	fanSpeed = program->fanSpeedHumidifier;
 }
 
 void Humidifier::enableVaporizer(bool enable) {

@@ -58,7 +58,7 @@ private:
 
 	char cmdBuffer[CFG_SERIAL_BUFFER_SIZE + 1];
 	int ptrBuffer;
-	Program program;
+	Program *program;
 	bool running;
 };
 

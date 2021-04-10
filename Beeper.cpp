@@ -31,8 +31,6 @@
 Beeper::Beeper() {
 	numberOfBeeps = 0;
 	soundOn = false;
-
-	eventHandler.subscribe(this); // register ourself
 }
 
 Beeper::~Beeper() {
@@ -56,6 +54,8 @@ void Beeper::initialize() {
 	uint8_t pin = configuration.getIO()->beeper;
 	pinMode(pin, OUTPUT);
 	digitalWrite(pin, LOW);
+
+	eventHandler.subscribe(this);
 }
 
 /**

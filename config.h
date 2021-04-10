@@ -44,7 +44,8 @@
 #define CFG_SERIAL_BUFFER_SIZE      80 // size of the serial input buffer
 
 #define CFG_MAX_NUMBER_PLATES       15 // defines the maximum number of heater plates (limited by 2*x*8 bytes + checksum < 256 bytes)
+#define CFG_MAX_NUM_SENSORS_PER_ZONE 5 // defines the maximum number of temp sensors assigned to one ThermalZone
 
-//#define FAKE_TEMPERATURE_SENSORS
+//#define CFG_FAKE_TEMPERATURE_SENSORS
 
 #endif /* CONFIG_H_ */

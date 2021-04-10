@@ -35,12 +35,12 @@ class Beeper: EventListener {
 public:
 	Beeper();
 	virtual ~Beeper();
+	void initialize();
 	void handleEvent(Event event, va_list args);
 	void beep(int8_t numberOfBeeps);
 	void click();
 
 private:
-	void initialize();
 	void process();
 	int8_t numberOfBeeps;
 	bool soundOn;

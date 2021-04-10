@@ -95,7 +95,7 @@ SimpleList<TemperatureSensor *> HiveFactory::createHiveSensors(SimpleList<Sensor
 					configSensor->addressHive[i].low, i + 1);
 			hiveSensors.push_back(new TemperatureSensor(configSensor->addressHive[i], i));
 		} else {
-			logger.error(F("unable to locate all configured hive sensors (%#l08x%08lx missing) !!"),
+			logger.error(F("unable to locate all configured hive sensors (%#08lx%08lx missing) !!"),
 					configSensor->addressHive[i].high, configSensor->addressHive[i].low);
 			eventHandler.publish(EventListener::ERROR, F("Not all hive sensors found"));
 		}

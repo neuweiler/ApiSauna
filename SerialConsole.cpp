@@ -49,7 +49,7 @@ void SerialConsole::handleEvent(Event event, va_list args) {
 	case PROGRAM_RUN:
 	case PROGRAM_UPDATE:
 		running = true;
-		program = va_arg(args, Program);
+		program = va_arg(args, Program*);
 		break;
 	case PROGRAM_STOP:
 		running = false;
@@ -119,16 +119,16 @@ void SerialConsole::printMenuParams() {
 			configParams->hiveMaxTemp);
 	logger.console(F("HIVE_OT=%d - hive over-temp at which an emergency is declared (in 0.1 deg C, default: 460)"),
 			configParams->hiveOverTemp);
-	logger.console(F("PLATE_OT=%d - plate over-temp (in 0.1 deg C, default: 850)"), configParams->plateOverTemp);
+	logger.console(F("PLATE_OT=%d - plate over-temp (in 0.1 deg C, default: 950)"), configParams->plateOverTemp);
 	logger.console(F("MAX_HEAT_CC=%d - max number of concurrent active heaters if PWM disabled (default: 2)"),
 			configParams->maxConcurrentHeaters);
-	logger.console(F("MAX_HEAT_PWR=%d - maximum heater power in PWM mode (0-255, default: 170)"),
+	logger.console(F("MAX_HEAT_PWR=%d - maximum heater power in PWM mode (0-255, default: 255)"),
 			configParams->maxHeaterPower);
 	logger.console(F("MIN_FAN_SPEED=%d - minimum fan speed level (0-255, default: 10)"), configParams->minFanSpeed);
 	logger.console(F("PWM=%d - enable/disable PWM (0=off, 1=on, default: 0)"), configParams->usePWM);
 	logger.console(F("HUMID_DRY=%d - extended run time to allow humidifier fan to dry (0-255 min, default: 2)"),
 			configParams->humidifierFanDryTime);
-	logger.console(F("THERMAL=%d - thermal zones (0=none, 1=1:1, 2=2:1, 3=2:2 - sensor:plate assignment)"),
+	logger.console(F("THERMAL=%d - thermal zones (0=none, 1=1:1, 2=2:1, 3=2:2 - sensor:plate assignment, default: 1)"),
 			configParams->thermalZones);
 }
 
@@ -178,23 +178,23 @@ void SerialConsole::printMenuProgram() {
 	if (running) {
 		logger.console(F("\nPROGRAM\n"));
 		logger.console(F("TEMP-PREHEAT=%d - pre-heat hive temperature (in 0.1 deg C, 0-600)"),
-				program.temperaturePreHeat);
-		logger.console(F("TEMP=%d - hive temperature (in 0.1 deg C, 0-600)"), program.temperatureHive);
-		logger.console(F("TEMP-PLATE=%d - max plate temperature (in 0.1 deg C, 0-1000)"), program.temperaturePlate);
-		logger.console(F("FANSPEED-PREHEAT=%d - fan speed during pre-heat (0-255)"), program.fanSpeedPreHeat);
-		logger.console(F("FANSPEED=%d - fan speed (0-255)"), program.fanSpeed);
-		logger.console(F("FANSPEED-HUMID=%d - fan speed of humidifier (0-255)"), program.fanSpeedHumidifier);
-		logger.console(F("HUMIDITY-MIN=%d - relative humidity minimum (0-100)"), program.humidityMinimum);
-		logger.console(F("HUMIDITY-MAX=%d - relative humidity maximum (0-100)"), program.humidityMaximum);
-		logger.console(F("DURATION-PREHEAT=%d - duration of pre-heat cycle (in min)"), program.durationPreHeat);
-		logger.console(F("DURATION=%d - duration of program (in min)"), program.duration);
+				program->temperaturePreHeat);
+		logger.console(F("TEMP=%d - hive temperature (in 0.1 deg C, 0-600)"), program->temperatureHive);
+		logger.console(F("TEMP-PLATE=%d - max plate temperature (in 0.1 deg C, 0-1000)"), program->temperaturePlate);
+		logger.console(F("FANSPEED-PREHEAT=%d - fan speed during pre-heat (0-255)"), program->fanSpeedPreHeat);
+		logger.console(F("FANSPEED=%d - fan speed (0-255)"), program->fanSpeed);
+		logger.console(F("FANSPEED-HUMID=%d - fan speed of humidifier (0-255)"), program->fanSpeedHumidifier);
+		logger.console(F("HUMIDITY-MIN=%d - relative humidity minimum (0-100)"), program->humidityMinimum);
+		logger.console(F("HUMIDITY-MAX=%d - relative humidity maximum (0-100)"), program->humidityMaximum);
+		logger.console(F("DURATION-PREHEAT=%d - duration of pre-heat cycle (in min)"), program->durationPreHeat);
+		logger.console(F("DURATION=%d - duration of program (in min)"), program->duration);
 		logger.console(F("enter the following values multiplied by 100 (e.g. 25 for 0.25) :"));
-		logger.console(F("HIVE-KP=%s - Kp parameter for hive temperature PID"), String(program.hiveKp).c_str());
-		logger.console(F("HIVE-KI=%s - Ki parameter for hive temperature PID"), String(program.hiveKi).c_str());
-		logger.console(F("HIVE-KD=%s - Kd parameter for hive temperature PID"), String(program.hiveKd).c_str());
-		logger.console(F("PLATE-KP=%s - Kp parameter for plate temperature PID"), String(program.plateKp).c_str());
-		logger.console(F("PLATE-KI=%s - Ki parameter for plate temperature PID"), String(program.plateKi).c_str());
-		logger.console(F("PLATE-KD=%s - Kd parameter for plate temperature PID"), String(program.plateKd).c_str());
+		logger.console(F("HIVE-KP=%s - Kp parameter for hive temperature PID"), String(program->hiveKp).c_str());
+		logger.console(F("HIVE-KI=%s - Ki parameter for hive temperature PID"), String(program->hiveKi).c_str());
+		logger.console(F("HIVE-KD=%s - Kd parameter for hive temperature PID"), String(program->hiveKd).c_str());
+		logger.console(F("PLATE-KP=%s - Kp parameter for plate temperature PID"), String(program->plateKp).c_str());
+		logger.console(F("PLATE-KI=%s - Ki parameter for plate temperature PID"), String(program->plateKi).c_str());
+		logger.console(F("PLATE-KD=%s - Kd parameter for plate temperature PID"), String(program->plateKd).c_str());
 		logger.console(F(""));
 	}
 }
@@ -428,61 +428,61 @@ bool SerialConsole::handleCmdProgram(String &command, int32_t value) {
 	if (command == String(F("TEMP-PREHEAT"))) {
 		value = constrain(value, 0, 600);
 		logger.console(F("Setting pre-heat hive temperature to %d.%d deg C"), value / 10, value % 10);
-		program.temperaturePreHeat = value;
+		program->temperaturePreHeat = value;
 	} else if (command == String(F("TEMP"))) {
 		value = constrain(value, 0, 600);
 		logger.console(F("Setting hive temperature to %d.%d deg C"), value / 10, value % 10);
-		program.temperatureHive = value;
+		program->temperatureHive = value;
 	} else if (command == String(F("TEMP-PLATE"))) {
 		value = constrain(value, 0, 1000);
 		logger.console(F("Setting max. plate temperature to %d.%d deg C"), value / 10, value % 10);
-		program.temperaturePlate = value;
+		program->temperaturePlate = value;
 	} else if (command == String(F("FANSPEED-PREHEAT"))) {
 		value = constrain(value, 0, 255);
 		logger.console(F("Setting pre-heat fan speed to %d"), value);
-		program.fanSpeedPreHeat = value;
+		program->fanSpeedPreHeat = value;
 	} else if (command == String(F("FANSPEED"))) {
 		value = constrain(value, 0, 255);
 		logger.console(F("Setting fan speed to %d"), value);
-		program.fanSpeed = value;
+		program->fanSpeed = value;
 	} else if (command == String(F("FANSPEED-HUMID"))) {
 		value = constrain(value, 0, 255);
 		logger.console(F("Setting speed of humidifier fan to %d"), value);
-		program.fanSpeedHumidifier = value;
+		program->fanSpeedHumidifier = value;
 	} else if (command == String(F("HUMIDITY-MIN"))) {
 		value = constrain(value, 0, 100);
 		logger.console(F("Setting relative humidity minimum to %d %%"), value);
-		program.humidityMinimum = value;
+		program->humidityMinimum = value;
 	} else if (command == String(F("HUMIDITY-MAX"))) {
 		value = constrain(value, 0, 100);
 		logger.console(F("Setting relative humidity maximum to %d %%"), value);
-		program.humidityMaximum = value;
+		program->humidityMaximum = value;
 	} else if (command == String(F("DURATION-PREHEAT"))) {
 		value = constrain(value, 0, 0xffff);
 		logger.console(F("Setting duration of pre-heat cycle to %d min"), value);
-		program.durationPreHeat = value;
+		program->durationPreHeat = value;
 	} else if (command == String(F("DURATION"))) {
 		value = constrain(value, 0, 0xffff);
 		logger.console(F("Setting duration of program to %d min"), value);
-		program.duration = value;
+		program->duration = value;
 	} else if (command == String(F("HIVE-KP"))) {
-		program.hiveKp = (double) value / (double) 100.0;
-		logger.console(F("Setting hive temperature Kp to %s"), String(program.hiveKp).c_str());
+		program->hiveKp = (double) value / (double) 100.0;
+		logger.console(F("Setting hive temperature Kp to %s"), String(program->hiveKp).c_str());
 	} else if (command == String(F("HIVE-KI"))) {
-		program.hiveKi = (double) value / (double) 100.0;
-		logger.console(F("Setting hive temperature Ki to %s"), String(program.hiveKi).c_str());
+		program->hiveKi = (double) value / (double) 100.0;
+		logger.console(F("Setting hive temperature Ki to %s"), String(program->hiveKi).c_str());
 	} else if (command == String(F("HIVE-KD"))) {
-		program.hiveKd = (double) value / (double) 100.0;
-		logger.console(F("Setting hive temperature Kd to %s"), String(program.hiveKd).c_str());
+		program->hiveKd = (double) value / (double) 100.0;
+		logger.console(F("Setting hive temperature Kd to %s"), String(program->hiveKd).c_str());
 	} else if (command == String(F("PLATE-KP"))) {
-		program.plateKp = (double) value / (double) 100.0;
-		logger.console(F("Setting plate temperature Kp to %s"), String(program.plateKp).c_str());
+		program->plateKp = (double) value / (double) 100.0;
+		logger.console(F("Setting plate temperature Kp to %s"), String(program->plateKp).c_str());
 	} else if (command == String(F("PLATE-KI"))) {
-		program.plateKi = (double) value / (double) 100.0;
-		logger.console(F("Setting plate temperature Ki to %s"), String(program.plateKi).c_str());
+		program->plateKi = (double) value / (double) 100.0;
+		logger.console(F("Setting plate temperature Ki to %s"), String(program->plateKi).c_str());
 	} else if (command == String(F("PLATE-KD"))) {
-		program.plateKd = (double) value / (double) 100.0;
-		logger.console(F("Setting plate temperature Kd to %s"), String(program.plateKd).c_str());
+		program->plateKd = (double) value / (double) 100.0;
+		logger.console(F("Setting plate temperature Kd to %s"), String(program->plateKd).c_str());
 	} else {
 		return false;
 	}

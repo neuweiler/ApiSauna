@@ -35,6 +35,8 @@ Plate::Plate() {
 	id = 0;
 	currentTemperature = 0.0;
 	targetTemperature = 0.0;
+	fanLevel = 0;
+	maxFanSpeed = 0;
 	power = 0.0;
 	pid = NULL;
 	paused = false;
@@ -69,15 +71,15 @@ void Plate::handleEvent(Event event, va_list args) {
 	case PROGRAM_PREHEAT:
 		running = true;
 		preHeat = true;
-		programChange(va_arg(args, Program));
+		programChange(va_arg(args, Program*));
 		break;
 	case PROGRAM_RUN:
 		running = true;
 		preHeat = false;
-		programChange(va_arg(args, Program));
+		programChange(va_arg(args, Program*));
 		break;
 	case PROGRAM_UPDATE:
-		programChange(va_arg(args, Program));
+		programChange(va_arg(args, Program*));
 		break;
 	case PROGRAM_STOP:
 	case TEMPERATURE_ALERT:
@@ -108,7 +110,7 @@ void Plate::initialize() {
 	}
 	pid = new PID(&currentTemperature, &power, &targetTemperature, 0, 0, 0, DIRECT);
 	pid->SetOutputLimits(0, configuration.getParams()->maxHeaterPower);
-	pid->SetSampleTime(CFG_LOOP_DELAY);
+	pid->SetSampleTime(CFG_LOOP_DELAY * 10);
 	pid->SetMode(AUTOMATIC);
 
 	paused = false;
@@ -136,28 +138,35 @@ void Plate::process() {
 		uint8_t heaterPower = calculateHeaterPower();
 		heater.setPower(heaterPower);
 		status.power = heaterPower;
+
+		setFanSpeed(maxFanSpeed * fanLevel / 100);
 	}
 	eventHandler.publish(EventListener::STATUS_PLATE, status);
 }
 
-void Plate::programChange(const Program &program) {
+void Plate::programChange(const Program *program) {
 	logger.debug(F("plate %d noticed program change"), id);
 	pid->SetOutputLimits(0, configuration.getParams()->maxHeaterPower);
-	pid->SetTunings(program.plateKp, program.plateKi, program.plateKd);
-	setFanSpeed(preHeat ? program.fanSpeedPreHeat : program.fanSpeed);
+	pid->SetTunings(program->plateKp, program->plateKi, program->plateKd);
+	maxFanSpeed = (preHeat ? program->fanSpeedPreHeat : program->fanSpeed);
 }
 
 /**
  * Set the desired temperature of the plate (in 0.1 deg C)
  */
 void Plate::setTargetTemperature(int16_t temperature) {
-	logger.debug(F("setting target temperature of heater %d to %d"), id, temperature);
+	if (logger.isDebug()) {
+		logger.debug(F("setting target temperature of heater %d to %d"), id, temperature);
+	}
 	targetTemperature = temperature;
 	status.temperatureTarget = temperature;
 }
 
+void Plate::setFanLevel(uint8_t fanLevel) {
+	this->fanLevel = fanLevel;
+}
+
 void Plate::setFanSpeed(uint8_t speed) {
-	logger.debug(F("setting fan speed of heater %d to %d"), id, speed);
 	fan.setSpeed(speed);
 	status.fanSpeed = speed;
 }
@@ -172,14 +181,14 @@ uint8_t Plate::calculateHeaterPower() {
 
 	pid->Compute(); // updates power
 
-	if (logger.isDebug()) {
-		logger.debug(F("calculated power for plate %d: %d"), id, power);
-	}
-
 	if (currentTemperature > params->plateOverTemp) {
 		logger.error(F("ALERT !!! Plate %d is over-heating !!!"), id);
 		eventHandler.publish(TEMPERATURE_ALERT);
 		return 0;
+	}
+
+	if (logger.isDebug()) {
+		logger.debug(F("plate %d power: before: %d, calc: %f, activeHeaters: %u"), id, heater.getPower(), (float) power, activeHeaters);
 	}
 
 	if (params->usePWM) {

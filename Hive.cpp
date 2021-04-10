@@ -45,7 +45,7 @@ void Hive::handleEvent(Event event, va_list args) {
 	case PROGRAM_RUN:
 	case PROGRAM_UPDATE:
 		running = true;
-		handleProgramChange(va_arg(args, Program));
+		handleProgramChange(va_arg(args, Program *));
 		//    startTime = millis();
 		//    status.setSystemState(Status::running);
 		//    eventHandler->sendEvent(updateProgram);
@@ -127,7 +127,7 @@ void Hive::process() {
  }
  */
 
-void Hive::handleProgramChange(Program program) {
+void Hive::handleProgramChange(Program *program) {
 	logger.debug(F("hive noticed program change"));
 	if (running) {
 		logger.debug(F("closing heater relay"));

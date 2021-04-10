@@ -147,8 +147,9 @@ void Configuration::reset() {
 	configIO->lcdD6 = 26;
 	configIO->lcdD7 = 27;
 
+	configParams->thermalZones = 1;
 	configParams->numberOfPlates = 4;
-	configParams->maxHeaterPower = 170;
+	configParams->maxHeaterPower = 255;
 	configParams->minFanSpeed = 10;
 	configParams->hiveOverTemp = 460;
 	configParams->hiveMaxTemp = 430;
