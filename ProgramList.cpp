@@ -42,6 +42,8 @@ ProgramList::~ProgramList() {
 void ProgramList::initPrograms() {
 	logger.info(F("loading program data"));
 
+	//TODO evtl divide ki and kd by 10 because sample time was increased 10x
+
 	Program *programVarroaSummer = new Program();
 	programVarroaSummer->name = String(F("Varroa Killer"));
 	programVarroaSummer->temperaturePreHeat = 400; // 40 deg C
@@ -49,12 +51,12 @@ void ProgramList::initPrograms() {
 	programVarroaSummer->durationPreHeat = 60; // 60min
 	programVarroaSummer->temperatureHive = 410; // 41 deg C
 	programVarroaSummer->hiveKp = 4.0;
-	programVarroaSummer->hiveKi = 0.2;
-	programVarroaSummer->hiveKd = 7.0;
+	programVarroaSummer->hiveKi = 0.02;
+	programVarroaSummer->hiveKd = 70.0;
 	programVarroaSummer->temperaturePlate = 800; // 70 deg C
 	programVarroaSummer->plateKp = 1.0;
-	programVarroaSummer->plateKi = 0.10;
-	programVarroaSummer->plateKd = 7.0;
+	programVarroaSummer->plateKi = 0.01;
+	programVarroaSummer->plateKd = 70.0;
 	programVarroaSummer->fanSpeed = 200; // minimum is 10
 	programVarroaSummer->humidityMinimum = 30;
 	programVarroaSummer->humidityMaximum = 35;
@@ -69,12 +71,12 @@ void ProgramList::initPrograms() {
 	programVarroaWinter->durationPreHeat = 60; // 60min
 	programVarroaWinter->temperatureHive = 420; // 42.0 deg C
 	programVarroaWinter->hiveKp = 8.0;
-	programVarroaWinter->hiveKi = 0.2;
-	programVarroaWinter->hiveKd = 5.0;
+	programVarroaWinter->hiveKi = 0.02;
+	programVarroaWinter->hiveKd = 50.0;
 	programVarroaWinter->temperaturePlate = 850; // 75 deg C
 	programVarroaWinter->plateKp = 4.0;
-	programVarroaWinter->plateKi = 0.09;
-	programVarroaWinter->plateKd = 50.0;
+	programVarroaWinter->plateKi = 0.01;
+	programVarroaWinter->plateKd = 500.0;
 	programVarroaWinter->fanSpeed = 255; // minimum is 10
 	programVarroaWinter->humidityMinimum = 30;
 	programVarroaWinter->humidityMaximum = 35;
@@ -89,12 +91,12 @@ void ProgramList::initPrograms() {
 	programCleaning->durationPreHeat = 0;
 	programCleaning->temperatureHive = 425; // 42.5 deg C
 	programCleaning->hiveKp = 8.0;
-	programCleaning->hiveKi = 0.2;
-	programCleaning->hiveKd = 5.0;
+	programCleaning->hiveKi = 0.02;
+	programCleaning->hiveKd = 50.0;
 	programCleaning->temperaturePlate = 600; // 60 deg C
 	programCleaning->plateKp = 4.0;
-	programCleaning->plateKi = 0.09;
-	programCleaning->plateKd = 50.0;
+	programCleaning->plateKi = 0.01;
+	programCleaning->plateKd = 500.0;
 	programCleaning->fanSpeed = 10; // minimum is 10
 	programCleaning->humidityMinimum = 1;
 	programCleaning->humidityMaximum = 2;
@@ -109,12 +111,12 @@ void ProgramList::initPrograms() {
 	programMeltHoney->durationPreHeat = 0;
 	programMeltHoney->temperatureHive = 300;
 	programMeltHoney->hiveKp = 8.0;
-	programMeltHoney->hiveKi = 0.2;
-	programMeltHoney->hiveKd = 5.0;
+	programMeltHoney->hiveKi = 0.02;
+	programMeltHoney->hiveKd = 50.0;
 	programMeltHoney->temperaturePlate = 500;
 	programMeltHoney->plateKp = 4.0;
-	programMeltHoney->plateKi = 0.09;
-	programMeltHoney->plateKd = 50.0;
+	programMeltHoney->plateKi = 0.01;
+	programMeltHoney->plateKd = 500.0;
 	programMeltHoney->fanSpeed = 10;
 	programMeltHoney->humidityMinimum = 1;
 	programMeltHoney->humidityMaximum = 2;
